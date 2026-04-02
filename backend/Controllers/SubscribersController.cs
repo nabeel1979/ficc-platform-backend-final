@@ -187,9 +187,12 @@ public class SubscribersController : ControllerBase {
 
     // GET /api/subscribers — للأدمن
     [HttpGet, Authorize]
-    public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20) {
-        var total = await _db.Subscribers.CountAsync();
-        var items = await _db.Subscribers.OrderByDescending(s => s.CreatedAt)
+    public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? search = null) {
+        var q = _db.Subscribers.AsQueryable();
+        if (!string.IsNullOrEmpty(search))
+            q = q.Where(s => s.FullName.Contains(search) || s.Phone.Contains(search) || (s.WhatsApp != null && s.WhatsApp.Contains(search)));
+        var total = await q.CountAsync();
+        var items = await q.OrderByDescending(s => s.CreatedAt)
             .Skip((page-1)*pageSize).Take(pageSize).ToListAsync();
         return Ok(new { total, page, pageSize, items });
     }
