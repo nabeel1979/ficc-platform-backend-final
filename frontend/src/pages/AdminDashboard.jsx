@@ -2614,56 +2614,88 @@ function SubscribersPanel() {
       )}
 
       {loading ? <div style={{textAlign:'center',padding:'40px',color:'#888'}}>⏳ جاري التحميل...</div> : (
-        <div style={{background:'#fff',borderRadius:'16px',overflow:'hidden',boxShadow:'0 4px 16px rgba(44,62,107,0.08)'}}>
-          <table style={{width:'100%',borderCollapse:'collapse',fontSize:'13px'}}>
-            <thead>
-              <tr style={{background:'#2C3E6B',color:'#fff'}}>
-                <th style={{padding:'12px 16px',textAlign:'right'}}>#</th>
-                <th style={{padding:'12px 16px',textAlign:'right'}}>الاسم</th>
-                <th style={{padding:'12px 16px',textAlign:'right'}}>الهاتف</th>
-                <th style={{padding:'12px 16px',textAlign:'right'}}>البريد</th>
-                <th style={{padding:'12px 16px',textAlign:'right'}}>الإشعار</th>
-                <th style={{padding:'12px 16px',textAlign:'right'}}>الحالة</th>
-                <th style={{padding:'12px 16px',textAlign:'center'}}>الإجراءات</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((s,i) => (
-                <tr key={s.id} style={{borderBottom:'1px solid #f0f2f7',background:s.isActive===false?'#fff5f5':i%2===0?'#fff':'#fafbff'}}>
-                  <td style={{padding:'10px 16px',color:'#888'}}>{(page-1)*pageSize + i + 1}</td>
-                  <td style={{padding:'10px 16px'}}>
-                    <div style={{fontWeight:'700',color:'#2C3E6B'}}>{s.fullName}</div>
-                    <div style={{fontSize:'11px',color:'#888',direction:'ltr'}}>{s.whatsApp || s.phone}</div>
-                    <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>{sectorsLabel(s.sectors)}</div>
-                  </td>
-                  <td style={{padding:'10px 16px',direction:'ltr',fontSize:'12px'}}>{s.phone}</td>
-                  <td style={{padding:'10px 16px',fontSize:'12px',color:'#666'}}>{s.email || '—'}</td>
-                  <td style={{padding:'10px 16px',textAlign:'center'}}>{notifyLabel(s.notifyBy)}</td>
-                  <td style={{padding:'10px 16px',textAlign:'center'}}>
-                    <span style={{padding:'3px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:'700',
-                      background:s.isActive!==false?'#dcfce7':'#fee2e2',
-                      color:s.isActive!==false?'#16a34a':'#dc2626'}}>
-                      {s.isActive!==false?'✅ نشط':'⏸️ موقوف'}
-                    </span>
-                  </td>
-                  <td style={{padding:'10px 16px',textAlign:'center',whiteSpace:'nowrap'}}>
-                    {btn(s.isActive!==false?'⏸️ إيقاف':'▶️ تفعيل', ()=>toggleActive(s), s.isActive!==false?'#fff8e7':'#f0fdf4', s.isActive!==false?'#b45309':'#16a34a')}
-                    {btn('✏️ تعديل', ()=>setEditSub({...s}), '#EEF2FF', '#4338ca')}
-                    {btn('📲 OTP', ()=>resendOtp(s), '#f0fdf4', '#16a34a')}
-                    {btn('🗑️', ()=>del(s.id), '#fee2e2', '#dc2626')}
-                  </td>
+        <div>
+          {/* Desktop: جدول */}
+          <div className="sub-table-wrap" style={{background:'#fff',borderRadius:'16px',overflow:'auto',boxShadow:'0 4px 16px rgba(44,62,107,0.08)'}}>
+            <table style={{width:'100%',borderCollapse:'collapse',fontSize:'13px',minWidth:'700px'}}>
+              <thead>
+                <tr style={{background:'#2C3E6B',color:'#fff'}}>
+                  <th style={{padding:'12px 16px',textAlign:'right'}}>#</th>
+                  <th style={{padding:'12px 16px',textAlign:'right'}}>الاسم</th>
+                  <th style={{padding:'12px 16px',textAlign:'right'}}>الهاتف</th>
+                  <th style={{padding:'12px 16px',textAlign:'right'}}>البريد</th>
+                  <th style={{padding:'12px 16px',textAlign:'right'}}>الإشعار</th>
+                  <th style={{padding:'12px 16px',textAlign:'right'}}>الحالة</th>
+                  <th style={{padding:'12px 16px',textAlign:'center'}}>الإجراءات</th>
                 </tr>
-              ))}
-              {items.length === 0 && <tr><td colSpan={7} style={{padding:'40px',textAlign:'center',color:'#aaa'}}>لا يوجد متابعون</td></tr>}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {items.map((s,i) => (
+                  <tr key={s.id} style={{borderBottom:'1px solid #f0f2f7',background:s.isActive===false?'#fff5f5':i%2===0?'#fff':'#fafbff'}}>
+                    <td style={{padding:'10px 16px',color:'#888'}}>{(page-1)*pageSize+i+1}</td>
+                    <td style={{padding:'10px 16px'}}>
+                      <div style={{fontWeight:'700',color:'#2C3E6B'}}>{s.fullName}</div>
+                      <div style={{fontSize:'11px',color:'#aaa'}}>{sectorsLabel(s.sectors)}</div>
+                    </td>
+                    <td style={{padding:'10px 16px',direction:'ltr',fontSize:'12px'}}>{s.phone}</td>
+                    <td style={{padding:'10px 16px',fontSize:'12px',color:'#666'}}>{s.email||'—'}</td>
+                    <td style={{padding:'10px 16px',textAlign:'center'}}>{notifyLabel(s.notifyBy)}</td>
+                    <td style={{padding:'10px 16px',textAlign:'center'}}>
+                      <span style={{padding:'3px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:'700',
+                        background:s.isActive!==false?'#dcfce7':'#fee2e2',color:s.isActive!==false?'#16a34a':'#dc2626'}}>
+                        {s.isActive!==false?'✅ نشط':'⏸️ موقوف'}
+                      </span>
+                    </td>
+                    <td style={{padding:'10px 16px',textAlign:'center',whiteSpace:'nowrap'}}>
+                      {btn(s.isActive!==false?'⏸️ إيقاف':'▶️ تفعيل',()=>toggleActive(s),s.isActive!==false?'#fff8e7':'#f0fdf4',s.isActive!==false?'#b45309':'#16a34a')}
+                      {btn('✏️ تعديل',()=>setEditSub({...s}),'#EEF2FF','#4338ca')}
+                      {btn('📲 OTP',()=>resendOtp(s),'#f0fdf4','#16a34a')}
+                      {btn('🗑️',()=>del(s.id),'#fee2e2','#dc2626')}
+                    </td>
+                  </tr>
+                ))}
+                {items.length===0 && <tr><td colSpan={7} style={{padding:'40px',textAlign:'center',color:'#aaa'}}>لا يوجد متابعون</td></tr>}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile: بطاقات */}
+          <div style={{display:'none'}} className="sub-cards-wrap">
+            {items.map((s,i) => (
+              <div key={s.id} style={{background:s.isActive===false?'#fff5f5':'#fff',borderRadius:'14px',padding:'16px',marginBottom:'10px',boxShadow:'0 2px 10px rgba(44,62,107,0.07)',border:'1px solid #eef0f7'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'8px'}}>
+                  <div>
+                    <span style={{fontWeight:'800',color:'#2C3E6B',fontSize:'14px'}}>{s.fullName}</span>
+                    <div style={{fontSize:'12px',color:'#888',direction:'ltr',marginTop:'2px'}}>{s.phone}</div>
+                    {s.email && <div style={{fontSize:'11px',color:'#aaa'}}>{s.email}</div>}
+                  </div>
+                  <span style={{padding:'3px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:'700',
+                    background:s.isActive!==false?'#dcfce7':'#fee2e2',color:s.isActive!==false?'#16a34a':'#dc2626'}}>
+                    {s.isActive!==false?'✅':'⏸️'}
+                  </span>
+                </div>
+                <div style={{fontSize:'11px',color:'#666',marginBottom:'10px'}}>
+                  {notifyLabel(s.notifyBy)} | {sectorsLabel(s.sectors)||'—'}
+                </div>
+                <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
+                  {btn(s.isActive!==false?'⏸️ إيقاف':'▶️ تفعيل',()=>toggleActive(s),s.isActive!==false?'#fff8e7':'#f0fdf4',s.isActive!==false?'#b45309':'#16a34a')}
+                  {btn('✏️ تعديل',()=>setEditSub({...s}),'#EEF2FF','#4338ca')}
+                  {btn('📲 OTP',()=>resendOtp(s),'#f0fdf4','#16a34a')}
+                  {btn('🗑️ حذف',()=>del(s.id),'#fee2e2','#dc2626')}
+                </div>
+              </div>
+            ))}
+            {items.length===0 && <div style={{textAlign:'center',padding:'40px',color:'#aaa'}}>لا يوجد متابعون</div>}
+          </div>
+
+          {/* Pagination */}
           {total > pageSize && (
-            <div style={{padding:'16px',display:'flex',gap:'8px',justifyContent:'center',alignItems:'center'}}>
-              <button onClick={()=>{setPage(1);load(1,search)}} disabled={page===1} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:page===1?'default':'pointer',fontFamily:'Cairo,sans-serif'}}>««</button>
-              <button onClick={()=>{const p=page-1;setPage(p);load(p,search)}} disabled={page===1} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:page===1?'default':'pointer',fontFamily:'Cairo,sans-serif'}}>‹</button>
-              <span style={{fontSize:'13px',color:'#666'}}>صفحة {page} من {Math.ceil(total/pageSize)}</span>
-              <button onClick={()=>{const p=page+1;setPage(p);load(p,search)}} disabled={page>=Math.ceil(total/pageSize)} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}>›</button>
-              <button onClick={()=>{const last=Math.ceil(total/pageSize);setPage(last);load(last,search)}} disabled={page>=Math.ceil(total/pageSize)} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}> »»</button>
+            <div style={{padding:'16px',display:'flex',gap:'8px',justifyContent:'center',alignItems:'center',flexWrap:'wrap'}}>
+              <button onClick={()=>{setPage(1);load(1,search)}} disabled={page===1} style={{padding:'7px 13px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:page===1?'default':'pointer',fontFamily:'Cairo,sans-serif'}}>««</button>
+              <button onClick={()=>{const p=page-1;setPage(p);load(p,search)}} disabled={page===1} style={{padding:'7px 13px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:page===1?'default':'pointer',fontFamily:'Cairo,sans-serif'}}>‹</button>
+              <span style={{fontSize:'13px',color:'#666',padding:'0 8px'}}>صفحة {page} من {Math.ceil(total/pageSize)}</span>
+              <button onClick={()=>{const p=page+1;setPage(p);load(p,search)}} disabled={page>=Math.ceil(total/pageSize)} style={{padding:'7px 13px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}>›</button>
+              <button onClick={()=>{const last=Math.ceil(total/pageSize);setPage(last);load(last,search)}} disabled={page>=Math.ceil(total/pageSize)} style={{padding:'7px 13px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}>»»</button>
             </div>
           )}
         </div>

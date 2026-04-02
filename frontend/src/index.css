@@ -101,3 +101,9 @@ img { display: block; }
 .input:focus { border-color: #4A6FA5; box-shadow: 0 0 0 3px rgba(74,111,165,0.12); }
 .filters { background: #fff; border-radius: 12px; padding: 14px; box-shadow: 0 2px 8px rgba(44,62,107,0.07); border: 1px solid #dde3ed; display: grid; gap: 10px; margin-bottom: 20px; }
 @media (min-width: 640px) { .filters { grid-template-columns: 1fr 1fr 1fr auto; align-items: end; } }
+
+/* Subscribers Panel Responsive */
+@media (max-width: 768px) {
+  .sub-table-wrap { display: none !important; }
+  .sub-cards-wrap { display: block !important; }
+}
