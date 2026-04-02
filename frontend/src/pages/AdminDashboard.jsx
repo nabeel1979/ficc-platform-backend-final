@@ -913,7 +913,8 @@ const FIELDS = {
     {key:'mobile',label:'رقم الموبايل',type:'tel'},
     {key:'email',label:'البريد الإلكتروني',type:'email'},
     {key:'notes',label:'ملاحظات',type:'textarea'},
-    {key:'_logo',label:'صورة المالك / شعار المنشأة',type:'logo'},
+    {key:'_logo',label:'🏢 شعار الشركة / المنشأة',type:'logo'},
+    {key:'_photo',label:'📷 صورة شخصية للمدير / صاحب العمل',type:'logo'},
     {key:'_social',label:'روابط التواصل الاجتماعي',type:'social'},
     {key:'isVerified',label:'موثّق',type:'checkbox',checkLabel:'هذا التاجر موثّق'},
   ],
@@ -1362,17 +1363,23 @@ function SubmissionsPanel() {
             {/* Show logo if provided */}
             {/* صورة شخصية أو لوغو في الأعلى */}
             {(selected.formData?._photo || selected.logoData || selected.formData?._logo) && (
-              <div style={{marginBottom:'16px',textAlign:'center',display:'flex',gap:'16px',justifyContent:'center',alignItems:'center'}}>
+              <div style={{marginBottom:'16px',textAlign:'center',display:'flex',gap:'24px',justifyContent:'center',alignItems:'flex-end'}}>
                 {selected.formData?._photo && (
                   <div style={{textAlign:'center'}}>
                     <img src={selected.formData._photo} alt="صورة شخصية" style={{width:'80px',height:'80px',borderRadius:'50%',objectFit:'cover',border:'3px solid #2C3E6B',boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}} />
-                    <p style={{fontSize:'11px',color:'#888',margin:'4px 0 0'}}>الصورة الشخصية</p>
+                    <p style={{fontSize:'11px',color:'#888',margin:'4px 0 0',fontWeight:'700'}}>📷 الصورة الشخصية</p>
                   </div>
                 )}
-                {(selected.logoData || selected.formData?._logo) && (
+                {(selected.logoData || selected.formData?._logo) && selected.formData?._logo !== selected.formData?._photo && (
                   <div style={{textAlign:'center'}}>
-                    <img src={selected.logoData || selected.formData._logo} alt="لوغو" style={{width:'80px',height:'80px',objectFit:'contain',borderRadius:'12px',border:'2px solid #2C3E6B',background:'#f5f7fa',padding:'4px'}} />
-                    <p style={{fontSize:'11px',color:'#888',margin:'4px 0 0'}}>شعار الشركة</p>
+                    <img src={selected.logoData || selected.formData._logo} alt="شعار الشركة" style={{width:'80px',height:'80px',objectFit:'contain',borderRadius:'12px',border:'2px solid #059669',background:'#f5f7fa',padding:'4px'}} />
+                    <p style={{fontSize:'11px',color:'#888',margin:'4px 0 0',fontWeight:'700'}}>🏢 شعار الشركة</p>
+                  </div>
+                )}
+                {(selected.logoData || selected.formData?._logo) && selected.formData?._logo === selected.formData?._photo && !selected.formData?._photo && (
+                  <div style={{textAlign:'center'}}>
+                    <img src={selected.logoData || selected.formData._logo} alt="شعار الشركة" style={{width:'80px',height:'80px',objectFit:'contain',borderRadius:'12px',border:'2px solid #059669',background:'#f5f7fa',padding:'4px'}} />
+                    <p style={{fontSize:'11px',color:'#888',margin:'4px 0 0',fontWeight:'700'}}>🏢 شعار الشركة</p>
                   </div>
                 )}
               </div>
