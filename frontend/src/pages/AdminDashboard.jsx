@@ -2597,11 +2597,34 @@ function SubscribersPanel() {
         <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center'}}>
           <div style={{background:'#fff',borderRadius:'16px',padding:'28px',width:'400px',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
             <h3 style={{color:'#2C3E6B',margin:'0 0 16px'}}>✏️ تعديل المتابع</h3>
-            {[['الاسم','fullName'],['الهاتف','phone'],['واتساب','whatsApp'],['الإيميل','email']].map(([lbl,k])=>(
+            {/* حقل الاسم */}
+            <div style={{marginBottom:'12px'}}>
+              <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>الاسم</label>
+              <input value={editSub.fullName||''} onChange={e=>setEditSub(p=>({...p,fullName:e.target.value}))}
+                style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',boxSizing:'border-box'}}/>
+            </div>
+            {/* حقول مع زر تحقق */}
+            {[
+              {lbl:'رقم الهاتف', k:'phone', field:'phone'},
+              {lbl:'واتساب',     k:'whatsApp', field:'whatsapp'},
+              {lbl:'الإيميل',   k:'email', field:'email'},
+            ].map(({lbl,k,field})=>(
               <div key={k} style={{marginBottom:'12px'}}>
                 <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>{lbl}</label>
-                <input value={editSub[k]||''} onChange={e=>setEditSub(p=>({...p,[k]:e.target.value}))}
-                  style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',boxSizing:'border-box'}}/>
+                <div style={{display:'flex',gap:'6px'}}>
+                  <input value={editSub[k]||''} onChange={e=>setEditSub(p=>({...p,[k]:e.target.value}))}
+                    style={{flex:1,padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',direction:field==='email'?'ltr':'ltr',boxSizing:'border-box'}}/>
+                  <button type="button" onClick={async()=>{
+                    const val = editSub[k]
+                    if(!val){alert('أدخل القيمة أولاً');return}
+                    try{
+                      await api.post(`${API}/subscribers/send-field-otp`,{field,value:val})
+                      alert(`✅ تم إرسال رمز التحقق إلى ${val}`)
+                    }catch(e){alert(e?.response?.data?.message||'فشل الإرسال')}
+                  }} style={{padding:'9px 12px',borderRadius:'9px',background:'#EEF2FF',color:'#4338ca',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700',whiteSpace:'nowrap'}}>
+                    📲 تحقق
+                  </button>
+                </div>
               </div>
             ))}
             <div style={{display:'flex',gap:'8px',marginTop:'16px'}}>
