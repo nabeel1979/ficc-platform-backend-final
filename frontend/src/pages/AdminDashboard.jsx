@@ -1644,6 +1644,8 @@ function ContactsPanel() {
   const [showDupes, setShowDupes] = useState(false)
   const [msg, setMsg] = useState('')
   const [confirmDlg, setConfirmDlg] = useState(null) // {msg, onConfirm}
+  const [pageSize, setPageSize] = useState(10)
+  const [page, setPage] = useState(1)
 
   const sources = [
     { key: 'all', label: 'الكل' },
@@ -1760,13 +1762,17 @@ function ContactsPanel() {
 
       {/* Filters */}
       <div style={{background:'#fff',borderRadius:'14px',padding:'12px',boxShadow:'0 2px 12px rgba(0,0,0,0.06)',marginBottom:'16px',display:'flex',gap:'8px',flexWrap:'wrap',alignItems:'center'}}>
-        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 بحث..."
+        <input value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}} placeholder="🔍 بحث..."
           style={{flex:1,minWidth:'140px',padding:'9px 12px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',direction:'rtl',outline:'none'}} />
-        <select value={source} onChange={e=>setSource(e.target.value)}
+        <select value={source} onChange={e=>{setSource(e.target.value);setPage(1)}}
           style={{padding:'9px 10px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',background:'#fff'}}>
           {sources.map(s=><option key={s.key} value={s.key}>{s.label}</option>)}
         </select>
-        <button onClick={()=>setShowDupes(!showDupes)}
+        <select value={pageSize} onChange={e=>{setPageSize(+e.target.value);setPage(1)}}
+          style={{padding:'9px 10px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',background:'#fff',cursor:'pointer'}}>
+          {[10,50,100,1000].map(n=><option key={n} value={n}>{n}</option>)}
+        </select>
+        <button onClick={()=>{setShowDupes(!showDupes);setPage(1)}}
           style={{padding:'9px 12px',borderRadius:'10px',border:'1.5px solid '+(showDupes?'#dc2626':'#dde3ed'),background:showDupes?'#fee2e2':'#fff',color:showDupes?'#dc2626':'#666',fontSize:'13px',fontFamily:'Cairo,sans-serif',fontWeight:'700',cursor:'pointer',whiteSpace:'nowrap'}}>
           ⚠️ مكرر ({dupeCount})
         </button>
@@ -1775,10 +1781,13 @@ function ContactsPanel() {
 
       {msg && <div style={{background:'#F0FDF4',color:'#16a34a',padding:'10px 16px',borderRadius:'10px',marginBottom:'12px',fontSize:'13px'}}>{msg}</div>}
 
-      {loading ? <div style={{textAlign:'center',padding:'60px',color:'#aaa'}}>⏳ جاري التحميل...</div> : (
-        /* Cards layout - responsive */
+      {loading ? <div style={{textAlign:'center',padding:'60px',color:'#aaa'}}>⏳ جاري التحميل...</div> : (() => {
+        const totalPages = Math.ceil(filtered.length / pageSize)
+        const paged = pageSize >= 1000 ? filtered : filtered.slice((page-1)*pageSize, page*pageSize)
+        return (<>
+        {/* Cards layout - responsive */}
         <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-          {filtered.map((c, i) => {
+          {paged.map((c, i) => {
             const isDupePhone = c.phone && phoneCounts[normalize(c.phone)] > 1
             const isDupeEmail = c.email && emailCounts[(c.email||'').toLowerCase().trim()] > 1
             return (
@@ -1813,11 +1822,25 @@ function ContactsPanel() {
               </div>
             )
           })}
-          {filtered.length === 0 && (
+          {paged.length === 0 && (
             <div style={{textAlign:'center',padding:'40px',background:'#fff',borderRadius:'12px',color:'#aaa'}}>لا توجد نتائج</div>
           )}
         </div>
-      )}
+        {totalPages > 1 && (
+          <div style={{display:'flex',justifyContent:'center',alignItems:'center',gap:6,padding:'14px 0',flexWrap:'wrap'}}>
+            <button onClick={()=>setPage(1)} disabled={page===1}
+              style={{padding:'5px 10px',borderRadius:7,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>««</button>
+            <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
+              style={{padding:'5px 10px',borderRadius:7,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>← السابق</button>
+            <span style={{fontSize:12,color:'#555',fontFamily:'Cairo,sans-serif',padding:'0 8px'}}>{page} / {totalPages}</span>
+            <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
+              style={{padding:'5px 10px',borderRadius:7,border:'1px solid #dde3ed',background:page===totalPages?'#f5f5f5':'#fff',cursor:page===totalPages?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>التالي →</button>
+            <button onClick={()=>setPage(totalPages)} disabled={page===totalPages}
+              style={{padding:'5px 10px',borderRadius:7,border:'1px solid #dde3ed',background:page===totalPages?'#f5f5f5':'#fff',cursor:page===totalPages?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>»»</button>
+          </div>
+        )}
+        </>)
+      })()}
     </div>
   )
 }
