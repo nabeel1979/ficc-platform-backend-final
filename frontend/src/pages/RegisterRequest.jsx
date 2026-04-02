@@ -131,7 +131,6 @@ const ENTITY_CONFIGS = {
       { key: '_logo',         label: 'شعار الشركة / المؤسسة', type: 'logo' },
       { key: 'tradeName',     label: 'الاسم التجاري', required: true },
       { key: 'businessType',  label: 'نوع النشاط التجاري', type: 'select', required: true,
-        constantsKey: 'trader_business_type',
         options: ['تجارة عامة','استيراد وتصدير','تجارة جملة','تجارة مفرد','مقاولات وإنشاءات','صناعة وتصنيع','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','أخرى'] },
       { key: 'tradeCategory', label: 'التصنيف التجاري', type: 'select',
         constantsKey: 'trader_classification',
