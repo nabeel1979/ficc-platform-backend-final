@@ -370,12 +370,11 @@ public class SubmissionsController : ControllerBase {
                 var base64 = sub.LogoData.Substring(sub.LogoData.IndexOf(',') + 1);
                 var ext = sub.LogoData.Contains("png") ? ".png" : sub.LogoData.Contains("gif") ? ".gif" : ".jpg";
                 var bytes = Convert.FromBase64String(base64);
-                var wwwroot = _storage.UploadsRoot;
                 var folder = sub.EntityType switch {
-                    "chamber" => Path.Combine(wwwroot, "uploads", "chambers"),
-                    "trader"  => Path.Combine(wwwroot, "uploads", "traders"),
-                    "member"  => Path.Combine(wwwroot, "uploads", "members"),
-                    _         => Path.Combine(wwwroot, "uploads", "chambers")
+                    "chamber" => _storage.GetFolder("chambers"),
+                    "trader"  => _storage.GetFolder("traders"),
+                    "member"  => _storage.GetFolder("members"),
+                    _         => _storage.GetFolder("chambers")
                 };
                 Directory.CreateDirectory(folder);
                 var ts = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
