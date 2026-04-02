@@ -54,12 +54,14 @@ public class SubscribersController : ControllerBase {
             CreatedAt = DateTime.UtcNow, ExpiresAt = DateTime.UtcNow.AddMinutes(10)
         });
         await _db.SaveChangesAsync();
-        var msg = $"اتحاد الغرف التجارية العراقية\nرمز التحقق: {otp}\nصالح 10 دقائق";
         if (dto.Field == "email")
             await _notify.SendEmail(dto.Value, "رمز التحقق | اتحاد الغرف التجارية العراقية", $"<div dir='rtl' style='font-family:Cairo,sans-serif;font-size:16px'><p>رمز التحقق الخاص بك:</p><h1 style='letter-spacing:8px;color:#2C3E6B'>{otp}</h1><p>صالح لمدة 10 دقائق</p></div>");
-        else
-            await _notify.SendTwilioSms(dto.Value, otp);
-        return Ok(new { message = "تم إرسال رمز التأكيد" });
+        else {
+            // أرسل WhatsApp أولاً (يعمل مع كل الشبكات العراقية) + SMS كـ fallback
+            var waSent = await _notify.SendWhatsAppOtp(dto.Value, otp);
+            await _notify.SendTwilioSms(dto.Value, otp); // SMS معاً للتأكيد
+        }
+        return Ok(new { message = "تم إرسال رمز التأكيد عبر واتساب ورسالة نصية" });
     }
 
     // POST /api/subscribers/verify-field-otp — تحقق OTP لحقل معين

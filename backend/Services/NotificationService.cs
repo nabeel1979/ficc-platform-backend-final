@@ -119,6 +119,32 @@ public class NotificationService {
         return phone;
     }
 
+    // إرسال OTP عبر واتساب (Twilio WhatsApp Sandbox)
+    public async Task<bool> SendWhatsAppOtp(string phone, string otp) {
+        try {
+            var sid   = _cfg["Twilio:AccountSid"];
+            var token = _cfg["Twilio:AuthToken"];
+            if (string.IsNullOrEmpty(sid) || string.IsNullOrEmpty(token)) return false;
+            var url = $"https://api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json";
+            using var http = new HttpClient();
+            http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+                "Basic", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"{sid}:{token}"))
+            );
+            var body = $"اتحاد الغرف التجارية العراقية 🏛️\nرمز التحقق: *{otp}*\nصالح 10 دقائق - لا تشاركه مع أحد";
+            var resp = await http.PostAsync(url, new FormUrlEncodedContent(new Dictionary<string,string>{
+                ["To"]   = "whatsapp:" + NormalizeIraqiPhone(phone),
+                ["From"] = "whatsapp:+14155238886",
+                ["Body"] = body
+            }));
+            var respBody = await resp.Content.ReadAsStringAsync();
+            _log.LogInformation("WhatsApp OTP to {Phone}: {Status} {Body}", phone, resp.StatusCode, respBody);
+            return resp.IsSuccessStatusCode;
+        } catch (Exception ex) {
+            _log.LogError(ex, "WhatsApp OTP send failed");
+            return false;
+        }
+    }
+
     public async Task<bool> SendTwilioSms(string phone, string otp) {
         try {
             var sid   = _cfg["Twilio:AccountSid"];
