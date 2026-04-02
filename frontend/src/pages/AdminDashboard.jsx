@@ -2653,17 +2653,14 @@ function SubscribersPanel() {
                   )
                 })}
               </div>
-              {(()=>{
-                const ALL_SEC = ['تجارة عامة','استيراد وتصدير','صناعة وتصنيع','مقاولات وإنشاءات','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','طاقة وكهرباء','أخرى']
-                const cur = (() => { try { return JSON.parse(editSub.sectors||'[]') } catch { return [] } })()
-                const allSelected = cur.length === ALL_SEC.length
-                return (
-                  <button type="button" onClick={()=>setEditSub(p=>({...p,sectors:JSON.stringify(allSelected?[]:ALL_SEC)}))}
-                    style={{padding:'5px 12px',borderRadius:'8px',background:'#FFF8E7',color:'#B8860B',border:'1px solid #fde68a',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',marginTop:'6px'}}>
-                    {allSelected?'❌ إلغاء الكل':'✅ اختر الكل'}
-                  </button>
-                )
-              })()}
+              <button type="button" onClick={()=>{
+                  const ALL_SEC = ['تجارة عامة','استيراد وتصدير','صناعة وتصنيع','مقاولات وإنشاءات','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','طاقة وكهرباء','أخرى']
+                  const cur2 = (() => { try { return JSON.parse(editSub.sectors||'[]') } catch { return [] } })()
+                  setEditSub(p=>({...p, sectors: JSON.stringify(cur2.length===ALL_SEC.length ? [] : ALL_SEC)}))
+                }}
+                style={{padding:'5px 12px',borderRadius:'8px',background:'#FFF8E7',color:'#B8860B',border:'1px solid #fde68a',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',marginTop:'6px'}}>
+                {(()=>{ try { return JSON.parse(editSub.sectors||'[]').length } catch { return 0 } })() === 15 ? '❌ إلغاء الكل' : '✅ اختر الكل'}
+              </button>
             </div>
 
             {/* طريقة التواصل */}
@@ -2691,8 +2688,13 @@ function SubscribersPanel() {
             </div>
 
             <div style={{display:'flex',gap:'8px',marginTop:'16px'}}>
-              <button onClick={async()=>{ await api.put(`${API}/subscribers/${editSub.id}`,editSub); setEditSub(null); load(page,search) }}
-                style={{flex:1,padding:'11px',borderRadius:'10px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'800'}}>💾 حفظ</button>
+              <button onClick={async()=>{
+                const sec = (() => { try { return JSON.parse(editSub.sectors||'[]') } catch { return [] } })()
+                if (sec.length === 0) { alert('⚠️ اختر قطاعاً واحداً على الأقل'); return }
+                const ntf = (() => { try { return JSON.parse(editSub.notifyBy||'[]') } catch { return [] } })()
+                if (ntf.length === 0) { alert('⚠️ اختر طريقة تواصل واحدة على الأقل'); return }
+                await api.put(`${API}/subscribers/${editSub.id}`,editSub); setEditSub(null); load(page,search)
+              }} style={{flex:1,padding:'11px',borderRadius:'10px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'800'}}>💾 حفظ</button>
               <button onClick={()=>setEditSub(null)}
                 style={{flex:1,padding:'11px',borderRadius:'10px',background:'#f5f7fa',color:'#666',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}>إلغاء</button>
             </div>
