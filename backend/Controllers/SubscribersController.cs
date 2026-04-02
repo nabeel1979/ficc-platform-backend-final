@@ -192,11 +192,7 @@ public class SubscribersController : ControllerBase {
             .Skip((page-1)*pageSize).Take(pageSize).ToListAsync();
         return Ok(new { total, page, pageSize, items });
     }
-}
-
-public record SubscriberDto(string FullName, string Phone, string? WhatsApp, string? Email, string? Sectors, string? NotifyBy);
-public record PhoneDto(string Phone);
-public record VerifyOtpDto(string Phone, string Code);
+    // DELETE /api/subscribers/{id}
     [HttpDelete("{id}"), Authorize]
     public async Task<IActionResult> Delete(int id) {
         var sub = await _db.Subscribers.FindAsync(id);
@@ -205,7 +201,10 @@ public record VerifyOtpDto(string Phone, string Code);
         await _db.SaveChangesAsync();
         return Ok(new { message = "تم الحذف" });
     }
+}
 
+public record SubscriberDto(string FullName, string Phone, string? WhatsApp, string? Email, string? Sectors, string? NotifyBy);
+public record PhoneDto(string Phone);
+public record VerifyOtpDto(string Phone, string Code);
 public record FieldOtpDto(string Field, string Value);
 public record FieldVerifyDto(string Field, string Value, string Code);
-// DELETE /api/subscribers/{id} — حذف متابع
