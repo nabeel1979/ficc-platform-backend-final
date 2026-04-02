@@ -32,15 +32,22 @@ public class ConstantsController : ControllerBase
         if (!string.IsNullOrEmpty(search))
             q = q.Where(c => c.Value.Contains(search));
         var total = await q.CountAsync();
-        // المطابقة الكاملة أولاً
-        var exact = string.IsNullOrEmpty(search) ? new List<FICCPlatform.Models.SystemConstant>()
-            : await q.Where(c => c.Value == search).ToListAsync();
-        var rest = await q
-            .Where(c => string.IsNullOrEmpty(search) || c.Value != search)
-            .OrderBy(c => c.SortOrder).ThenBy(c => c.Value)
-            .Skip((page - 1) * pageSize).Take(pageSize)
-            .ToListAsync();
-        var items = exact.Concat(rest).Take(pageSize).ToList();
+        // ترتيب: المطابق التام أولاً، ثم يبدأ بالكلمة، ثم يحتوي عليها
+        List<FICCPlatform.Models.SystemConstant> items;
+        if (!string.IsNullOrEmpty(search)) {
+            var exact   = await q.Where(c => c.Value == search).ToListAsync();
+            var starts  = await q.Where(c => c.Value != search && c.Value.StartsWith(search))
+                            .OrderBy(c => c.SortOrder).ThenBy(c => c.Value)
+                            .Take(pageSize).ToListAsync();
+            var rest    = await q.Where(c => c.Value != search && !c.Value.StartsWith(search))
+                            .OrderBy(c => c.SortOrder).ThenBy(c => c.Value)
+                            .Skip((page - 1) * Math.Max(1, pageSize - exact.Count - starts.Count))
+                            .Take(pageSize).ToListAsync();
+            items = exact.Concat(starts).Concat(rest).Take(pageSize).ToList();
+        } else {
+            items = await q.OrderBy(c => c.SortOrder).ThenBy(c => c.Value)
+                .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        }
         return Ok(new { total, page, pageSize, items });
     }
 
