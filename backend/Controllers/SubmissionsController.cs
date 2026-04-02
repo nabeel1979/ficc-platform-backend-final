@@ -264,6 +264,7 @@ public class SubmissionsController : ControllerBase {
 
                 var item = new TraderDirectory {
                     TradeName = getString("tradeName"),
+                    CompanyName = getString("companyName") != "" ? getString("companyName") : getString("tradeName"),
                     OwnerName = getString("ownerName"), BusinessType = getString("businessType"),
                     Governorate = getString("governorate"), Area = getString("area"),
                     Address = getString("address"), Website = getString("website"),
