@@ -311,7 +311,10 @@ export default function Subscribe() {
                 {form.fullName?.charAt(0) || '👤'}
               </div>
               <h2 style={{color:'#fff',fontWeight:'900',fontSize:'20px',margin:'0 0 4px'}}>{form.fullName}</h2>
-              <p style={{color:'rgba(255,255,255,0.6)',fontSize:'13px',margin:0,direction:'ltr'}}>{form.phone}</p>
+              <div style={{display:'inline-flex',alignItems:'center',gap:'6px',background:'rgba(255,255,255,0.1)',padding:'5px 14px',borderRadius:'20px',marginTop:'6px'}}>
+                <span style={{fontSize:'14px'}}>📱</span>
+                <span style={{color:'#FFC72C',fontWeight:'700',fontSize:'14px',direction:'ltr'}}>{form.phone}</span>
+              </div>
             </div>
 
             {/* البيانات */}
