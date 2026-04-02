@@ -58,8 +58,7 @@ public class ConstantsController : ControllerBase
             usageCount += await _db.Submissions.CountAsync(s =>
                 s.FormData != null && s.FormData.Contains(c.Value) && s.EntityType == "trader");
         } else if (c.Category.StartsWith("news")) {
-            usageCount += await _db.News.CountAsync(n =>
-                n.Category == c.Value || n.NewsType == c.Value);
+            usageCount += await _db.News.CountAsync(n => n.Category == c.Value);
         }
 
         if (usageCount > 0)
