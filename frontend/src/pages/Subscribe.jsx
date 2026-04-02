@@ -241,7 +241,7 @@ export default function Subscribe() {
             <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
               <div>
                 <label style={{display:'block',fontSize:'13px',fontWeight:'700',color:'#2C3E6B',marginBottom:'8px'}}>القطاعات * <span style={{color:'#888',fontWeight:'400'}}>(اختر واحداً أو أكثر)</span></label>
-                <div style={{display:'flex',flexWrap:'wrap',gap:'8px'}}>
+                <div style={{display:'flex',flexWrap:'wrap',gap:'8px',marginBottom:'8px'}}>
                   {SECTORS.map(s=>(
                     <button key={s} type="button" onClick={()=>toggleSector(s)}
                       style={{padding:'6px 14px',borderRadius:'20px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'600',
@@ -250,6 +250,10 @@ export default function Subscribe() {
                     </button>
                   ))}
                 </div>
+                <button type="button" onClick={()=>set('sectors', form.sectors.length===SECTORS.length ? [] : [...SECTORS])}
+                  style={{padding:'6px 14px',borderRadius:'8px',background:'#FFF8E7',color:'#B8860B',border:'1px solid #fde68a',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700'}}>
+                  {form.sectors.length===SECTORS.length ? '❌ إلغاء الكل' : '✅ اختر الكل'}
+                </button>
               </div>
               <div>
                 <label style={{display:'block',fontSize:'13px',fontWeight:'700',color:'#2C3E6B',marginBottom:'8px'}}>طريقة الإشعار *</label>
@@ -316,7 +320,7 @@ export default function Subscribe() {
                 verified={verified.email} onVerified={v=>setV('email',v)}/>
               <div>
                 <label style={{display:'block',fontSize:'13px',fontWeight:'700',color:'#2C3E6B',marginBottom:'8px'}}>القطاعات</label>
-                <div style={{display:'flex',flexWrap:'wrap',gap:'8px'}}>
+                <div style={{display:'flex',flexWrap:'wrap',gap:'8px',marginBottom:'8px'}}>
                   {SECTORS.map(s=>(
                     <button key={s} type="button" onClick={()=>toggleSector(s)}
                       style={{padding:'6px 14px',borderRadius:'20px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'600',
@@ -325,6 +329,10 @@ export default function Subscribe() {
                     </button>
                   ))}
                 </div>
+                <button type="button" onClick={()=>set('sectors', form.sectors.length===SECTORS.length ? [] : [...SECTORS])}
+                  style={{padding:'6px 14px',borderRadius:'8px',background:'#FFF8E7',color:'#B8860B',border:'1px solid #fde68a',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700'}}>
+                  {form.sectors.length===SECTORS.length ? '❌ إلغاء الكل' : '✅ اختر الكل'}
+                </button>
               </div>
               <div>
                 <label style={{display:'block',fontSize:'13px',fontWeight:'700',color:'#2C3E6B',marginBottom:'8px'}}>طريقة الإشعار</label>

@@ -2531,7 +2531,6 @@ function SubscribersPanel() {
   const [editSub, setEditSub] = useState(null)
   const [otpMsg, setOtpMsg] = useState('')
   const [pageSize, setPageSize] = useState(20)
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
 
   const load = async (p=1, q='') => {
     setLoading(true)
@@ -2597,67 +2596,13 @@ function SubscribersPanel() {
         <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center'}}>
           <div style={{background:'#fff',borderRadius:'16px',padding:'28px',width:'400px',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
             <h3 style={{color:'#2C3E6B',margin:'0 0 16px'}}>✏️ تعديل المتابع</h3>
-            {/* حقل الاسم */}
-            <div style={{marginBottom:'12px'}}>
-              <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>الاسم</label>
-              <input value={editSub.fullName||''} onChange={e=>setEditSub(p=>({...p,fullName:e.target.value}))}
-                style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',boxSizing:'border-box'}}/>
-            </div>
-            {/* حقول مع زر تحقق */}
-            {[
-              {lbl:'رقم الهاتف', k:'phone', field:'phone'},
-              {lbl:'واتساب',     k:'whatsApp', field:'whatsapp'},
-              {lbl:'الإيميل',   k:'email', field:'email'},
-            ].map(({lbl,k,field})=>(
+            {[['الاسم','fullName'],['الهاتف','phone'],['واتساب','whatsApp'],['الإيميل','email']].map(([lbl,k])=>(
               <div key={k} style={{marginBottom:'12px'}}>
                 <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>{lbl}</label>
-                <div style={{display:'flex',gap:'6px'}}>
-                  <input value={editSub[k]||''} onChange={e=>setEditSub(p=>({...p,[k]:e.target.value}))}
-                    style={{flex:1,padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',direction:field==='email'?'ltr':'ltr',boxSizing:'border-box'}}/>
-                  <button type="button" onClick={async()=>{
-                    const val = editSub[k]
-                    if(!val){alert('أدخل القيمة أولاً');return}
-                    try{
-                      await api.post(`${API}/subscribers/send-field-otp`,{field,value:val})
-                      alert(`✅ تم إرسال رمز التحقق إلى ${val}`)
-                    }catch(e){alert(e?.response?.data?.message||'فشل الإرسال')}
-                  }} style={{padding:'9px 12px',borderRadius:'9px',background:'#EEF2FF',color:'#4338ca',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700',whiteSpace:'nowrap'}}>
-                    📲 تحقق
-                  </button>
-                </div>
+                <input value={editSub[k]||''} onChange={e=>setEditSub(p=>({...p,[k]:e.target.value}))}
+                  style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',boxSizing:'border-box'}}/>
               </div>
             ))}
-            {/* القطاعات */}
-            <div style={{marginBottom:'12px'}}>
-              <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'8px'}}>القطاعات</label>
-              <div style={{display:'flex',flexWrap:'wrap',gap:'6px',marginBottom:'8px'}}>
-                {['تجارة عامة','استيراد وتصدير','صناعة وتصنيع','مقاولات وإنشاءات','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','طاقة وكهرباء','أخرى'].map(sec=>{
-                  const cur = (() => { try { return JSON.parse(editSub.sectors||'[]') } catch { return [] } })()
-                  const active = cur.includes(sec)
-                  return (
-                    <button key={sec} type="button" onClick={()=>{
-                      const arr = active ? cur.filter(x=>x!==sec) : [...cur, sec]
-                      setEditSub(p=>({...p, sectors: JSON.stringify(arr)}))
-                    }} style={{padding:'4px 10px',borderRadius:'16px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'600',
-                      background:active?'#2C3E6B':'#EEF2FF',color:active?'#fff':'#2C3E6B'}}>
-                      {active?'✓ ':''}{sec}
-                    </button>
-                  )
-                })}
-              </div>
-              {(()=>{
-                const ALL_SEC = ['تجارة عامة','استيراد وتصدير','صناعة وتصنيع','مقاولات وإنشاءات','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','طاقة وكهرباء','أخرى']
-                const cur = (() => { try { return JSON.parse(editSub.sectors||'[]') } catch { return [] } })()
-                const allSelected = cur.length === ALL_SEC.length
-                return (
-                  <button type="button" onClick={()=>setEditSub(p=>({...p,sectors:JSON.stringify(allSelected?[]:ALL_SEC)}))}
-                    style={{padding:'5px 12px',borderRadius:'8px',background:'#FFF8E7',color:'#B8860B',border:'1px solid #fde68a',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',marginTop:'6px'}}>
-                    {allSelected?'❌ إلغاء الكل':'✅ اختر الكل'}
-                  </button>
-                )
-              })()}
-            </div>
-
             <div style={{display:'flex',gap:'8px',marginTop:'16px'}}>
               <button onClick={async()=>{ await api.put(`${API}/subscribers/${editSub.id}`,editSub); setEditSub(null); load(page,search) }}
                 style={{flex:1,padding:'11px',borderRadius:'10px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'800'}}>💾 حفظ</button>
@@ -2671,7 +2616,7 @@ function SubscribersPanel() {
       {loading ? <div style={{textAlign:'center',padding:'40px',color:'#888'}}>⏳ جاري التحميل...</div> : (
         <div>
           {/* Desktop: جدول */}
-          <div className="sub-table-wrap" style={{background:'#fff',borderRadius:'16px',overflow:'auto',boxShadow:'0 4px 16px rgba(44,62,107,0.08)',display:isMobile?'none':'block'}}>
+          <div className="sub-table-wrap" style={{background:'#fff',borderRadius:'16px',overflow:'auto',boxShadow:'0 4px 16px rgba(44,62,107,0.08)'}}>
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:'13px',minWidth:'700px'}}>
               <thead>
                 <tr style={{background:'#2C3E6B',color:'#fff'}}>
@@ -2715,7 +2660,7 @@ function SubscribersPanel() {
           </div>
 
           {/* Mobile: بطاقات */}
-          <div className="sub-cards-wrap" style={{display:isMobile?'block':'none'}}>
+          <div style={{display:'none'}} className="sub-cards-wrap">
             {items.map((s,i) => (
               <div key={s.id} style={{background:s.isActive===false?'#fff5f5':'#fff',borderRadius:'14px',padding:'16px',marginBottom:'10px',boxShadow:'0 2px 10px rgba(44,62,107,0.07)',border:'1px solid #eef0f7'}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'8px'}}>
@@ -2730,7 +2675,7 @@ function SubscribersPanel() {
                   </span>
                 </div>
                 <div style={{fontSize:'11px',color:'#666',marginBottom:'10px'}}>
-                  {notifyLabel(s.notifyBy)}
+                  {notifyLabel(s.notifyBy)} | {sectorsLabel(s.sectors)||'—'}
                 </div>
                 <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
                   {btn(s.isActive!==false?'⏸️ إيقاف':'▶️ تفعيل',()=>toggleActive(s),s.isActive!==false?'#fff8e7':'#f0fdf4',s.isActive!==false?'#b45309':'#16a34a')}
