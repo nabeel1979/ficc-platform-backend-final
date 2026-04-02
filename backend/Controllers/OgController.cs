@@ -241,6 +241,20 @@ public class OgController : ControllerBase {
         ), "text/html; charset=utf-8");
     }
 
+    // OG for subscribe page
+    [HttpGet("subscribe")]
+    public IActionResult SubscribeOg() {
+        var host = Request.Host.ToString();
+        var scheme = Request.Scheme;
+        var pageUrl = $"https://{host}/subscribe";
+        var img = $"https://{host}/uploads/ficc-logo.jpg";
+        return Content(BuildHtml(
+            "سجّل متابعاً | اتحاد الغرف التجارية العراقية",
+            "سجّل الآن لتصلك آخر الأخبار والإعلانات من اتحاد الغرف التجارية العراقية — اختر قطاعاتك وطريقة الإشعار المفضّلة",
+            img, pageUrl, scheme, host
+        ), "text/html; charset=utf-8");
+    }
+
     // OG for specific startup
     [HttpGet("startups/{id}")]
     public async Task<IActionResult> StartupOg(int id) {
