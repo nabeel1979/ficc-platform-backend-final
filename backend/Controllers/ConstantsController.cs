@@ -49,6 +49,25 @@ public class ConstantsController : ControllerBase
     {
         var c = await _db.SystemConstants.FindAsync(id);
         if (c == null) return NotFound();
+
+        // تحقق: هل القيمة مستخدمة في البيانات الفعلية؟
+        int usageCount = 0;
+        if (c.Category.StartsWith("trader")) {
+            usageCount += await _db.TraderDirectory.CountAsync(t =>
+                t.BusinessType == c.Value || t.TradeCategory == c.Value);
+            usageCount += await _db.Submissions.CountAsync(s =>
+                s.FormData != null && s.FormData.Contains(c.Value) && s.EntityType == "trader");
+        } else if (c.Category.StartsWith("news")) {
+            usageCount += await _db.News.CountAsync(n =>
+                n.Category == c.Value || n.NewsType == c.Value);
+        }
+
+        if (usageCount > 0)
+            return BadRequest(new {
+                message = $"❌ لا يمكن حذف \"{c.Value}\" — مستخدمة في {usageCount} سجل. يمكنك إيقاف تفعيلها بدلاً من الحذف.",
+                usageCount
+            });
+
         _db.SystemConstants.Remove(c);
         await _db.SaveChangesAsync();
         return Ok();

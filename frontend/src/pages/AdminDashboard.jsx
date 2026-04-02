@@ -2006,7 +2006,16 @@ function SystemConstantsPanel() {
     } catch(e) { setMsg(e.response?.data?.message || 'خطأ') }
   }
 
-  const del = async id => { if (!confirm('حذف؟')) return; await api.delete(`${API}/constants/${id}`, { headers: authHdrs() }); load() }
+  const del = async id => {
+    if (!confirm('حذف هذه القيمة؟')) return
+    try {
+      await api.delete(`${API}/constants/${id}`, { headers: authHdrs() })
+      load()
+    } catch(e) {
+      const msg = e?.response?.data?.message || 'حدث خطأ'
+      alert(msg)
+    }
+  }
   const startEdit = item => { setForm({ value: item.value, label: item.label||'', sortOrder: item.sortOrder, isActive: item.isActive }); setEditing(item.id); setShowForm(true) }
   const sections = [...new Set(CATS.map(c => c.section))]
 
