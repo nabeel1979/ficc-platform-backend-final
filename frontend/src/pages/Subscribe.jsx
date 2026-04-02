@@ -21,7 +21,7 @@ function VerifiedField({ label, value, onChange, placeholder, isLtr, required, f
   const inp = { width:'100%', padding:'11px 14px', borderRadius:'10px', border:'1.5px solid #dde3ed', fontSize:'14px', fontFamily:'Cairo,sans-serif', outline:'none', boxSizing:'border-box' }
 
   const sendOtp = async () => {
-    if (!value) { setErr('أدخل القيمة أولاً'); return }
+    if (!value || value.trim().length < 3) { setErr('أدخل القيمة أولاً'); return }
     setLoading(true); setErr('')
     try {
       await api.post(`${API}/subscribers/send-field-otp`, { field, value })
@@ -95,7 +95,7 @@ export default function Subscribe() {
   const goStep2 = () => {
     if (!form.fullName) { setErr('الاسم مطلوب'); return }
     if (!form.phone) { setErr('رقم الهاتف مطلوب'); return }
-    if (!verified.phone) { setErr('يجب التحقق من رقم الهاتف أولاً'); return }
+    if (!verified.phone) { setErr('⚠️ رقم الهاتف مطلوب — اضغط 📲 تحقق وأدخل الرمز المرسل على واتساب'); return }
     setErr(''); setStep(2)
   }
 
