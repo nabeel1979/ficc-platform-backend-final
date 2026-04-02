@@ -2530,7 +2530,7 @@ function SubscribersPanel() {
   const [loading, setLoading] = useState(false)
   const [editSub, setEditSub] = useState(null)
   const [otpMsg, setOtpMsg] = useState('')
-  const pageSize = 20
+  const [pageSize, setPageSize] = useState(20)
 
   const load = async (p=1, q='') => {
     setLoading(true)
@@ -2578,9 +2578,15 @@ function SubscribersPanel() {
     <div style={{padding:'24px',fontFamily:'Cairo,sans-serif',direction:'rtl'}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'20px',flexWrap:'wrap',gap:'12px'}}>
         <h2 style={{color:'#2C3E6B',fontWeight:'900',fontSize:'20px',margin:0}}>🔔 المتابعون ({total})</h2>
-        <input value={search} onChange={e=>{setSearch(e.target.value); load(1, e.target.value)}}
-          placeholder="بحث بالاسم أو الهاتف..."
-          style={{padding:'9px 14px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'14px',fontFamily:'Cairo,sans-serif',width:'240px',outline:'none'}}/>
+        <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+          <input value={search} onChange={e=>{setSearch(e.target.value); load(1, e.target.value)}}
+            placeholder="بحث بالاسم أو الهاتف..."
+            style={{padding:'9px 14px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'14px',fontFamily:'Cairo,sans-serif',width:'200px',outline:'none'}}/>
+          <select value={pageSize} onChange={e=>{setPageSize(+e.target.value);setPage(1);load(1,search)}}
+            style={{padding:'9px 12px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',background:'#fff',cursor:'pointer'}}>
+            {[10,20,50,100].map(n=><option key={n} value={n}>{n}</option>)}
+          </select>
+        </div>
       </div>
 
       {otpMsg && <div style={{background:'#f0fdf4',color:'#16a34a',padding:'10px 16px',borderRadius:'10px',marginBottom:'12px',fontWeight:'700'}}>{otpMsg}</div>}
