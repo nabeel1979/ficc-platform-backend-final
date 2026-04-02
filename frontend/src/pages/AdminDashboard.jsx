@@ -2531,6 +2531,7 @@ function SubscribersPanel() {
   const [editSub, setEditSub] = useState(null)
   const [otpMsg, setOtpMsg] = useState('')
   const [pageSize, setPageSize] = useState(20)
+  const [notifyFilter, setNotifyFilter] = useState('')
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
 
   const load = async (p=1, q='') => {
@@ -2579,10 +2580,17 @@ function SubscribersPanel() {
     <div style={{padding:'24px',fontFamily:'Cairo,sans-serif',direction:'rtl'}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'20px',flexWrap:'wrap',gap:'12px'}}>
         <h2 style={{color:'#2C3E6B',fontWeight:'900',fontSize:'20px',margin:0}}>🔔 المتابعون ({total})</h2>
-        <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+        <div style={{display:'flex',gap:'8px',alignItems:'center',flexWrap:'wrap'}}>
           <input value={search} onChange={e=>{setSearch(e.target.value); load(1, e.target.value)}}
             placeholder="بحث بالاسم أو الهاتف..."
-            style={{padding:'9px 14px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'14px',fontFamily:'Cairo,sans-serif',width:'200px',outline:'none'}}/>
+            style={{padding:'9px 14px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'14px',fontFamily:'Cairo,sans-serif',width:'180px',outline:'none'}}/>
+          <select value={notifyFilter} onChange={e=>setNotifyFilter(e.target.value)}
+            style={{padding:'9px 12px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',background:'#fff',cursor:'pointer'}}>
+            <option value=''>📢 كل الطرق</option>
+            <option value='whatsapp'>💬 واتساب</option>
+            <option value='sms'>📱 SMS</option>
+            <option value='email'>📧 إيميل</option>
+          </select>
           <select value={pageSize} onChange={e=>{setPageSize(+e.target.value);setPage(1);load(1,search)}}
             style={{padding:'9px 12px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',background:'#fff',cursor:'pointer'}}>
             {[10,20,50,100].map(n=><option key={n} value={n}>{n}</option>)}
@@ -2692,7 +2700,9 @@ function SubscribersPanel() {
         </div>
       )}
 
-      {loading ? <div style={{textAlign:'center',padding:'40px',color:'#888'}}>⏳ جاري التحميل...</div> : (
+      {loading ? <div style={{textAlign:'center',padding:'40px',color:'#888'}}>⏳ جاري التحميل...</div> : (()=>{
+        const di = notifyFilter ? items.filter(s=>{try{return JSON.parse(s.notifyBy||'[]').includes(notifyFilter)}catch{return false}}) : items
+        return (
         <div>
           {/* Desktop: جدول */}
           <div className="sub-table-wrap" style={{background:'#fff',borderRadius:'16px',overflow:'auto',boxShadow:'0 4px 16px rgba(44,62,107,0.08)',display:isMobile?'none':'block'}}>
@@ -2709,7 +2719,7 @@ function SubscribersPanel() {
                 </tr>
               </thead>
               <tbody>
-                {items.map((s,i) => (
+                {di.map((s,i) => (
                   <tr key={s.id} style={{borderBottom:'1px solid #f0f2f7',background:s.isActive===false?'#fff5f5':i%2===0?'#fff':'#fafbff'}}>
                     <td style={{padding:'10px 16px',color:'#888'}}>{(page-1)*pageSize+i+1}</td>
                     <td style={{padding:'10px 16px'}}>
@@ -2732,14 +2742,14 @@ function SubscribersPanel() {
                     </td>
                   </tr>
                 ))}
-                {items.length===0 && <tr><td colSpan={7} style={{padding:'40px',textAlign:'center',color:'#aaa'}}>لا يوجد متابعون</td></tr>}
+                {di.length===0 && <tr><td colSpan={7} style={{padding:'40px',textAlign:'center',color:'#aaa'}}>لا يوجد متابعون</td></tr>}
               </tbody>
             </table>
           </div>
 
           {/* Mobile: بطاقات */}
           <div className="sub-cards-wrap" style={{display:isMobile?'block':'none'}}>
-            {items.map((s,i) => (
+            {di.map((s,i) => (
               <div key={s.id} style={{background:s.isActive===false?'#fff5f5':'#fff',borderRadius:'14px',padding:'16px',marginBottom:'10px',boxShadow:'0 2px 10px rgba(44,62,107,0.07)',border:'1px solid #eef0f7'}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'8px'}}>
                   <div>
@@ -2762,7 +2772,7 @@ function SubscribersPanel() {
                 </div>
               </div>
             ))}
-            {items.length===0 && <div style={{textAlign:'center',padding:'40px',color:'#aaa'}}>لا يوجد متابعون</div>}
+            {di.length===0 && <div style={{textAlign:'center',padding:'40px',color:'#aaa'}}>لا يوجد متابعون</div>}
           </div>
 
           {/* Pagination */}
@@ -2776,7 +2786,8 @@ function SubscribersPanel() {
             </div>
           )}
         </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
