@@ -90,12 +90,11 @@ public class SubscribersController : ControllerBase {
         await _db.SaveChangesAsync();
         if (dto.Field == "email")
             await _notify.SendEmail(dto.Value, "رمز التحقق | اتحاد الغرف التجارية العراقية", $"<div dir='rtl' style='font-family:Cairo,sans-serif;font-size:16px'><p>رمز التحقق الخاص بك:</p><h1 style='letter-spacing:8px;color:#2C3E6B'>{otp}</h1><p>صالح لمدة 10 دقائق</p></div>");
-        else {
-            // أرسل WhatsApp أولاً (يعمل مع كل الشبكات العراقية) + SMS كـ fallback
-            var waSent = await _notify.SendWhatsAppOtp(dto.Value, otp);
-            await _notify.SendTwilioSms(dto.Value, otp); // SMS معاً للتأكيد
-        }
-        return Ok(new { message = "تم إرسال رمز التأكيد عبر واتساب ورسالة نصية" });
+        else if (dto.Field == "whatsapp")
+            await _notify.SendWhatsAppOtp(dto.Value, otp); // واتساب فقط
+        else
+            await _notify.SendTwilioSms(dto.Value, otp);   // SMS فقط للهاتف
+        return Ok(new { message = "تم إرسال رمز التأكيد" });
     }
 
     // POST /api/subscribers/verify-field-otp — تحقق OTP لحقل معين
@@ -111,13 +110,13 @@ public class SubscribersController : ControllerBase {
         return Ok(new { message = "تم التحقق بنجاح" });
     }
 
-    // POST /api/subscribers/send-otp-new — إرسال OTP للتسجيل الجديد (phone فقط)
+    // POST /api/subscribers/send-otp-new — إرسال OTP للتسجيل الجديد (phone فقط عبر واتساب)
     [HttpPost("send-otp-new")]
     public async Task<IActionResult> SendOtpNew([FromBody] PhoneDto dto) {
         if (string.IsNullOrEmpty(dto.Phone)) return BadRequest(new { message = "رقم الهاتف مطلوب" });
         var existing = await _db.Subscribers.FirstOrDefaultAsync(s => s.Phone == dto.Phone);
         if (existing != null) return BadRequest(new { message = "هذا الرقم مسجّل مسبقاً" });
-        return await SendFieldOtp(new FieldOtpDto("phone", dto.Phone));
+        return await SendFieldOtp(new FieldOtpDto("whatsapp", dto.Phone)); // واتساب فقط للتسجيل
     }
 
     // POST /api/subscribers/verify-otp-new — تحقق OTP للتسجيل الجديد
