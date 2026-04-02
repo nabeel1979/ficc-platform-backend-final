@@ -492,6 +492,8 @@ function CrudTable({ title, icon, endpoint, columns, fields: rawFields, addLabel
   const [saving, setSaving]   = useState(false)
   const [msg, setMsg]         = useState('')
   const [verifiedFields, setVerifiedFields] = useState({})
+  const [pageSize, setPageSize] = useState(10)
+  const [page, setPage]         = useState(1)
 
   const load = async () => {
     setLoading(true)
@@ -636,6 +638,8 @@ function CrudTable({ title, icon, endpoint, columns, fields: rawFields, addLabel
   const filtered = items.filter(it =>
     !search || columns.some(c => String(it[c.key]||'').toLowerCase().includes(search.toLowerCase()))
   )
+  const totalPages = Math.ceil(filtered.length / pageSize)
+  const paged = pageSize >= 1000 ? filtered : filtered.slice((page-1)*pageSize, page*pageSize)
 
   return (
     <div>
@@ -643,10 +647,14 @@ function CrudTable({ title, icon, endpoint, columns, fields: rawFields, addLabel
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'20px',flexWrap:'wrap',gap:'12px'}}>
         <h2 style={{color:'#2C3E6B',fontWeight:'800',fontSize:'22px',margin:0}}>{icon} {title}</h2>
         <div style={{display:'flex',gap:'10px'}}>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 بحث..." style={{
+          <input value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}} placeholder="🔍 بحث..." style={{
             padding:'9px 14px',borderRadius:'10px',border:'1.5px solid #dde3ed',
             fontSize:'13px',fontFamily:'Cairo,sans-serif',outline:'none',width:'180px'
           }} />
+          <select value={pageSize} onChange={e=>{setPageSize(+e.target.value);setPage(1)}}
+            style={{padding:'9px 12px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',background:'#fff',cursor:'pointer'}}>
+            {[10,50,100,1000].map(n=><option key={n} value={n}>{n}</option>)}
+          </select>
           <button onClick={openAdd} style={{
             padding:'9px 20px',borderRadius:'10px',
             background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',
@@ -673,13 +681,13 @@ function CrudTable({ title, icon, endpoint, columns, fields: rawFields, addLabel
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0 ? (
+                {paged.length === 0 ? (
                   <tr><td colSpan={columns.length+2} style={{textAlign:'center',padding:'40px',color:'#aaa'}}>لا توجد بيانات</td></tr>
-                ) : filtered.map((item, idx) => (
+                ) : paged.map((item, idx) => (
                   <tr key={item.id} style={{borderBottom:'1px solid #f0f2f8',background:idx%2===0?'#fff':'#fafbff',transition:'background 0.1s'}}
                     onMouseEnter={e=>e.currentTarget.style.background='#EEF2FF'}
                     onMouseLeave={e=>e.currentTarget.style.background=idx%2===0?'#fff':'#fafbff'}>
-                    <td style={td}>{idx+1}</td>
+                    <td style={td}>{(page-1)*pageSize+idx+1}</td>
                     {columns.map(c => (
                       <td key={c.key} style={{...td,maxWidth:'180px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
                         {c.render ? c.render(item[c.key], item) : (item[c.key]??'—')}
@@ -696,7 +704,22 @@ function CrudTable({ title, icon, endpoint, columns, fields: rawFields, addLabel
           </div>
         )}
       </div>
-      <p style={{color:'#aaa',fontSize:'12px',marginTop:'8px'}}>{filtered.length} سجل</p>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'10px',flexWrap:'wrap',gap:8}}>
+        <p style={{color:'#aaa',fontSize:'12px',margin:0}}>{filtered.length} سجل {search && `(نتائج البحث)`}</p>
+        {totalPages > 1 && (
+          <div style={{display:'flex',gap:6,alignItems:'center'}}>
+            <button onClick={()=>setPage(1)} disabled={page===1}
+              style={{padding:'5px 10px',borderRadius:7,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>««</button>
+            <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
+              style={{padding:'5px 10px',borderRadius:7,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>← السابق</button>
+            <span style={{fontSize:12,color:'#555',fontFamily:'Cairo,sans-serif',padding:'0 6px'}}>{page} / {totalPages}</span>
+            <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
+              style={{padding:'5px 10px',borderRadius:7,border:'1px solid #dde3ed',background:page===totalPages?'#f5f5f5':'#fff',cursor:page===totalPages?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>التالي →</button>
+            <button onClick={()=>setPage(totalPages)} disabled={page===totalPages}
+              style={{padding:'5px 10px',borderRadius:7,border:'1px solid #dde3ed',background:page===totalPages?'#f5f5f5':'#fff',cursor:page===totalPages?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>»»</button>
+          </div>
+        )}
+      </div>
 
       {/* Add/Edit Modal */}
       {modal && modal.mode !== 'delete' && (
