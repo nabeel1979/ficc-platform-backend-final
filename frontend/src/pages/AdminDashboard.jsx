@@ -2658,6 +2658,30 @@ function SubscribersPanel() {
               })()}
             </div>
 
+            {/* طريقة التواصل */}
+            <div style={{marginBottom:'16px'}}>
+              <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'8px'}}>طريقة التواصل</label>
+              <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+                {[{k:'whatsapp',l:'واتساب 💬'},{k:'sms',l:'رسالة نصية 📱'},{k:'email',l:'بريد إلكتروني 📧'}].map(({k,l})=>{
+                  const cur = (() => { try { return JSON.parse(editSub.notifyBy||'[]') } catch { return [] } })()
+                  const active = cur.includes(k)
+                  return (
+                    <button key={k} type="button" onClick={()=>{
+                      const arr = active ? cur.filter(x=>x!==k) : [...cur, k]
+                      setEditSub(p=>({...p, notifyBy: JSON.stringify(arr)}))
+                    }} style={{padding:'8px 16px',borderRadius:'10px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700',
+                      background:active?'#059669':'#F0FDF4',color:active?'#fff':'#059669'}}>
+                      {active?'✓ ':''}{l}
+                    </button>
+                  )
+                })}
+                <button type="button" onClick={()=>setEditSub(p=>({...p,notifyBy:JSON.stringify(['whatsapp','sms','email'])}))}
+                  style={{padding:'8px 14px',borderRadius:'10px',background:'#FFF8E7',color:'#B8860B',border:'1px solid #fde68a',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700'}}>
+                  ✅ كل الطرق
+                </button>
+              </div>
+            </div>
+
             <div style={{display:'flex',gap:'8px',marginTop:'16px'}}>
               <button onClick={async()=>{ await api.put(`${API}/subscribers/${editSub.id}`,editSub); setEditSub(null); load(page,search) }}
                 style={{flex:1,padding:'11px',borderRadius:'10px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'800'}}>💾 حفظ</button>
