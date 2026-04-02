@@ -283,6 +283,24 @@ function ImagesField({ value, onChange, existingImages: initExisting, existingMa
 }
 
 /* ─── Field Renderer ─── */
+// ─── Image Lightbox ───
+function ImageLightbox({ src, onClose }) {
+  if (!src) return null
+  return (
+    <div onClick={onClose} style={{
+      position:'fixed',inset:0,zIndex:99999,background:'rgba(0,0,0,0.92)',
+      display:'flex',alignItems:'center',justifyContent:'center',cursor:'zoom-out',padding:16
+    }}>
+      <img src={src} alt="" onClick={e=>e.stopPropagation()} style={{maxWidth:'95vw',maxHeight:'92vh',objectFit:'contain',borderRadius:12,boxShadow:'0 8px 40px rgba(0,0,0,0.6)'}} />
+      <button onClick={onClose} style={{position:'absolute',top:16,left:16,background:'rgba(255,255,255,0.15)',border:'none',borderRadius:'50%',width:44,height:44,cursor:'pointer',color:'#fff',fontSize:22,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+      <a href={src} download target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()}
+        style={{position:'absolute',top:16,right:16,background:'rgba(255,255,255,0.15)',border:'none',borderRadius:10,padding:'8px 16px',cursor:'pointer',color:'#fff',fontSize:13,fontFamily:'Cairo,sans-serif',fontWeight:700,textDecoration:'none'}}>
+        ⬇️ تحميل
+      </a>
+    </div>
+  )
+}
+
 function AdminSearchableSelect({ options, value, onChange, base }) {
   const [q, setQ] = React.useState('')
   const [open, setOpen] = React.useState(false)
@@ -1210,6 +1228,7 @@ function SubmissionsPanel() {
   const [pageSize, setPageSize] = React.useState(10)
   const [page, setPage] = React.useState(1)
   const [search, setSearch] = React.useState('')
+  const [lightbox, setLightbox] = React.useState(null)
 
   React.useEffect(() => {
     api.get(`${API}/chambers`, { headers: authHdrs() }).then(r => setChambers(r.data||[])).catch(()=>{})
@@ -1408,6 +1427,7 @@ function SubmissionsPanel() {
         </div>
         </>)
       })()}
+      <ImageLightbox src={lightbox} onClose={()=>setLightbox(null)} />
       {selected && (
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}} onClick={()=>setSelected(null)}>
           <div style={{background:'#fff',borderRadius:'20px',padding:'32px',width:'100%',maxWidth:'600px',maxHeight:'85vh',overflowY:'auto',direction:'rtl',fontFamily:'Cairo,sans-serif'}} onClick={e=>e.stopPropagation()}>
@@ -1427,19 +1447,19 @@ function SubmissionsPanel() {
               <div style={{marginBottom:'16px',textAlign:'center',display:'flex',gap:'24px',justifyContent:'center',alignItems:'flex-end'}}>
                 {selected.formData?._photo && (
                   <div style={{textAlign:'center'}}>
-                    <img src={selected.formData._photo} alt="صورة شخصية" style={{width:'80px',height:'80px',borderRadius:'50%',objectFit:'cover',border:'3px solid #2C3E6B',boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}} />
+                    <img src={selected.formData._photo} alt="صورة شخصية" onClick={()=>setLightbox(selected.formData._photo)} style={{width:'80px',height:'80px',borderRadius:'50%',objectFit:'cover',border:'3px solid #2C3E6B',boxShadow:'0 2px 8px rgba(0,0,0,0.1)',cursor:'zoom-in'}} />
                     <p style={{fontSize:'11px',color:'#888',margin:'4px 0 0',fontWeight:'700'}}>📷 الصورة الشخصية</p>
                   </div>
                 )}
                 {(selected.logoData || selected.formData?._logo) && selected.formData?._logo !== selected.formData?._photo && (
                   <div style={{textAlign:'center'}}>
-                    <img src={selected.logoData || selected.formData._logo} alt="شعار الشركة" style={{width:'80px',height:'80px',objectFit:'contain',borderRadius:'12px',border:'2px solid #059669',background:'#f5f7fa',padding:'4px'}} />
+                    <img src={selected.logoData || selected.formData._logo} alt="شعار الشركة" onClick={()=>setLightbox(selected.logoData || selected.formData._logo)} style={{width:'80px',height:'80px',objectFit:'contain',borderRadius:'12px',border:'2px solid #059669',background:'#f5f7fa',padding:'4px',cursor:'zoom-in'}} />
                     <p style={{fontSize:'11px',color:'#888',margin:'4px 0 0',fontWeight:'700'}}>🏢 شعار الشركة</p>
                   </div>
                 )}
                 {(selected.logoData || selected.formData?._logo) && selected.formData?._logo === selected.formData?._photo && !selected.formData?._photo && (
                   <div style={{textAlign:'center'}}>
-                    <img src={selected.logoData || selected.formData._logo} alt="شعار الشركة" style={{width:'80px',height:'80px',objectFit:'contain',borderRadius:'12px',border:'2px solid #059669',background:'#f5f7fa',padding:'4px'}} />
+                    <img src={selected.logoData || selected.formData._logo} alt="شعار الشركة" onClick={()=>setLightbox(selected.logoData || selected.formData._logo)} style={{width:'80px',height:'80px',objectFit:'contain',borderRadius:'12px',border:'2px solid #059669',background:'#f5f7fa',padding:'4px',cursor:'zoom-in'}} />
                     <p style={{fontSize:'11px',color:'#888',margin:'4px 0 0',fontWeight:'700'}}>🏢 شعار الشركة</p>
                   </div>
                 )}
@@ -1453,7 +1473,7 @@ function SubmissionsPanel() {
                   <span style={{color:'#666',fontSize:'12px',minWidth:'130px',flexShrink:0}}>الصورة الشخصية:</span>
                   {selected.formData?._photo ? (
                     <img src={selected.formData._photo.startsWith('data:') ? selected.formData._photo : `https://ficc.iq${selected.formData._photo}`}
-                      alt="صورة" style={{width:'80px',height:'80px',borderRadius:'50%',objectFit:'cover',border:'3px solid #2C3E6B'}} />
+                      alt="صورة" onClick={()=>setLightbox(selected.formData._photo.startsWith('data:') ? selected.formData._photo : `https://ficc.iq${selected.formData._photo}`)} style={{width:'80px',height:'80px',borderRadius:'50%',objectFit:'cover',border:'3px solid #2C3E6B',cursor:'zoom-in'}} />
                   ) : (
                     <span style={{fontSize:'12px',color:'#ccc',background:'#f5f5f5',padding:'8px 16px',borderRadius:'6px'}}>— لم يرفع صورة</span>
                   )}
@@ -1488,7 +1508,7 @@ function SubmissionsPanel() {
                 <div style={{display:'flex',gap:'12px',padding:'12px 0',borderBottom:'1px solid #e5e7eb',alignItems:'center'}}>
                   <span style={{color:'#666',fontSize:'12px',minWidth:'130px',flexShrink:0}}>الصورة الشخصية:</span>
                   <img src={selected.formData._photo.startsWith('data:') ? selected.formData._photo : `https://ficc.iq${selected.formData._photo}`}
-                    alt="صورة" style={{width:'80px',height:'80px',borderRadius:'50%',objectFit:'cover',border:'3px solid #2C3E6B'}} />
+                    alt="صورة" onClick={()=>setLightbox(selected.formData._photo.startsWith('data:') ? selected.formData._photo : `https://ficc.iq${selected.formData._photo}`)} style={{width:'80px',height:'80px',borderRadius:'50%',objectFit:'cover',border:'3px solid #2C3E6B',cursor:'zoom-in'}} />
                 </div>
               )}
               {/* منصات التواصل */}
