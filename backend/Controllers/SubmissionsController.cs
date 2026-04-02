@@ -202,13 +202,13 @@ public class SubmissionsController : ControllerBase {
         var s = await _db.Submissions
             .AsNoTracking()
             .Where(x => x.Id == id)
-            .Select(x => new { x.Id, x.EntityType, x.Status, x.ContactName, x.ContactPhone, x.ContactEmail, x.ReviewNote, x.ReviewedAt, x.CreatedAt, x.FormData })
+            .Select(x => new { x.Id, x.EntityType, x.Status, x.ContactName, x.ContactPhone, x.ContactEmail, x.ReviewNote, x.ReviewedAt, x.CreatedAt, x.FormData, x.LogoData })
             .FirstOrDefaultAsync();
         _log.LogInformation("Get submission {Id} - db done, found={Found}", id, s != null);
         if (s == null) return NotFound();
         var fdJson = string.IsNullOrEmpty(s.FormData) ? "{}" : s.FormData;
         _log.LogInformation("Get submission {Id} - fdJson len={Len}", id, fdJson.Length);
-        var resp = $"{{\"id\":{s.Id},\"entityType\":{JsonSerializer.Serialize(s.EntityType)},\"status\":{JsonSerializer.Serialize(s.Status)},\"contactName\":{JsonSerializer.Serialize(s.ContactName)},\"contactPhone\":{JsonSerializer.Serialize(s.ContactPhone)},\"contactEmail\":{JsonSerializer.Serialize(s.ContactEmail)},\"reviewNote\":{JsonSerializer.Serialize(s.ReviewNote)},\"reviewedAt\":{JsonSerializer.Serialize(s.ReviewedAt?.ToString("o"))},\"createdAt\":{JsonSerializer.Serialize(s.CreatedAt.ToString("o"))},\"formData\":{fdJson}}}";
+        var resp = $"{{\"id\":{s.Id},\"entityType\":{JsonSerializer.Serialize(s.EntityType)},\"status\":{JsonSerializer.Serialize(s.Status)},\"contactName\":{JsonSerializer.Serialize(s.ContactName)},\"contactPhone\":{JsonSerializer.Serialize(s.ContactPhone)},\"contactEmail\":{JsonSerializer.Serialize(s.ContactEmail)},\"reviewNote\":{JsonSerializer.Serialize(s.ReviewNote)},\"reviewedAt\":{JsonSerializer.Serialize(s.ReviewedAt?.ToString("o"))},\"createdAt\":{JsonSerializer.Serialize(s.CreatedAt.ToString("o"))},\"logoData\":{JsonSerializer.Serialize(s.LogoData)},\"formData\":{fdJson}}}";
         _log.LogInformation("Get submission {Id} - returning {Bytes} bytes", id, resp.Length);
         return Content(resp, "application/json");
     }
