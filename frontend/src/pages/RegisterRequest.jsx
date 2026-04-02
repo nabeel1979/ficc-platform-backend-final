@@ -131,8 +131,10 @@ const ENTITY_CONFIGS = {
       { key: '_logo',         label: 'شعار الشركة / المؤسسة', type: 'logo' },
       { key: 'tradeName',     label: 'الاسم التجاري', required: true },
       { key: 'businessType',  label: 'نوع النشاط التجاري', type: 'select', required: true,
-        options: ['استيراد وتصدير','تجارة جملة','تجارة مفرد','مقاولات وإنشاءات','صناعة وتصنيع','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','أخرى'] },
+        constantsKey: 'trader_business_type',
+        options: ['تجارة عامة','استيراد وتصدير','تجارة جملة','تجارة مفرد','مقاولات وإنشاءات','صناعة وتصنيع','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','أخرى'] },
       { key: 'tradeCategory', label: 'التصنيف التجاري', type: 'select',
+        constantsKey: 'trader_classification',
         options: ['شركة ذات مسؤولية محدودة','شركة مساهمة','مؤسسة فردية','شركة تضامن','وكالة تجارية','فرع شركة أجنبية','تعاونية','أخرى'] },
       { key: 'chamberId',     label: 'الغرفة التجارية', type: 'chamber', required: true },
       { key: 'governorate',   label: 'المحافظة', type: 'select', options: ['بغداد','البصرة','نينوى','أربيل','النجف','كربلاء','الأنبار','ديالى','صلاح الدين','واسط','ميسان','ذي قار','المثنى','القادسية','بابل','كركوك','السليمانية','دهوك'] },
@@ -639,14 +641,16 @@ export default function RegisterRequest() {
   const [constants, setConstants] = useState({})
 
   useEffect(() => {
-    api.get(`${API}/constants`).then(r => {
+    const cats = ['trader_business_type','trader_classification','news_category','news_type','trader_sector']
+    Promise.all(cats.map(cat =>
+      api.get(`${API}/constants/${cat}`).then(r => ({ cat, items: r.data || [] })).catch(() => ({ cat, items: [] }))
+    )).then(results => {
       const grouped = {}
-      r.data.forEach(item => {
-        if (!grouped[item.category]) grouped[item.category] = []
-        grouped[item.category].push(item.label || item.value)
+      results.forEach(({ cat, items }) => {
+        grouped[cat] = items.map(i => i.label || i.value)
       })
       setConstants(grouped)
-    }).catch(() => {})
+    })
   }, [])
 
   // If URL has entityType directly, show form immediately
