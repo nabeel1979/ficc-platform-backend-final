@@ -1810,6 +1810,7 @@ function SystemConstantsPanel() {
   const [msg, setMsg] = useState('')
   const [pageSize, setPageSize] = useState(10)
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
 
   const CATS = [
     { key: 'trader_classification', label: '🏢 تصنيف التاجر',  section: 'دليل التجار' },
@@ -1821,7 +1822,7 @@ function SystemConstantsPanel() {
 
   const load = () => api.get(`${API}/constants`, { headers: authHdrs() }).then(r => { setAll(r.data); setItems(r.data.filter(i => i.category === selected)) }).catch(()=>{})
   useEffect(() => { load() }, [])
-  useEffect(() => { setItems(all.filter(i => i.category === selected)); setShowForm(false); setEditing(null); setPage(1) }, [selected, all])
+  useEffect(() => { setItems(all.filter(i => i.category === selected)); setShowForm(false); setEditing(null); setPage(1); setSearch('') }, [selected, all])
 
   const save = async e => {
     e.preventDefault(); setMsg('')
@@ -1857,8 +1858,11 @@ function SystemConstantsPanel() {
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
-            <h3 style={{ margin: 0, color: '#2C3E6B', fontSize: 16 }}>{CATS.find(c=>c.key===selected)?.label} <span style={{color:'#888',fontSize:12,fontWeight:400}}>({items.length} عنصر)</span></h3>
-            <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+            <h3 style={{ margin: 0, color: '#2C3E6B', fontSize: 16 }}>{CATS.find(c=>c.key===selected)?.label} <span style={{color:'#888',fontSize:12,fontWeight:400}}>({items.length} عنصر{search && ` — ${items.filter(i=>i.value?.includes(search)||i.label?.includes(search)).length} نتيجة`})</span></h3>
+            <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
+              <input value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}}
+                placeholder="🔍 بحث..."
+                style={{padding:'6px 12px',borderRadius:8,border:'1px solid #dde3ed',fontSize:13,fontFamily:'Cairo,sans-serif',minWidth:'160px',outline:'none'}} />
               <select value={pageSize} onChange={e=>{setPageSize(+e.target.value);setPage(1)}}
                 style={{padding:'6px 12px',borderRadius:8,border:'1px solid #dde3ed',fontSize:13,fontFamily:'Cairo,sans-serif',background:'#fff',cursor:'pointer'}}>
                 {[10,50,100,1000].map(n => <option key={n} value={n}>{n} عنصر</option>)}
@@ -1896,9 +1900,11 @@ function SystemConstantsPanel() {
               <span>#</span><span>القيمة</span><span>الترتيب</span><span>الحالة</span><span>إجراءات</span>
             </div>
             {items.length===0 ? <p style={{textAlign:'center',padding:36,color:'#999'}}>لا توجد عناصر</p> : (() => {
-              const totalPages = Math.ceil(items.length / pageSize)
-              const paged = pageSize >= 1000 ? items : items.slice((page-1)*pageSize, page*pageSize)
+              const filtered = search.trim() ? items.filter(i => i.value?.includes(search) || i.label?.includes(search)) : items
+              const totalPages = Math.ceil(filtered.length / pageSize)
+              const paged = pageSize >= 1000 ? filtered : filtered.slice((page-1)*pageSize, page*pageSize)
               return (<>
+                {filtered.length === 0 && <p style={{textAlign:'center',padding:24,color:'#999'}}>لا توجد نتائج للبحث</p>}
                 {paged.map((item,i)=>(
                   <div key={item.id} style={{ display:'grid',gridTemplateColumns:'36px 1fr 56px 70px 90px',padding:'10px 16px',borderBottom:'1px solid #f5f5f5',alignItems:'center',fontSize:13 }}>
                     <span style={{color:'#aaa'}}>{(page-1)*pageSize+i+1}</span>
