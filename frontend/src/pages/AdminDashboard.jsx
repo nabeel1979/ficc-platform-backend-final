@@ -1808,6 +1808,8 @@ function SystemConstantsPanel() {
   const [editing, setEditing] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [msg, setMsg] = useState('')
+  const [pageSize, setPageSize] = useState(10)
+  const [page, setPage] = useState(1)
 
   const CATS = [
     { key: 'trader_classification', label: '🏢 تصنيف التاجر',  section: 'دليل التجار' },
@@ -1819,7 +1821,7 @@ function SystemConstantsPanel() {
 
   const load = () => api.get(`${API}/constants`, { headers: authHdrs() }).then(r => { setAll(r.data); setItems(r.data.filter(i => i.category === selected)) }).catch(()=>{})
   useEffect(() => { load() }, [])
-  useEffect(() => { setItems(all.filter(i => i.category === selected)); setShowForm(false); setEditing(null) }, [selected, all])
+  useEffect(() => { setItems(all.filter(i => i.category === selected)); setShowForm(false); setEditing(null); setPage(1) }, [selected, all])
 
   const save = async e => {
     e.preventDefault(); setMsg('')
@@ -1854,10 +1856,16 @@ function SystemConstantsPanel() {
           ))}
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <h3 style={{ margin: 0, color: '#2C3E6B', fontSize: 16 }}>{CATS.find(c=>c.key===selected)?.label}</h3>
-            <button onClick={() => { setShowForm(true); setEditing(null); setForm({ value: '', label: '', sortOrder: 0, isActive: true }) }}
-              style={{ background: '#2C3E6B', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 18px', cursor: 'pointer', fontFamily: 'Cairo,sans-serif', fontWeight: 700 }}>+ إضافة</button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
+            <h3 style={{ margin: 0, color: '#2C3E6B', fontSize: 16 }}>{CATS.find(c=>c.key===selected)?.label} <span style={{color:'#888',fontSize:12,fontWeight:400}}>({items.length} عنصر)</span></h3>
+            <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+              <select value={pageSize} onChange={e=>{setPageSize(+e.target.value);setPage(1)}}
+                style={{padding:'6px 12px',borderRadius:8,border:'1px solid #dde3ed',fontSize:13,fontFamily:'Cairo,sans-serif',background:'#fff',cursor:'pointer'}}>
+                {[10,50,100,1000].map(n => <option key={n} value={n}>{n} عنصر</option>)}
+              </select>
+              <button onClick={() => { setShowForm(true); setEditing(null); setForm({ value: '', label: '', sortOrder: 0, isActive: true }) }}
+                style={{ background: '#2C3E6B', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 18px', cursor: 'pointer', fontFamily: 'Cairo,sans-serif', fontWeight: 700 }}>+ إضافة</button>
+            </div>
           </div>
           {showForm && (
             <div style={{ background: '#fff', borderRadius: 12, padding: 18, marginBottom: 14, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
@@ -1887,22 +1895,41 @@ function SystemConstantsPanel() {
             <div style={{ display:'grid',gridTemplateColumns:'36px 1fr 56px 70px 90px',padding:'9px 16px',background:'#f8f8f8',fontSize:12,fontWeight:700,color:'#666',borderBottom:'2px solid #eee' }}>
               <span>#</span><span>القيمة</span><span>الترتيب</span><span>الحالة</span><span>إجراءات</span>
             </div>
-            {items.length===0 ? <p style={{textAlign:'center',padding:36,color:'#999'}}>لا توجد عناصر</p> :
-              items.map((item,i)=>(
-                <div key={item.id} style={{ display:'grid',gridTemplateColumns:'36px 1fr 56px 70px 90px',padding:'10px 16px',borderBottom:'1px solid #f5f5f5',alignItems:'center',fontSize:13 }}>
-                  <span style={{color:'#aaa'}}>{i+1}</span>
-                  <span style={{fontWeight:600,color:'#333'}}>{item.value}</span>
-                  <span style={{textAlign:'center',color:'#888'}}>{item.sortOrder}</span>
-                  <span style={{textAlign:'center'}}>
-                    <span style={{fontSize:11,padding:'3px 8px',borderRadius:20,background:item.isActive?'#d1fae5':'#fee2e2',color:item.isActive?'#065f46':'#991b1b'}}>{item.isActive?'نشط':'موقوف'}</span>
-                  </span>
-                  <div style={{display:'flex',gap:5}}>
-                    <button onClick={()=>startEdit(item)} style={{background:'#7c3aed22',color:'#7c3aed',border:'1px solid #7c3aed44',borderRadius:5,padding:'5px 9px',cursor:'pointer',fontSize:13}}>✏️</button>
-                    <button onClick={()=>del(item.id)} style={{background:'#dc262622',color:'#dc2626',border:'1px solid #dc262644',borderRadius:5,padding:'5px 9px',cursor:'pointer',fontSize:13}}>🗑️</button>
+            {items.length===0 ? <p style={{textAlign:'center',padding:36,color:'#999'}}>لا توجد عناصر</p> : (() => {
+              const totalPages = Math.ceil(items.length / pageSize)
+              const paged = pageSize >= 1000 ? items : items.slice((page-1)*pageSize, page*pageSize)
+              return (<>
+                {paged.map((item,i)=>(
+                  <div key={item.id} style={{ display:'grid',gridTemplateColumns:'36px 1fr 56px 70px 90px',padding:'10px 16px',borderBottom:'1px solid #f5f5f5',alignItems:'center',fontSize:13 }}>
+                    <span style={{color:'#aaa'}}>{(page-1)*pageSize+i+1}</span>
+                    <span style={{fontWeight:600,color:'#333'}}>{item.value}</span>
+                    <span style={{textAlign:'center',color:'#888'}}>{item.sortOrder}</span>
+                    <span style={{textAlign:'center'}}>
+                      <span style={{fontSize:11,padding:'3px 8px',borderRadius:20,background:item.isActive?'#d1fae5':'#fee2e2',color:item.isActive?'#065f46':'#991b1b'}}>{item.isActive?'نشط':'موقوف'}</span>
+                    </span>
+                    <div style={{display:'flex',gap:5}}>
+                      <button onClick={()=>startEdit(item)} style={{background:'#7c3aed22',color:'#7c3aed',border:'1px solid #7c3aed44',borderRadius:5,padding:'5px 9px',cursor:'pointer',fontSize:13}}>✏️</button>
+                      <button onClick={()=>del(item.id)} style={{background:'#dc262622',color:'#dc2626',border:'1px solid #dc262644',borderRadius:5,padding:'5px 9px',cursor:'pointer',fontSize:13}}>🗑️</button>
+                    </div>
                   </div>
-                </div>
-              ))
-            }
+                ))}
+                {totalPages > 1 && (
+                  <div style={{display:'flex',justifyContent:'center',alignItems:'center',gap:8,padding:'12px',borderTop:'1px solid #f0f0f0'}}>
+                    <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
+                      style={{padding:'6px 12px',borderRadius:8,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:13,fontFamily:'Cairo,sans-serif'}}>
+                      ← السابق
+                    </button>
+                    <span style={{fontSize:13,color:'#555',fontFamily:'Cairo,sans-serif'}}>
+                      صفحة {page} من {totalPages}
+                    </span>
+                    <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
+                      style={{padding:'6px 12px',borderRadius:8,border:'1px solid #dde3ed',background:page===totalPages?'#f5f5f5':'#fff',cursor:page===totalPages?'default':'pointer',fontSize:13,fontFamily:'Cairo,sans-serif'}}>
+                      التالي →
+                    </button>
+                  </div>
+                )}
+              </>)
+            })()}
           </div>
         </div>
       </div>
