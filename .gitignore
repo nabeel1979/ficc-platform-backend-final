@@ -1,0 +1,15 @@
+# Backend
+backend/bin/
+backend/obj/
+backend/appsettings.Development.json
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Misc
+.env
+*.user
+scanner-electron/dist/
+scanner-electron/node_modules/
+uploads/

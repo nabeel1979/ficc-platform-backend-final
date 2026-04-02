@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FICC Scanner</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Segoe UI', Cairo, Tahoma, sans-serif;
+      background: #F0F4F8;
+      color: #1a1a2e;
+      direction: rtl;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #2C3E6B, #1a2a4a);
+      color: white;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    .header-title { display: flex; align-items: center; gap: 10px; }
+    .header-title h1 { font-size: 18px; font-weight: 700; }
+    .header-title p { font-size: 12px; opacity: 0.7; }
+    .status-badge {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 20px;
+      font-size: 12px; font-weight: 700;
+      transition: all 0.3s;
+    }
+    .status-badge.connected { background: #16a34a22; color: #16a34a; border: 1.5px solid #16a34a; }
+    .status-badge.disconnected { background: #dc262622; color: #dc2626; border: 1.5px solid #dc2626; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .status-badge.connected .status-dot { background: #16a34a; }
+    .status-badge.disconnected .status-dot { background: #dc2626; }
+
+    /* Main Layout */
+    .main { display: flex; height: calc(100vh - 52px); }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px; background: #fff;
+      border-left: 1px solid #e2e8f0;
+      padding: 16px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+
+    .section-title {
+      font-size: 11px; font-weight: 700;
+      color: #94a3b8; text-transform: uppercase;
+      letter-spacing: 0.5px; margin-bottom: 6px;
+    }
+
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: 12px; font-weight: 600; color: #475569; }
+    .form-group input {
+      padding: 8px 10px; border-radius: 8px;
+      border: 1.5px solid #e2e8f0; font-size: 13px;
+      font-family: inherit; direction: rtl;
+      transition: border-color 0.2s;
+      background: #f8fafc;
+    }
+    .form-group input:focus { outline: none; border-color: #2C3E6B; background: #fff; }
+
+    .input-row { display: flex; gap: 4px; }
+    .input-row input { flex: 1; }
+
+    .icon-btn {
+      padding: 8px 10px; border-radius: 8px;
+      border: 1.5px solid #e2e8f0; background: #f8fafc;
+      cursor: pointer; font-size: 14px;
+      transition: all 0.2s;
+    }
+    .icon-btn:hover { background: #e2e8f0; }
+
+    .naps2-status {
+      padding: 8px 10px; border-radius: 8px;
+      font-size: 11px; font-weight: 600;
+    }
+    .naps2-status.found { background: #F0FDF4; color: #16a34a; border: 1px solid #bbf7d0; }
+    .naps2-status.notfound { background: #FEF2F2; color: #dc2626; border: 1px solid #fecaca; }
+
+    .btn {
+      padding: 10px 14px; border-radius: 10px;
+      border: none; cursor: pointer; font-size: 13px;
+      font-weight: 700; font-family: inherit;
+      transition: all 0.2s; width: 100%;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: #2C3E6B; color: white; }
+    .btn-primary:hover:not(:disabled) { background: #1a2a4a; }
+    .btn-success { background: #16a34a; color: white; }
+    .btn-success:hover:not(:disabled) { background: #15803d; }
+    .btn-danger { background: #dc2626; color: white; }
+    .btn-danger:hover:not(:disabled) { background: #b91c1c; }
+    .btn-outline { background: white; color: #2C3E6B; border: 1.5px solid #2C3E6B; }
+    .btn-outline:hover:not(:disabled) { background: #f0f4ff; }
+
+    /* Content Area */
+    .content { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+
+    .card {
+      background: white; border-radius: 14px;
+      padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      border: 1px solid #e2e8f0;
+    }
+    .card-title {
+      font-size: 14px; font-weight: 700; color: #2C3E6B;
+      margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+    }
+
+    /* Status Card */
+    .status-card {
+      padding: 16px; border-radius: 12px;
+      font-size: 14px; font-weight: 600;
+      text-align: center; line-height: 1.6;
+    }
+    .status-card.ready { background: #F0FDF4; color: #16a34a; border: 1px solid #bbf7d0; }
+    .status-card.scanning { background: #EFF6FF; color: #2563eb; border: 1px solid #bfdbfe; }
+    .status-card.uploading { background: #FFF7ED; color: #ea580c; border: 1px solid #fed7aa; }
+    .status-card.error { background: #FEF2F2; color: #dc2626; border: 1px solid #fecaca; }
+    .status-card.warning { background: #FFFBEB; color: #d97706; border: 1px solid #fde68a; }
+
+    /* File Items */
+    .file-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px; border-radius: 10px;
+      background: #f8fafc; border: 1px solid #e2e8f0;
+      margin-bottom: 6px; font-size: 13px;
+    }
+    .file-item.new { border-color: #2C3E6B; background: #EFF6FF; }
+    .file-item.uploaded { border-color: #16a34a; background: #F0FDF4; }
+    .file-item.uploading { border-color: #ea580c; background: #FFF7ED; }
+    .file-name { font-weight: 600; flex: 1; }
+    .file-badge {
+      padding: 2px 8px; border-radius: 10px;
+      font-size: 11px; font-weight: 700;
+    }
+
+    /* Steps */
+    .steps { display: flex; gap: 8px; }
+    .step {
+      flex: 1; padding: 10px 6px; border-radius: 10px;
+      text-align: center; font-size: 11px; font-weight: 600;
+      background: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0;
+    }
+    .step.active { background: #EFF6FF; color: #2563eb; border-color: #bfdbfe; }
+    .step.done { background: #F0FDF4; color: #16a34a; border-color: #bbf7d0; }
+    .step-icon { font-size: 18px; margin-bottom: 4px; }
+
+    .divider { height: 1px; background: #e2e8f0; margin: 8px 0; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">
+      <div>
+        <h1>🏛️ FICC Scanner</h1>
+        <p>اتحاد الغرف التجارية العراقية</p>
+      </div>
+    </div>
+    <div id="connectionBadge" class="status-badge disconnected">
+      <div class="status-dot"></div>
+      <span id="connectionText">غير متصل</span>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="section-title">⚙️ الإعدادات</div>
+
+      <div class="form-group">
+        <label>رقم المسودة (Draft ID)</label>
+        <input type="number" id="draftId" placeholder="مثال: 15" min="1">
+      </div>
+
+      <div class="form-group">
+        <label>رمز الدخول (Token)</label>
+        <div class="input-row">
+          <input type="password" id="token" placeholder="أدخل الرمز">
+          <button id="toggleToken" class="icon-btn">👁️</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>مجلد حفظ الصور</label>
+        <input type="text" id="scanFolder" value="E:\scaner" readonly>
+      </div>
+
+      <div class="form-group">
+        <label>مسار NAPS2</label>
+        <div id="naps2Status" class="naps2-status notfound">🔍 جاري الكشف...</div>
+        <input type="text" id="naps2Path" placeholder="C:\Program Files\NAPS2\NAPS2.exe" style="display:none">
+      </div>
+
+      <div class="divider"></div>
+
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid #e2e8f0;margin-top:4px">
+        <input type="checkbox" id="deleteAfterUpload" checked style="width:16px;height:16px;cursor:pointer">
+        <label for="deleteAfterUpload" style="font-size:12px;color:#475569;cursor:pointer">🗑️ حذف بعد الرفع</label>
+      </div>
+
+      <button id="saveConfig" class="btn btn-outline">💾 حفظ الإعدادات</button>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <!-- Steps -->
+      <div class="card">
+        <div class="card-title">📋 خطوات العمل</div>
+        <div class="steps">
+          <div class="step" id="step1">
+            <div class="step-icon">⚙️</div>
+            إعداد
+          </div>
+          <div class="step" id="step2">
+            <div class="step-icon">📸</div>
+            مسح
+          </div>
+          <div class="step" id="step3">
+            <div class="step-icon">📤</div>
+            رفع
+          </div>
+          <div class="step" id="step4">
+            <div class="step-icon">✅</div>
+            اكتمل
+          </div>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div id="statusCard" class="status-card ready">
+        ✅ جاهز — أدخل Token و Draft ID ثم اضغط "فتح NAPS2"
+      </div>
+
+      <!-- Controls -->
+      <div class="card">
+        <div class="card-title">🎮 التحكم</div>
+        <div style="display:flex;gap:8px;flex-direction:column">
+          <button id="openNAPS2" class="btn btn-success">📸 فتح NAPS2 + بدء المراقبة</button>
+          <div style="display:flex;gap:8px">
+            <button id="startMonitoring" class="btn btn-primary" style="flex:1">🔄 مراقبة فقط</button>
+            <button id="stopMonitoring" class="btn btn-danger" style="flex:1" disabled>⏹️ إيقاف</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Files -->
+      <div class="card">
+        <div class="card-title">📄 الملفات</div>
+        <div id="filesList">
+          <p style="color:#aaa;font-size:13px;text-align:center;padding:10px">لا توجد ملفات بعد</p>
+        </div>
+      </div>
+
+      <!-- Upload Log -->
+      <div class="card">
+        <div class="card-title">📤 سجل الرفع</div>
+        <div id="uploadLog">
+          <p style="color:#aaa;font-size:13px;text-align:center;padding:10px">لم يتم رفع أي ملف بعد</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

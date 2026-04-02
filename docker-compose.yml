@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ficc-sqlserver
+    environment:
+      SA_PASSWORD: "CHANGE_ME_STRONG_PASSWORD"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "CHANGE_ME_STRONG_PASSWORD" -C -Q "SELECT 1" || exit 1
+      interval: 15s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ficc-backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./uploads:/app/wwwroot/uploads
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=FICCPlatform;User Id=sa;Password=CHANGE_ME_STRONG_PASSWORD;TrustServerCertificate=True;
+      - JwtSettings__Secret=CHANGE_ME_MIN_32_CHARACTERS_LONG
+      - JwtSettings__Issuer=FICCPlatform
+      - JwtSettings__Audience=FICCPlatformUsers
+      - JwtSettings__ExpiryDays=7
+      - ASPNETCORE_URLS=http://+:5000
+      - ZeptoMail__ApiKey=
+      - ZeptoMail__From=noreply@yourdomain.com
+      - ZeptoMail__FromName=اتحاد الغرف التجارية العراقية
+      - Email__Username=
+      - Email__From=
+      - Email__FromName=اتحاد الغرف التجارية العراقية
+      - Twilio__AccountSid=
+      - Twilio__AuthToken=
+      - Twilio__VerifyServiceSid=
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ficc-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  sqlserver_data:
