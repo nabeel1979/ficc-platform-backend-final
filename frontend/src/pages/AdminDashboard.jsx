@@ -1144,6 +1144,7 @@ function SubmissionsPanel() {
   const [chambers, setChambers] = React.useState([])
   const [pageSize, setPageSize] = React.useState(10)
   const [page, setPage] = React.useState(1)
+  const [search, setSearch] = React.useState('')
 
   React.useEffect(() => {
     api.get(`${API}/chambers`, { headers: authHdrs() }).then(r => setChambers(r.data||[])).catch(()=>{})
@@ -1248,8 +1249,10 @@ function SubmissionsPanel() {
             {label}
           </button>
         ))}
+        <input value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}} placeholder="🔍 بحث بالاسم أو الهاتف..."
+          style={{padding:'7px 14px',borderRadius:'20px',border:'none',fontSize:'12px',fontFamily:'Cairo,sans-serif',background:'#f0f2f8',color:'#333',outline:'none',minWidth:'180px',marginRight:'auto'}} />
         <select value={pageSize} onChange={e=>{setPageSize(+e.target.value);setPage(1)}}
-          style={{padding:'7px 12px',borderRadius:'20px',border:'none',fontSize:'12px',fontFamily:'Cairo,sans-serif',background:'#f0f2f8',color:'#555',fontWeight:'700',cursor:'pointer',marginRight:'auto'}}>
+          style={{padding:'7px 12px',borderRadius:'20px',border:'none',fontSize:'12px',fontFamily:'Cairo,sans-serif',background:'#f0f2f8',color:'#555',fontWeight:'700',cursor:'pointer'}}>
           {[10,50,100,1000].map(n=><option key={n} value={n}>{n} طلب</option>)}
         </select>
       </div>
@@ -1272,11 +1275,14 @@ function SubmissionsPanel() {
           <p style={{color:'#94a3b8',fontSize:'15px',fontWeight:'600'}}>لا توجد طلبات في هذا القسم</p>
         </div>
       ) : (() => {
-        const totalPages = Math.ceil(items.length / pageSize)
-        const paged = pageSize >= 1000 ? items : items.slice((page-1)*pageSize, page*pageSize)
+        const filtered = search.trim()
+          ? items.filter(i => (i.contactName||'').includes(search) || (i.contactPhone||'').includes(search) || (i.contactEmail||'').toLowerCase().includes(search.toLowerCase()))
+          : items
+        const totalPages = Math.ceil(filtered.length / pageSize)
+        const paged = pageSize >= 1000 ? filtered : filtered.slice((page-1)*pageSize, page*pageSize)
         return (<>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'8px'}}>
-          <span style={{color:'#888',fontSize:'12px',fontFamily:'Cairo,sans-serif'}}>{items.length} طلب</span>
+          <span style={{color:'#888',fontSize:'12px',fontFamily:'Cairo,sans-serif'}}>{filtered.length} طلب{search && ` (نتائج البحث)`}</span>
           {totalPages > 1 && (
             <div style={{display:'flex',gap:5,alignItems:'center'}}>
               <button onClick={()=>setPage(1)} disabled={page===1} style={{padding:'4px 9px',borderRadius:7,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>««</button>
