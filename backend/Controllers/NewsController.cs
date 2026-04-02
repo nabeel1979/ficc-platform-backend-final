@@ -55,9 +55,13 @@ public class NewsController : ControllerBase {
 
                 // صورة الخبر إذا موجودة
                 var imageUrl = "";
-                if (item.Images?.Count > 0)
-                    imageUrl = $"https://ficc.iq{item.Images[0]}";
-                else if (!string.IsNullOrEmpty(item.ImageUrl))
+                if (!string.IsNullOrEmpty(item.Images)) {
+                    try {
+                        var imgs = System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.List<string>>(item.Images);
+                        if (imgs?.Count > 0) imageUrl = imgs[0].StartsWith("http") ? imgs[0] : $"https://ficc.iq{imgs[0]}";
+                    } catch {}
+                }
+                if (string.IsNullOrEmpty(imageUrl) && !string.IsNullOrEmpty(item.ImageUrl))
                     imageUrl = item.ImageUrl.StartsWith("http") ? item.ImageUrl : $"https://ficc.iq{item.ImageUrl}";
 
                 var waCaption = $"🏛️ *اتحاد الغرف التجارية العراقية*\n\n📰 {item.Title}\n\n{(item.Body?.Length > 150 ? item.Body[..150] + "..." : item.Body)}\n\n🔗 {newsUrl}";
