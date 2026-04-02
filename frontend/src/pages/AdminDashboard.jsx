@@ -987,8 +987,8 @@ const FIELDS = {
   ],
   traderdirectory: [
     {key:'tradeName',label:'الاسم التجاري',required:true},
-    {key:'businessType',label:'نوع النشاط التجاري',type:'searchable-select',options:['استيراد وتصدير','تجارة جملة','تجارة مفرد','مقاولات وإنشاءات','صناعة وتصنيع','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','أخرى']},
-    {key:'tradeCategory',label:'التصنيف التجاري',type:'searchable-select',options:['شركة ذات مسؤولية محدودة','شركة مساهمة','مؤسسة فردية','شركة تضامن','وكالة تجارية','فرع شركة أجنبية','تعاونية','أخرى']},
+    {key:'businessType',label:'نوع النشاط التجاري',type:'searchable-select',constantsKey:'trader_business_type',options:['تجارة عامة','استيراد وتصدير','تجارة جملة','تجارة مفرد','مقاولات وإنشاءات','صناعة وتصنيع','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','أخرى']},
+    {key:'tradeCategory',label:'التصنيف التجاري',type:'searchable-select',constantsKey:'trader_classification',options:['شركة ذات مسؤولية محدودة','شركة مساهمة','مؤسسة فردية','شركة تضامن','وكالة تجارية','فرع شركة أجنبية','تعاونية','أخرى']},
     {key:'chamberName',label:'الغرفة التجارية',type:'chamberSelect'},
     {key:'ownerName',label:'صاحب العمل'},
     {key:'governorate',label:'المحافظة',type:'select',options:govOptions},
