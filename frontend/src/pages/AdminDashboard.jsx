@@ -2528,6 +2528,8 @@ function SubscribersPanel() {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
+  const [editSub, setEditSub] = useState(null)
+  const [otpMsg, setOtpMsg] = useState('')
   const pageSize = 20
 
   const load = async (p=1, q='') => {
@@ -2548,16 +2550,29 @@ function SubscribersPanel() {
     load(page, search)
   }
 
-  const notifyLabel = (nb) => {
-    try {
-      const arr = JSON.parse(nb || '[]')
-      return arr.map(n => n === 'whatsapp' ? '💬' : n === 'sms' ? '📱' : n === 'email' ? '📧' : n).join(' ')
-    } catch { return nb || '' }
+  const toggleActive = async (s) => {
+    await api.put(`${API}/subscribers/${s.id}`, { ...s, isActive: !s.isActive, sectors: s.sectors, notifyBy: s.notifyBy })
+    load(page, search)
   }
 
-  const sectorsLabel = (s) => {
-    try { return JSON.parse(s || '[]').join('، ') } catch { return s || '' }
+  const resendOtp = async (s) => {
+    setOtpMsg('')
+    try {
+      await api.post(`${API}/subscribers/send-field-otp`, { field: 'whatsapp', value: s.whatsApp || s.phone })
+      setOtpMsg(`✅ تم إرسال OTP لـ ${s.fullName}`)
+      setTimeout(()=>setOtpMsg(''), 4000)
+    } catch(e) { setOtpMsg('❌ فشل الإرسال') }
   }
+
+  const notifyLabel = (nb) => {
+    try { return JSON.parse(nb||'[]').map(n=>n==='whatsapp'?'💬':n==='sms'?'📱':n==='email'?'📧':n).join(' ') }
+    catch { return nb||'' }
+  }
+  const sectorsLabel = (s) => { try { return JSON.parse(s||'[]').join('، ') } catch { return s||'' } }
+
+  const btn = (label, onClick, bg, color) => (
+    <button onClick={onClick} style={{background:bg,color:color,border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',margin:'1px'}}>{label}</button>
+  )
 
   return (
     <div style={{padding:'24px',fontFamily:'Cairo,sans-serif',direction:'rtl'}}>
@@ -2568,6 +2583,30 @@ function SubscribersPanel() {
           style={{padding:'9px 14px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'14px',fontFamily:'Cairo,sans-serif',width:'240px',outline:'none'}}/>
       </div>
 
+      {otpMsg && <div style={{background:'#f0fdf4',color:'#16a34a',padding:'10px 16px',borderRadius:'10px',marginBottom:'12px',fontWeight:'700'}}>{otpMsg}</div>}
+
+      {/* نافذة التعديل */}
+      {editSub && (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <div style={{background:'#fff',borderRadius:'16px',padding:'28px',width:'400px',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
+            <h3 style={{color:'#2C3E6B',margin:'0 0 16px'}}>✏️ تعديل المتابع</h3>
+            {[['الاسم','fullName'],['الهاتف','phone'],['واتساب','whatsApp'],['الإيميل','email']].map(([lbl,k])=>(
+              <div key={k} style={{marginBottom:'12px'}}>
+                <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>{lbl}</label>
+                <input value={editSub[k]||''} onChange={e=>setEditSub(p=>({...p,[k]:e.target.value}))}
+                  style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',boxSizing:'border-box'}}/>
+              </div>
+            ))}
+            <div style={{display:'flex',gap:'8px',marginTop:'16px'}}>
+              <button onClick={async()=>{ await api.put(`${API}/subscribers/${editSub.id}`,editSub); setEditSub(null); load(page,search) }}
+                style={{flex:1,padding:'11px',borderRadius:'10px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'800'}}>💾 حفظ</button>
+              <button onClick={()=>setEditSub(null)}
+                style={{flex:1,padding:'11px',borderRadius:'10px',background:'#f5f7fa',color:'#666',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}>إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {loading ? <div style={{textAlign:'center',padding:'40px',color:'#888'}}>⏳ جاري التحميل...</div> : (
         <div style={{background:'#fff',borderRadius:'16px',overflow:'hidden',boxShadow:'0 4px 16px rgba(44,62,107,0.08)'}}>
           <table style={{width:'100%',borderCollapse:'collapse',fontSize:'13px'}}>
@@ -2576,40 +2615,48 @@ function SubscribersPanel() {
                 <th style={{padding:'12px 16px',textAlign:'right'}}>#</th>
                 <th style={{padding:'12px 16px',textAlign:'right'}}>الاسم</th>
                 <th style={{padding:'12px 16px',textAlign:'right'}}>الهاتف</th>
-                <th style={{padding:'12px 16px',textAlign:'right'}}>واتساب</th>
                 <th style={{padding:'12px 16px',textAlign:'right'}}>البريد</th>
                 <th style={{padding:'12px 16px',textAlign:'right'}}>الإشعار</th>
-                <th style={{padding:'12px 16px',textAlign:'right'}}>القطاعات</th>
-                <th style={{padding:'12px 16px',textAlign:'right'}}>التاريخ</th>
-                <th style={{padding:'12px 16px',textAlign:'center'}}>حذف</th>
+                <th style={{padding:'12px 16px',textAlign:'right'}}>الحالة</th>
+                <th style={{padding:'12px 16px',textAlign:'center'}}>الإجراءات</th>
               </tr>
             </thead>
             <tbody>
               {items.map((s,i) => (
-                <tr key={s.id} style={{borderBottom:'1px solid #f0f2f7',background:i%2===0?'#fff':'#fafbff'}}>
+                <tr key={s.id} style={{borderBottom:'1px solid #f0f2f7',background:s.isActive===false?'#fff5f5':i%2===0?'#fff':'#fafbff'}}>
                   <td style={{padding:'10px 16px',color:'#888'}}>{(page-1)*pageSize + i + 1}</td>
-                  <td style={{padding:'10px 16px',fontWeight:'700',color:'#2C3E6B'}}>{s.fullName}</td>
-                  <td style={{padding:'10px 16px',direction:'ltr'}}>{s.phone}</td>
-                  <td style={{padding:'10px 16px',direction:'ltr'}}>{s.whatsApp}</td>
+                  <td style={{padding:'10px 16px'}}>
+                    <div style={{fontWeight:'700',color:'#2C3E6B'}}>{s.fullName}</div>
+                    <div style={{fontSize:'11px',color:'#888',direction:'ltr'}}>{s.whatsApp || s.phone}</div>
+                    <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>{sectorsLabel(s.sectors)}</div>
+                  </td>
+                  <td style={{padding:'10px 16px',direction:'ltr',fontSize:'12px'}}>{s.phone}</td>
                   <td style={{padding:'10px 16px',fontSize:'12px',color:'#666'}}>{s.email || '—'}</td>
                   <td style={{padding:'10px 16px',textAlign:'center'}}>{notifyLabel(s.notifyBy)}</td>
-                  <td style={{padding:'10px 16px',fontSize:'12px',color:'#555',maxWidth:'200px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{sectorsLabel(s.sectors) || '—'}</td>
-                  <td style={{padding:'10px 16px',fontSize:'12px',color:'#888'}}>{new Date(s.createdAt).toLocaleDateString('ar-IQ')}</td>
                   <td style={{padding:'10px 16px',textAlign:'center'}}>
-                    <button onClick={()=>del(s.id)} style={{background:'#fee2e2',color:'#dc2626',border:'none',borderRadius:'8px',padding:'5px 10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px'}}>🗑️</button>
+                    <span style={{padding:'3px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:'700',
+                      background:s.isActive!==false?'#dcfce7':'#fee2e2',
+                      color:s.isActive!==false?'#16a34a':'#dc2626'}}>
+                      {s.isActive!==false?'✅ نشط':'⏸️ موقوف'}
+                    </span>
+                  </td>
+                  <td style={{padding:'10px 16px',textAlign:'center',whiteSpace:'nowrap'}}>
+                    {btn(s.isActive!==false?'⏸️ إيقاف':'▶️ تفعيل', ()=>toggleActive(s), s.isActive!==false?'#fff8e7':'#f0fdf4', s.isActive!==false?'#b45309':'#16a34a')}
+                    {btn('✏️ تعديل', ()=>setEditSub({...s}), '#EEF2FF', '#4338ca')}
+                    {btn('📲 OTP', ()=>resendOtp(s), '#f0fdf4', '#16a34a')}
+                    {btn('🗑️', ()=>del(s.id), '#fee2e2', '#dc2626')}
                   </td>
                 </tr>
               ))}
-              {items.length === 0 && <tr><td colSpan={9} style={{padding:'40px',textAlign:'center',color:'#aaa'}}>لا يوجد متابعون</td></tr>}
+              {items.length === 0 && <tr><td colSpan={7} style={{padding:'40px',textAlign:'center',color:'#aaa'}}>لا يوجد متابعون</td></tr>}
             </tbody>
           </table>
-
           {total > pageSize && (
             <div style={{padding:'16px',display:'flex',gap:'8px',justifyContent:'center',alignItems:'center'}}>
-              <button onClick={()=>{setPage(1);load(1,search)}} disabled={page===1} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',background:page===1?'#f5f7fa':'#fff',cursor:page===1?'default':'pointer',fontFamily:'Cairo,sans-serif'}}>««</button>
-              <button onClick={()=>{setPage(p=>p-1);load(page-1,search)}} disabled={page===1} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',background:page===1?'#f5f7fa':'#fff',cursor:page===1?'default':'pointer',fontFamily:'Cairo,sans-serif'}}>‹</button>
+              <button onClick={()=>{setPage(1);load(1,search)}} disabled={page===1} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:page===1?'default':'pointer',fontFamily:'Cairo,sans-serif'}}>««</button>
+              <button onClick={()=>{const p=page-1;setPage(p);load(p,search)}} disabled={page===1} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:page===1?'default':'pointer',fontFamily:'Cairo,sans-serif'}}>‹</button>
               <span style={{fontSize:'13px',color:'#666'}}>صفحة {page} من {Math.ceil(total/pageSize)}</span>
-              <button onClick={()=>{setPage(p=>p+1);load(page+1,search)}} disabled={page>=Math.ceil(total/pageSize)} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}>›</button>
+              <button onClick={()=>{const p=page+1;setPage(p);load(p,search)}} disabled={page>=Math.ceil(total/pageSize)} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}>›</button>
               <button onClick={()=>{const last=Math.ceil(total/pageSize);setPage(last);load(last,search)}} disabled={page>=Math.ceil(total/pageSize)} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}> »»</button>
             </div>
           )}

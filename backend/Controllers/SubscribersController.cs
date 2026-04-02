@@ -171,14 +171,15 @@ public class SubscribersController : ControllerBase {
 
     // PUT /api/subscribers/{id} — تعديل البيانات
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] SubscriberDto dto) {
+    public async Task<IActionResult> Update(int id, [FromBody] SubscriberUpdateDto dto) {
         var sub = await _db.Subscribers.FindAsync(id);
         if (sub == null) return NotFound();
-        sub.FullName  = dto.FullName;
-        sub.WhatsApp  = dto.WhatsApp;
-        sub.Email     = dto.Email;
-        sub.Sectors   = dto.Sectors;
-        sub.NotifyBy  = dto.NotifyBy;
+        sub.FullName  = dto.FullName ?? sub.FullName;
+        sub.WhatsApp  = dto.WhatsApp ?? sub.WhatsApp;
+        sub.Email     = dto.Email ?? sub.Email;
+        sub.Sectors   = dto.Sectors ?? sub.Sectors;
+        sub.NotifyBy  = dto.NotifyBy ?? sub.NotifyBy;
+        if (dto.IsActive.HasValue) sub.IsActive = dto.IsActive.Value;
         sub.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return Ok(sub);
@@ -204,6 +205,7 @@ public class SubscribersController : ControllerBase {
 }
 
 public record SubscriberDto(string FullName, string Phone, string? WhatsApp, string? Email, string? Sectors, string? NotifyBy);
+public record SubscriberUpdateDto(string? FullName, string? Phone, string? WhatsApp, string? Email, string? Sectors, string? NotifyBy, bool? IsActive);
 public record PhoneDto(string Phone);
 public record VerifyOtpDto(string Phone, string Code);
 public record FieldOtpDto(string Field, string Value);
