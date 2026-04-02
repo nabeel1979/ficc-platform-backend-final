@@ -1790,11 +1790,15 @@ function ContactsPanel() {
           {paged.map((c, i) => {
             const isDupePhone = c.phone && phoneCounts[normalize(c.phone)] > 1
             const isDupeEmail = c.email && emailCounts[(c.email||'').toLowerCase().trim()] > 1
+            const seq = (page-1)*pageSize + i + 1
             return (
               <div key={`${c.source}-${c.id}`}
                 style={{background:'#fff',borderRadius:'12px',padding:'12px 14px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:`1px solid ${isDupePhone||isDupeEmail?'#fca5a5':'#eef0f5'}`}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'8px',flexWrap:'wrap',gap:'4px'}}>
-                  <span style={{fontWeight:'700',fontSize:'14px',color:'#2C3E6B'}}>{c.name}</span>
+                  <span style={{fontWeight:'700',fontSize:'14px',color:'#2C3E6B'}}>
+                    <span style={{color:'#aaa',fontWeight:'400',fontSize:'12px',marginLeft:'6px'}}>#{seq}</span>
+                    {c.name}
+                  </span>
                   <span style={{background:srcColor[c.source]||'#888',color:'#fff',borderRadius:'8px',padding:'2px 8px',fontSize:'11px',fontWeight:'700'}}>{c.sourceLabel}</span>
                 </div>
                 {c.phone && (
