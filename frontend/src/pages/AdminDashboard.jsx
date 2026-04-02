@@ -1142,6 +1142,8 @@ function SubmissionsPanel() {
   const [msg, setMsg] = React.useState('')
   const [loading, setLoading] = React.useState(false)
   const [chambers, setChambers] = React.useState([])
+  const [pageSize, setPageSize] = React.useState(10)
+  const [page, setPage] = React.useState(1)
 
   React.useEffect(() => {
     api.get(`${API}/chambers`, { headers: authHdrs() }).then(r => setChambers(r.data||[])).catch(()=>{})
@@ -1234,10 +1236,10 @@ function SubmissionsPanel() {
         ))}
       </div>
 
-      {/* فلتر النوع */}
-      <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+      {/* فلتر النوع + pageSize */}
+      <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap',alignItems:'center'}}>
         {[['all','الكل 📋'],['chamber','🏛️ الغرف التجارية'],['member','👤 أعضاء مجلس الاتحاد'],['trader','🏢 دليل التجار'],['shipping','🚢 شركات الشحن'],['lawyer','⚖️ المحامون'],['agent','🏭 وكلاء الإخراج']].map(([k,label])=>(
-          <button key={k} onClick={()=>setEntityFilter(k)}
+          <button key={k} onClick={()=>{setEntityFilter(k);setPage(1)}}
             style={{padding:'7px 14px',borderRadius:'20px',border:'none',cursor:'pointer',
               fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700',
               background: entityFilter===k ? '#2C3E6B' : '#f0f2f8',
@@ -1246,6 +1248,10 @@ function SubmissionsPanel() {
             {label}
           </button>
         ))}
+        <select value={pageSize} onChange={e=>{setPageSize(+e.target.value);setPage(1)}}
+          style={{padding:'7px 12px',borderRadius:'20px',border:'none',fontSize:'12px',fontFamily:'Cairo,sans-serif',background:'#f0f2f8',color:'#555',fontWeight:'700',cursor:'pointer',marginRight:'auto'}}>
+          {[10,50,100,1000].map(n=><option key={n} value={n}>{n} طلب</option>)}
+        </select>
       </div>
 
       {msg && (
@@ -1265,9 +1271,24 @@ function SubmissionsPanel() {
           <div style={{fontSize:'48px',marginBottom:'12px'}}>📭</div>
           <p style={{color:'#94a3b8',fontSize:'15px',fontWeight:'600'}}>لا توجد طلبات في هذا القسم</p>
         </div>
-      ) : (
+      ) : (() => {
+        const totalPages = Math.ceil(items.length / pageSize)
+        const paged = pageSize >= 1000 ? items : items.slice((page-1)*pageSize, page*pageSize)
+        return (<>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'8px'}}>
+          <span style={{color:'#888',fontSize:'12px',fontFamily:'Cairo,sans-serif'}}>{items.length} طلب</span>
+          {totalPages > 1 && (
+            <div style={{display:'flex',gap:5,alignItems:'center'}}>
+              <button onClick={()=>setPage(1)} disabled={page===1} style={{padding:'4px 9px',borderRadius:7,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>««</button>
+              <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1} style={{padding:'4px 9px',borderRadius:7,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>← السابق</button>
+              <span style={{fontSize:12,color:'#555',fontFamily:'Cairo,sans-serif',padding:'0 6px'}}>{page} / {totalPages}</span>
+              <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages} style={{padding:'4px 9px',borderRadius:7,border:'1px solid #dde3ed',background:page===totalPages?'#f5f5f5':'#fff',cursor:page===totalPages?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>التالي →</button>
+              <button onClick={()=>setPage(totalPages)} disabled={page===totalPages} style={{padding:'4px 9px',borderRadius:7,border:'1px solid #dde3ed',background:page===totalPages?'#f5f5f5':'#fff',cursor:page===totalPages?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>»»</button>
+            </div>
+          )}
+        </div>
         <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
-          {items.map(item => (
+          {paged.map((item, idx) => (
             <div key={item.id}
               style={{background:'white',borderRadius:'14px',padding:'16px 20px',
                 boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0',
@@ -1283,7 +1304,8 @@ function SubmissionsPanel() {
               onMouseEnter={e=>e.currentTarget.style.boxShadow='0 4px 16px rgba(44,62,107,0.12)'}
               onMouseLeave={e=>e.currentTarget.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)'}>
 
-              {/* Icon */}
+              {/* Seq + Icon */}
+              <span style={{color:'#aaa',fontSize:'11px',fontWeight:'400',minWidth:'24px',textAlign:'center'}}>#{(page-1)*pageSize+idx+1}</span>
               <div style={{width:'48px',height:'48px',borderRadius:'12px',background:'#EEF2FF',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'22px',flexShrink:0}}>
                 {entityIcons[item.entityType]||'📋'}
               </div>
@@ -1313,7 +1335,8 @@ function SubmissionsPanel() {
             </div>
           ))}
         </div>
-      )}
+        </>)
+      })()}
       {selected && (
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}} onClick={()=>setSelected(null)}>
           <div style={{background:'#fff',borderRadius:'20px',padding:'32px',width:'100%',maxWidth:'600px',maxHeight:'85vh',overflowY:'auto',direction:'rtl',fontFamily:'Cairo,sans-serif'}} onClick={e=>e.stopPropagation()}>
