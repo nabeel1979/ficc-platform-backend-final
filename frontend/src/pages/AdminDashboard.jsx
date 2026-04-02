@@ -2082,7 +2082,13 @@ function SystemConstantsPanel() {
               <span>#</span><span>القيمة</span><span>الترتيب</span><span>الحالة</span><span>إجراءات</span>
             </div>
             {items.length===0 ? <p style={{textAlign:'center',padding:36,color:'#999'}}>لا توجد عناصر</p> : (() => {
-              const filtered = search.trim() ? items.filter(i => i.value?.includes(search) || i.label?.includes(search)) : items
+              const filtered = search.trim() ? (() => {
+                const q = search.trim()
+                const exact = items.filter(i => i.value?.toLowerCase() === q.toLowerCase())
+                const startsWith = items.filter(i => i.value?.toLowerCase().startsWith(q.toLowerCase()) && i.value?.toLowerCase() !== q.toLowerCase())
+                const contains = items.filter(i => i.value?.toLowerCase().includes(q.toLowerCase()) && !i.value?.toLowerCase().startsWith(q.toLowerCase()) && i.value?.toLowerCase() !== q.toLowerCase())
+                return [...exact, ...startsWith, ...contains]
+              })() : items
               const totalPages = Math.ceil(filtered.length / pageSize)
               const paged = pageSize >= 1000 ? filtered : filtered.slice((page-1)*pageSize, page*pageSize)
               return (<>
