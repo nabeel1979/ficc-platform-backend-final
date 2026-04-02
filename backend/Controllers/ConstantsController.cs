@@ -27,6 +27,14 @@ public class ConstantsController : ControllerBase
     [HttpPost, Authorize]
     public async Task<IActionResult> Create([FromBody] SystemConstant dto)
     {
+        // منع التكرار — نفس القيمة بنفس التصنيف
+        var exists = await _db.SystemConstants.AnyAsync(c =>
+            c.Category == dto.Category &&
+            c.Value.Trim().ToLower() == dto.Value.Trim().ToLower());
+        if (exists)
+            return BadRequest(new { message = $"❌ القيمة \"{dto.Value}\" موجودة مسبقاً في هذا التصنيف" });
+
+        dto.Value = dto.Value.Trim();
         dto.CreatedAt = DateTime.UtcNow;
         _db.SystemConstants.Add(dto);
         await _db.SaveChangesAsync();
@@ -38,7 +46,16 @@ public class ConstantsController : ControllerBase
     {
         var c = await _db.SystemConstants.FindAsync(id);
         if (c == null) return NotFound();
-        c.Value = dto.Value; c.Label = dto.Label;
+
+        // منع التكرار عند التعديل (تجاهل السجل الحالي نفسه)
+        var exists = await _db.SystemConstants.AnyAsync(x =>
+            x.Id != id &&
+            x.Category == c.Category &&
+            x.Value.Trim().ToLower() == dto.Value.Trim().ToLower());
+        if (exists)
+            return BadRequest(new { message = $"❌ القيمة \"{dto.Value}\" موجودة مسبقاً في هذا التصنيف" });
+
+        c.Value = dto.Value.Trim(); c.Label = dto.Label;
         c.SortOrder = dto.SortOrder; c.IsActive = dto.IsActive;
         await _db.SaveChangesAsync();
         return Ok(c);
