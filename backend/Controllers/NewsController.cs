@@ -10,7 +10,10 @@ namespace FICCPlatform.Controllers;
 public class NewsController : ControllerBase {
     private readonly AppDbContext _db;
     private readonly FICCPlatform.Services.StorageService _storage;
-    public NewsController(AppDbContext db, FICCPlatform.Services.StorageService storage) { _db = db; _storage = storage; }
+    private readonly FICCPlatform.Services.NotificationService _notify;
+    public NewsController(AppDbContext db, FICCPlatform.Services.StorageService storage, FICCPlatform.Services.NotificationService notify) {
+        _db = db; _storage = storage; _notify = notify;
+    }
 
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] string? category, [FromQuery] int page = 1, [FromQuery] int pageSize = 20) {
@@ -32,6 +35,38 @@ public class NewsController : ControllerBase {
     public async Task<IActionResult> Create([FromBody] News item) {
         item.PublishedAt = DateTime.UtcNow;
         _db.News.Add(item); await _db.SaveChangesAsync();
+
+        // ─── إشعار المتابعين تلقائياً ───
+        _ = Task.Run(async () => {
+            try {
+                var subscribers = await _db.Subscribers.Where(s => s.IsActive).ToListAsync();
+                var newsUrl = $"https://ficc.iq/news/{item.Id}";
+                var msg = $"📰 {item.Title}\n\nاتحاد الغرف التجارية العراقية\n{newsUrl}";
+                var htmlBody = $@"
+<div dir='rtl' style='font-family:Cairo,sans-serif;max-width:600px;margin:0 auto;background:#f5f7fa;padding:16px;border-radius:16px'>
+  <div style='background:linear-gradient(135deg,#2C3E6B,#4A6FA5);padding:20px;border-radius:12px;text-align:center;margin-bottom:16px'>
+    <h2 style='color:#fff;margin:0;font-size:18px'>📰 {System.Web.HttpUtility.HtmlEncode(item.Title)}</h2>
+    <p style='color:#FFC72C;margin:6px 0 0;font-size:12px'>اتحاد الغرف التجارية العراقية</p>
+  </div>
+  {(item.Body?.Length > 0 ? $"<p style='color:#555;font-size:14px;padding:0 8px;line-height:1.8'>{System.Web.HttpUtility.HtmlEncode(item.Body.Length > 200 ? item.Body[..200] + "..." : item.Body)}</p>" : "")}
+  <a href='{newsUrl}' style='display:block;text-align:center;background:#2C3E6B;color:#fff;padding:12px;border-radius:10px;text-decoration:none;font-weight:700;margin-top:12px'>قراءة المزيد ←</a>
+  <p style='color:#aaa;font-size:11px;text-align:center;margin-top:10px'><a href='https://ficc.iq/subscribe' style='color:#4A6FA5'>إلغاء الاشتراك</a></p>
+</div>";
+
+                foreach (var sub in subscribers) {
+                    var notifyBy = new System.Collections.Generic.List<string>();
+                    try { notifyBy = System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.List<string>>(sub.NotifyBy ?? "[]") ?? new(); } catch {}
+
+                    if (notifyBy.Contains("sms") && !string.IsNullOrEmpty(sub.Phone))
+                        await _notify.SendSmsText(sub.Phone, msg);
+                    if (notifyBy.Contains("whatsapp") && !string.IsNullOrEmpty(sub.WhatsApp))
+                        await _notify.SendSmsText(sub.WhatsApp, msg);
+                    if (notifyBy.Contains("email") && !string.IsNullOrEmpty(sub.Email))
+                        await _notify.SendEmail(sub.Email, $"📰 {item.Title} | اتحاد الغرف التجارية العراقية", htmlBody);
+                }
+            } catch { /* silent */ }
+        });
+
         return Ok(item);
     }
 
