@@ -94,6 +94,58 @@ public class SubmissionsController : ControllerBase {
             await _notify.SendEmail(adminEmail, $"📬 طلب جديد — {label} | {dto.ContactName}", adminHtml);
         } catch (Exception ex) { _log.LogError(ex, "Failed to send admin notification email"); }
 
+        // ─── إشعار المتقدم: تم استلام طلبك ───
+        try {
+            var entityLabels = new Dictionary<string,string> {
+                {"chamber","غرفة تجارية"}, {"member","عضو مجلس الاتحاد"},
+                {"trader","دليل الشركات"}, {"shipping","شركة شحن"},
+                {"lawyer","محامٍ"}, {"agent","وكيل إخراج"}
+            };
+            var lbl = entityLabels.TryGetValue(dto.EntityType, out var ll) ? ll : dto.EntityType;
+
+            // إيميل للمتقدم
+            if (!string.IsNullOrWhiteSpace(dto.ContactEmail)) {
+                var applicantHtml = $@"
+<div dir='rtl' style='font-family:Cairo,sans-serif;max-width:600px;margin:0 auto;background:#f5f7fa;padding:20px;border-radius:16px'>
+  <div style='background:linear-gradient(135deg,#2C3E6B,#4A6FA5);padding:28px 24px;border-radius:14px;text-align:center;margin-bottom:20px'>
+    <div style='font-size:48px;margin-bottom:10px'>✅</div>
+    <h2 style='color:#fff;margin:0;font-size:20px;font-weight:800'>تم استلام طلبك بنجاح</h2>
+    <p style='color:#FFC72C;margin:8px 0 0;font-size:14px'>اتحاد الغرف التجارية العراقية</p>
+  </div>
+  <div style='background:#fff;padding:20px;border-radius:12px;margin-bottom:16px;border-right:4px solid #10b981'>
+    <p style='color:#2C3E6B;font-size:15px;margin:0 0 12px;font-weight:700'>عزيزي {System.Web.HttpUtility.HtmlEncode(dto.ContactName)}،</p>
+    <p style='color:#555;font-size:14px;margin:0;line-height:1.8'>
+      تم استلام طلب تسجيلك في <strong>{System.Web.HttpUtility.HtmlEncode(lbl)}</strong> بنجاح.<br/>
+      سيتم مراجعة طلبك من قِبَل فريق اتحاد الغرف التجارية العراقية وإشعارك بالنتيجة في أقرب وقت.
+    </p>
+  </div>
+  <div style='background:#fff;padding:16px 20px;border-radius:12px;margin-bottom:16px'>
+    <table style='width:100%;border-collapse:collapse;font-size:14px'>
+      <tr><td style='color:#888;padding:8px 0;border-bottom:1px solid #f5f5f5;width:130px'>رقم الطلب:</td><td style='color:#2C3E6B;font-weight:800'>#{sub.Id}</td></tr>
+      <tr><td style='color:#888;padding:8px 0;border-bottom:1px solid #f5f5f5'>نوع الطلب:</td><td style='color:#333;font-weight:700'>{System.Web.HttpUtility.HtmlEncode(lbl)}</td></tr>
+      <tr><td style='color:#888;padding:8px 0;border-bottom:1px solid #f5f5f5'>الاسم:</td><td style='color:#333;font-weight:700'>{System.Web.HttpUtility.HtmlEncode(dto.ContactName)}</td></tr>
+      <tr><td style='color:#888;padding:8px 0'>تاريخ التقديم:</td><td style='color:#555'>{DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC</td></tr>
+    </table>
+  </div>
+  <div style='background:#EEF2FF;padding:16px;border-radius:12px;margin-bottom:16px;text-align:center'>
+    <p style='color:#2C3E6B;font-size:13px;margin:0 0 8px;font-weight:700'>للاستفسار عن حالة طلبك:</p>
+    <p style='color:#555;font-size:13px;margin:0'>📞 <strong>5366</strong> &nbsp;|&nbsp; ✉️ <strong>info@ficc.iq</strong></p>
+  </div>
+  <div style='text-align:center;padding-top:8px'>
+    <p style='color:#aaa;font-size:11px;margin:0'>اتحاد الغرف التجارية العراقية — Federation of Iraqi Chambers of Commerce</p>
+    <p style='color:#aaa;font-size:11px;margin:4px 0 0'><a href='https://ficc.iq' style='color:#4A6FA5'>ficc.iq</a></p>
+  </div>
+</div>";
+                await _notify.SendEmail(dto.ContactEmail, $"✅ تم استلام طلبك — {lbl} | اتحاد الغرف التجارية العراقية", applicantHtml);
+            }
+
+            // SMS للمتقدم
+            if (!string.IsNullOrWhiteSpace(dto.ContactPhone)) {
+                var smsMsg = $"✅ عزيزي {dto.ContactName}، تم استلام طلبك في اتحاد الغرف التجارية العراقية (رقم الطلب: #{sub.Id}). سيتم مراجعته وإشعارك بالنتيجة. للاستفسار: 5366";
+                await _notify.SendSmsText(dto.ContactPhone, smsMsg);
+            }
+        } catch (Exception ex) { _log.LogError(ex, "Failed to send applicant confirmation"); }
+
         return Ok(new { id = sub.Id, message = "تم استلام طلبك بنجاح، سيتم مراجعته قريباً" });
     }
 

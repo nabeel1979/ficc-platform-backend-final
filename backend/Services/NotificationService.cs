@@ -134,6 +134,30 @@ public class NotificationService {
         }
     }
 
+    // Send general SMS (not OTP) via Twilio
+    public async Task<bool> SendSmsText(string phone, string message) {
+        try {
+            var sid   = _cfg["Twilio:AccountSid"];
+            var token = _cfg["Twilio:AuthToken"];
+            if (string.IsNullOrEmpty(sid) || string.IsNullOrEmpty(token)) return false;
+            var url = $"https://api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json";
+            using var http = new HttpClient();
+            http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+                "Basic", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"{sid}:{token}"))
+            );
+            var resp = await http.PostAsync(url, new FormUrlEncodedContent(new Dictionary<string,string>{
+                ["To"]   = phone,
+                ["From"] = _cfg["Twilio:From"] ?? "IraqChamber",
+                ["Body"] = message
+            }));
+            _log.LogInformation("SMS to {Phone}: {Status}", phone, resp.StatusCode);
+            return resp.IsSuccessStatusCode;
+        } catch (Exception ex) {
+            _log.LogError(ex, "SMS send failed");
+            return false;
+        }
+    }
+
     // Legacy: Twilio Verify (blocked for Iraq +9647 — use SendTwilioSms instead)
     public async Task<bool> SendTwilioVerify(string phone) {
         return await SendTwilioSms(phone, GenerateOtp());
