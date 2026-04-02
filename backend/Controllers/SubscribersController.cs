@@ -39,10 +39,44 @@ public class SubscribersController : ControllerBase {
         return Ok(new { id = sub.Id, message = "تم التسجيل بنجاح!" });
     }
 
+    // دالة مشتركة للتحقق من Rate Limit
+    private async Task<(bool blocked, string message)> CheckRateLimit(string key, string keyType) {
+        var record = await _db.RateLimitBlocks.FirstOrDefaultAsync(r => r.Key == key && r.KeyType == keyType);
+        if (record != null) {
+            // إذا محظور ولسه ما انتهى الحظر
+            if (record.BlockedUntil.HasValue && record.BlockedUntil > DateTime.UtcNow) {
+                var remaining = (int)(record.BlockedUntil.Value - DateTime.UtcNow).TotalMinutes + 1;
+                return (true, $"تم حظر هذا الرقم مؤقتاً. حاول مرة أخرى بعد {remaining} دقيقة");
+            }
+            // إذا انتهى الحظر — أعد التهيئة
+            if (record.BlockedUntil.HasValue && record.BlockedUntil <= DateTime.UtcNow) {
+                record.Attempts = 0;
+                record.BlockedUntil = null;
+                record.FirstAttemptAt = DateTime.UtcNow;
+            }
+            record.Attempts++;
+            record.UpdatedAt = DateTime.UtcNow;
+            if (record.Attempts >= 5) {
+                record.BlockedUntil = DateTime.UtcNow.AddHours(1);
+                await _db.SaveChangesAsync();
+                return (true, "تم تجاوز الحد المسموح. تم حظر الوصول لمدة ساعة");
+            }
+            await _db.SaveChangesAsync();
+        } else {
+            _db.RateLimitBlocks.Add(new RateLimitBlock { Key = key, KeyType = keyType, Attempts = 1 });
+            await _db.SaveChangesAsync();
+        }
+        return (false, "");
+    }
+
     // POST /api/subscribers/send-field-otp — إرسال OTP لحقل معين (phone/whatsapp/email)
     [HttpPost("send-field-otp")]
     public async Task<IActionResult> SendFieldOtp([FromBody] FieldOtpDto dto) {
         if (string.IsNullOrEmpty(dto.Value)) return BadRequest(new { message = "القيمة مطلوبة" });
+
+        // التحقق من Rate Limit
+        var (blocked, blockMsg) = await CheckRateLimit(dto.Value, dto.Field);
+        if (blocked) return StatusCode(429, new { message = blockMsg });
         var otp = new string(System.Linq.Enumerable.Repeat("0123456789", 6)
             .Select(s => s[new Random().Next(s.Length)]).ToArray());
         var typeKey = $"sub-{dto.Field}";
@@ -95,6 +129,9 @@ public class SubscribersController : ControllerBase {
     // POST /api/subscribers/send-otp — إرسال OTP للمتابع المسجّل سابقاً
     [HttpPost("send-otp")]
     public async Task<IActionResult> SendOtp([FromBody] PhoneDto dto) {
+        var (blocked, blockMsg) = await CheckRateLimit(dto.Phone, "phone-login");
+        if (blocked) return StatusCode(429, new { message = blockMsg });
+
         var sub = await _db.Subscribers.FirstOrDefaultAsync(s => s.Phone == dto.Phone);
         if (sub == null) return NotFound(new { message = "هذا الرقم غير مسجّل" });
 

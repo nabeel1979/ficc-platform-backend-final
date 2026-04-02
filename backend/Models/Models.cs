@@ -384,3 +384,14 @@ public class Subscriber {
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 }
+
+public class RateLimitBlock {
+    public int Id { get; set; }
+    public string Key { get; set; } = "";       // رقم الهاتف أو الإيميل
+    public string KeyType { get; set; } = "";   // phone / whatsapp / email
+    public string Action { get; set; } = "";    // subscribe
+    public int Attempts { get; set; } = 0;
+    public DateTime FirstAttemptAt { get; set; } = DateTime.UtcNow;
+    public DateTime? BlockedUntil { get; set; }
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+}

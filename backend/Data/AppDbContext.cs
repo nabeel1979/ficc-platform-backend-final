@@ -9,6 +9,7 @@ public class AppDbContext : DbContext {
     public DbSet<Chamber> Chambers => Set<Chamber>();
     public DbSet<Member> Members => Set<Member>();
     public DbSet<Subscriber> Subscribers => Set<Subscriber>();
+    public DbSet<RateLimitBlock> RateLimitBlocks => Set<RateLimitBlock>();
     public DbSet<Setting> Settings => Set<Setting>();
     public DbSet<ShippingCompany> ShippingCompanies => Set<ShippingCompany>();
     public DbSet<OtpCode> OtpCodes => Set<OtpCode>();
