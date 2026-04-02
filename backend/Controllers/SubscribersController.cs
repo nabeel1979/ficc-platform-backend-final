@@ -39,40 +39,55 @@ public class SubscribersController : ControllerBase {
         return Ok(new { id = sub.Id, message = "تم التسجيل بنجاح!" });
     }
 
-    // POST /api/subscribers/send-otp-new — إرسال OTP للتسجيل الجديد (قبل إنشاء الحساب)
+    // POST /api/subscribers/send-field-otp — إرسال OTP لحقل معين (phone/whatsapp/email)
+    [HttpPost("send-field-otp")]
+    public async Task<IActionResult> SendFieldOtp([FromBody] FieldOtpDto dto) {
+        if (string.IsNullOrEmpty(dto.Value)) return BadRequest(new { message = "القيمة مطلوبة" });
+        var otp = new string(System.Linq.Enumerable.Repeat("0123456789", 6)
+            .Select(s => s[new Random().Next(s.Length)]).ToArray());
+        var typeKey = $"sub-{dto.Field}";
+        var old = await _db.OtpCodes.FirstOrDefaultAsync(o => o.UserId == 0 && o.Type == typeKey && o.IpAddress == dto.Value && o.UsedAt == null);
+        if (old != null) _db.OtpCodes.Remove(old);
+        _db.OtpCodes.Add(new OtpCode {
+            UserId = 0, Code = otp, Channel = dto.Field == "email" ? "email" : "sms",
+            Type = typeKey, IpAddress = dto.Value,
+            CreatedAt = DateTime.UtcNow, ExpiresAt = DateTime.UtcNow.AddMinutes(10)
+        });
+        await _db.SaveChangesAsync();
+        var msg = $"اتحاد الغرف التجارية العراقية\nرمز التحقق: {otp}\nصالح 10 دقائق";
+        if (dto.Field == "email")
+            await _notify.SendEmail(dto.Value, "رمز التحقق | اتحاد الغرف التجارية العراقية", $"<div dir='rtl' style='font-family:Cairo,sans-serif;font-size:16px'><p>رمز التحقق الخاص بك:</p><h1 style='letter-spacing:8px;color:#2C3E6B'>{otp}</h1><p>صالح لمدة 10 دقائق</p></div>");
+        else
+            await _notify.SendTwilioSms(dto.Value, otp);
+        return Ok(new { message = "تم إرسال رمز التأكيد" });
+    }
+
+    // POST /api/subscribers/verify-field-otp — تحقق OTP لحقل معين
+    [HttpPost("verify-field-otp")]
+    public async Task<IActionResult> VerifyFieldOtp([FromBody] FieldVerifyDto dto) {
+        var typeKey = $"sub-{dto.Field}";
+        var otpRecord = await _db.OtpCodes.FirstOrDefaultAsync(o =>
+            o.UserId == 0 && o.Code == dto.Code && o.Type == typeKey &&
+            o.IpAddress == dto.Value && o.UsedAt == null && o.ExpiresAt > DateTime.UtcNow);
+        if (otpRecord == null) return BadRequest(new { message = "رمز غير صحيح أو منتهي الصلاحية" });
+        otpRecord.UsedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        return Ok(new { message = "تم التحقق بنجاح" });
+    }
+
+    // POST /api/subscribers/send-otp-new — إرسال OTP للتسجيل الجديد (phone فقط)
     [HttpPost("send-otp-new")]
     public async Task<IActionResult> SendOtpNew([FromBody] PhoneDto dto) {
         if (string.IsNullOrEmpty(dto.Phone)) return BadRequest(new { message = "رقم الهاتف مطلوب" });
         var existing = await _db.Subscribers.FirstOrDefaultAsync(s => s.Phone == dto.Phone);
         if (existing != null) return BadRequest(new { message = "هذا الرقم مسجّل مسبقاً" });
-
-        var otp = new string(System.Linq.Enumerable.Repeat("0123456789", 6)
-            .Select(s => s[new Random().Next(s.Length)]).ToArray());
-
-        // نخزّن الـ OTP بـ UserId=0 والهاتف بـ IpAddress للتمييز
-        var old = await _db.OtpCodes.FirstOrDefaultAsync(o => o.UserId == 0 && o.Type == "subscriber-new" && o.IpAddress == dto.Phone && o.UsedAt == null);
-        if (old != null) _db.OtpCodes.Remove(old);
-
-        _db.OtpCodes.Add(new OtpCode {
-            UserId = 0, Code = otp, Channel = "sms",
-            Type = "subscriber-new", IpAddress = dto.Phone,
-            CreatedAt = DateTime.UtcNow, ExpiresAt = DateTime.UtcNow.AddMinutes(10)
-        });
-        await _db.SaveChangesAsync();
-        await _notify.SendTwilioSms(dto.Phone, otp);
-        return Ok(new { message = "تم إرسال رمز التأكيد" });
+        return await SendFieldOtp(new FieldOtpDto("phone", dto.Phone));
     }
 
     // POST /api/subscribers/verify-otp-new — تحقق OTP للتسجيل الجديد
     [HttpPost("verify-otp-new")]
     public async Task<IActionResult> VerifyOtpNew([FromBody] VerifyOtpDto dto) {
-        var otpRecord = await _db.OtpCodes.FirstOrDefaultAsync(o =>
-            o.UserId == 0 && o.Code == dto.Code && o.Type == "subscriber-new" &&
-            o.IpAddress == dto.Phone && o.UsedAt == null && o.ExpiresAt > DateTime.UtcNow);
-        if (otpRecord == null) return BadRequest(new { message = "رمز غير صحيح أو منتهي الصلاحية" });
-        otpRecord.UsedAt = DateTime.UtcNow;
-        await _db.SaveChangesAsync();
-        return Ok(new { message = "تم التحقق بنجاح" });
+        return await VerifyFieldOtp(new FieldVerifyDto("phone", dto.Phone, dto.Code));
     }
 
     // POST /api/subscribers/send-otp — إرسال OTP للمتابع المسجّل سابقاً
@@ -144,3 +159,5 @@ public class SubscribersController : ControllerBase {
 public record SubscriberDto(string FullName, string Phone, string? WhatsApp, string? Email, string? Sectors, string? NotifyBy);
 public record PhoneDto(string Phone);
 public record VerifyOtpDto(string Phone, string Code);
+public record FieldOtpDto(string Field, string Value);
+public record FieldVerifyDto(string Field, string Value, string Code);
