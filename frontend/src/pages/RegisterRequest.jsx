@@ -131,6 +131,7 @@ const ENTITY_CONFIGS = {
       { key: '_logo',         label: 'شعار الشركة / المؤسسة', type: 'logo' },
       { key: 'tradeName',     label: 'الاسم التجاري', required: true },
       { key: 'businessType',  label: 'نوع النشاط التجاري', type: 'select', required: true,
+        constantsKey: 'trader_business_type',
         options: ['تجارة عامة','استيراد وتصدير','تجارة جملة','تجارة مفرد','مقاولات وإنشاءات','صناعة وتصنيع','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','أخرى'] },
       { key: 'tradeCategory', label: 'التصنيف التجاري', type: 'select',
         constantsKey: 'trader_classification',
@@ -637,7 +638,10 @@ function RegistrationForm({ entityType, onBack, showBack = true, constants = {} 
 export default function RegisterRequest() {
   const { entityType: paramType } = useParams()
   const [selected, setSelected] = useState(paramType || null)
-  const [constants, setConstants] = useState({})
+  const [constants, setConstants] = useState({
+    trader_business_type: ['تجارة عامة','استيراد وتصدير','تجارة جملة','تجارة مفرد','مقاولات وإنشاءات','صناعة وتصنيع','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','أخرى'],
+    trader_classification: ['شركة ذات مسؤولية محدودة','شركة مساهمة','مؤسسة فردية','شركة تضامن','وكالة تجارية','فرع شركة أجنبية','تعاونية','أخرى']
+  })
 
   useEffect(() => {
     const cats = ['trader_business_type','trader_classification','news_category','news_type','trader_sector']
