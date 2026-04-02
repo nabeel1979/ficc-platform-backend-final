@@ -1539,14 +1539,16 @@ function SubmissionsPanel() {
                     {selected.formData?._idFile && (
                       <div style={{textAlign:'center'}}>
                         <img src={selected.formData._idFile.startsWith('data:') ? selected.formData._idFile : `https://ficc.iq${selected.formData._idFile}`}
-                          alt="وجه الهوية" style={{width:'150px',height:'100px',objectFit:'cover',borderRadius:'8px',border:'2px solid #2C3E6B'}} />
+                          alt="وجه الهوية" onClick={()=>setLightbox(selected.formData._idFile.startsWith('data:') ? selected.formData._idFile : `https://ficc.iq${selected.formData._idFile}`)}
+                          style={{width:'150px',height:'100px',objectFit:'cover',borderRadius:'8px',border:'2px solid #2C3E6B',cursor:'zoom-in'}} />
                         <p style={{fontSize:'11px',color:'#888',margin:'4px 0 0'}}>الوجه</p>
                       </div>
                     )}
                     {selected.formData?._idFileBack && (
                       <div style={{textAlign:'center'}}>
                         <img src={selected.formData._idFileBack.startsWith('data:') ? selected.formData._idFileBack : `https://ficc.iq${selected.formData._idFileBack}`}
-                          alt="خلف الهوية" style={{width:'150px',height:'100px',objectFit:'cover',borderRadius:'8px',border:'2px solid #059669'}} />
+                          alt="خلف الهوية" onClick={()=>setLightbox(selected.formData._idFileBack.startsWith('data:') ? selected.formData._idFileBack : `https://ficc.iq${selected.formData._idFileBack}`)}
+                          style={{width:'150px',height:'100px',objectFit:'cover',borderRadius:'8px',border:'2px solid #059669',cursor:'zoom-in'}} />
                         <p style={{fontSize:'11px',color:'#888',margin:'4px 0 0'}}>الخلف</p>
                       </div>
                     )}
