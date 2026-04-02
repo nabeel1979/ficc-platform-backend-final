@@ -1223,16 +1223,16 @@ function SubmissionsPanel() {
       </div>
 
       {/* Stats */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'12px',marginBottom:'20px'}}>
+      <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
         {[['pending','⏳','قيد المراجعة','#f59e0b'],['approved','✅','موافق عليها','#10b981'],['rejected','❌','مرفوضة','#ef4444']].map(([k,icon,label,color])=>(
           <button key={k} onClick={()=>setFilter(k)}
-            style={{padding:'16px',borderRadius:'14px',border:`2px solid ${filter===k?color:'transparent'}`,
+            style={{padding:'8px 16px',borderRadius:'20px',border:`2px solid ${filter===k?color:'transparent'}`,
               background: filter===k ? `${color}15` : 'white',
-              cursor:'pointer',fontFamily:'Cairo,sans-serif',textAlign:'center',
-              boxShadow:'0 2px 8px rgba(0,0,0,0.06)',transition:'all 0.2s'}}>
-            <div style={{fontSize:'24px',marginBottom:'4px'}}>{icon}</div>
-            <div style={{fontSize:'22px',fontWeight:'800',color: filter===k ? color : '#1e293b'}}>{counts[k]}</div>
-            <div style={{fontSize:'13px',fontWeight:'700',color: filter===k ? color : '#64748b'}}>{label}</div>
+              cursor:'pointer',fontFamily:'Cairo,sans-serif',display:'flex',alignItems:'center',gap:'6px',
+              boxShadow:'0 2px 6px rgba(0,0,0,0.06)',transition:'all 0.2s',flexShrink:0}}>
+            <span style={{fontSize:'14px'}}>{icon}</span>
+            <span style={{fontSize:'18px',fontWeight:'800',color: filter===k ? color : '#1e293b'}}>{counts[k]}</span>
+            <span style={{fontSize:'12px',fontWeight:'700',color: filter===k ? color : '#64748b'}}>{label}</span>
           </button>
         ))}
       </div>
