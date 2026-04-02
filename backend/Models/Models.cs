@@ -371,3 +371,16 @@ public class SystemConstant {
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
+
+public class Subscriber {
+    public int Id { get; set; }
+    public string FullName { get; set; } = "";
+    public string Phone { get; set; } = "";
+    public string? WhatsApp { get; set; }
+    public string? Email { get; set; }
+    public string? Sectors { get; set; }    // JSON array
+    public string? NotifyBy { get; set; }   // JSON array: ["whatsapp","sms","email"]
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAt { get; set; }
+}

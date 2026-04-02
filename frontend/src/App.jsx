@@ -26,6 +26,7 @@ import RegisterRequest from './pages/RegisterRequest'
 import ReviewPage from './pages/ReviewPage'
 import Correspondence from './pages/Correspondence'
 import Contact from './pages/Contact'
+import Subscribe from './pages/Subscribe'
 
 import { useState, useEffect } from 'react'
 import api from './lib/api'
@@ -130,6 +131,7 @@ export default function App() {
       <Route path="/track-request" element={<TrackRequest />} />
       <Route path="/join" element={<JoinPage />} />
       <Route path="/contact" element={<Layout><Contact /></Layout>} />
+      <Route path="/subscribe" element={<Layout><Subscribe /></Layout>} />
       <Route path="/register" element={<Layout><RegisterRequest /></Layout>} />
       <Route path="/register/:entityType" element={<Layout><RegisterRequest /></Layout>} />
       <Route path="/forms" element={<Layout><FormsPage /></Layout>} />

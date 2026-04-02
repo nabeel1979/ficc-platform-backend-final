@@ -194,3 +194,18 @@ INSERT INTO Users (Username, PasswordHash, Role, FullName)
 VALUES ('admin', '$2b$10$examplehash', 'Admin', N'مدير النظام');
 
 GO
+
+-- Subscribers (المتابعون)
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Subscribers' AND xtype='U')
+CREATE TABLE Subscribers (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    FullName NVARCHAR(200) NOT NULL,
+    Phone NVARCHAR(20) NOT NULL UNIQUE,
+    WhatsApp NVARCHAR(20),
+    Email NVARCHAR(200),
+    Sectors NVARCHAR(MAX),
+    NotifyBy NVARCHAR(200),
+    IsActive BIT DEFAULT 1,
+    CreatedAt DATETIME2 DEFAULT GETDATE(),
+    UpdatedAt DATETIME2
+);

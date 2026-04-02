@@ -55,6 +55,7 @@ export default function Home() {
         <div className="hero-btns">
           <Link to="/directory" className="btn-hero-primary">🔍 دليل التجار والشركات</Link>
           <Link to="/register" className="btn-hero-outline">✅ سجّل نشاطك</Link>
+          <Link to="/subscribe" className="btn-hero-outline" style={{background:'rgba(255,199,44,0.15)',borderColor:'rgba(255,199,44,0.4)',color:'#FFC72C'}}>🔔 سجّل متابعاً</Link>
         </div>
       </section>
 
