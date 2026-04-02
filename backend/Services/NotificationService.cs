@@ -53,8 +53,8 @@ public class NotificationService {
 
     private async Task<bool> SendViaZeptoMail(string toEmail, string subject, string htmlBody, string apiKey) {
         try {
-            var fromEmail = _cfg["Email:Username"] ?? "noreply@ficc.iq";
-            var fromName  = _cfg["Email:FromName"] ?? "اتحاد الغرف التجارية العراقية";
+            var fromEmail = _cfg["ZeptoMail:From"] ?? _cfg["Email:Username"] ?? "noreply@ficc.iq";
+            var fromName  = _cfg["ZeptoMail:FromName"] ?? _cfg["Email:FromName"] ?? "اتحاد الغرف التجارية العراقية";
             var payload = new {
                 from = new { address = fromEmail, name = fromName },
                 to = new[] { new { email_address = new { address = toEmail } } },
@@ -69,7 +69,10 @@ public class NotificationService {
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             var resp = await http.PostAsync("https://api.zeptomail.com/v1.1/email", content);
             var respBody = await resp.Content.ReadAsStringAsync();
-            _log.LogInformation("ZeptoMail send to {Email}: {Status}", toEmail, resp.StatusCode);
+            if (resp.IsSuccessStatusCode)
+                _log.LogInformation("ZeptoMail send to {Email}: {Status}", toEmail, resp.StatusCode);
+            else
+                _log.LogError("ZeptoMail failed to {Email}: {Status} — {Body}", toEmail, resp.StatusCode, respBody);
             return resp.IsSuccessStatusCode;
         } catch (Exception ex) {
             _log.LogError(ex, "ZeptoMail send failed");
