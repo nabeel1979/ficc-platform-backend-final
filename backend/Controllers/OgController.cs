@@ -62,7 +62,7 @@ public class OgController : ControllerBase {
         var desc = item.Description?.Length>200 ? item.Description[..200]+"..." : item.Description
             ?? $"{item.BusinessType ?? "منشأة تجارية"} في {item.Governorate ?? "العراق"} — {item.TradeCategory ?? ""}";
         return Content(BuildHtml(
-            item.CompanyName,
+            !string.IsNullOrEmpty(item.TradeName) ? item.TradeName : item.CompanyName,
             desc,
             item.LogoUrl ?? "",
             $"{Request.Scheme}://{Request.Host}/directory/{id}",

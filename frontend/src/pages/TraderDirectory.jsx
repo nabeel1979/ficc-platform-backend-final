@@ -90,7 +90,7 @@ export default function TraderDirectory() {
                     {t.logoUrl ? <img src={t.logoUrl} alt="" style={{width:'100%',height:'100%',objectFit:'contain',borderRadius:'10px'}}/> : <span style={{fontSize:'22px',fontWeight:'800',color:'#fff'}}>{(t.companyName||'?')[0]}</span>}
                   </div>
                   <div style={{flex:1,minWidth:0}}>
-                    <h3 style={{color:'#fff',fontWeight:'800',fontSize:'15px',margin:'0 0 2px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{t.companyName}</h3>
+                    <h3 style={{color:'#fff',fontWeight:'800',fontSize:'15px',margin:'0 0 2px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{t.tradeName||t.companyName}</h3>
                     {t.businessType && <span style={{background:'rgba(255,255,255,0.2)',color:'#fff',padding:'2px 8px',borderRadius:'10px',fontSize:'11px',fontWeight:'600'}}>{t.businessType}</span>}
                   </div>
                   {t.isVerified && <span style={{background:'#FFC72C',color:'#1a1a2e',padding:'3px 8px',borderRadius:'20px',fontSize:'11px',fontWeight:'700',flexShrink:0}}>✓ موثّق</span>}
@@ -140,10 +140,10 @@ function TraderDetail({ t, onBack }) {
           <div style={{background:'linear-gradient(135deg,#1a1a2e,#2C3E6B,#4A6FA5)',padding:'32px'}}>
             <div style={{display:'flex',alignItems:'center',gap:'20px',marginBottom:'16px'}}>
               <div style={{width:'80px',height:'80px',background:'rgba(255,255,255,0.15)',borderRadius:'16px',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,overflow:'hidden'}}>
-                {t.logoUrl ? <img src={t.logoUrl} alt="" style={{width:'100%',height:'100%',objectFit:'contain'}}/> : <span style={{fontSize:'36px',fontWeight:'800',color:'#fff'}}>{(t.companyName||'?')[0]}</span>}
+                {t.logoUrl ? <img src={t.logoUrl} alt="" style={{width:'100%',height:'100%',objectFit:'contain'}}/> : <span style={{fontSize:'36px',fontWeight:'800',color:'#fff'}}>{(t.tradeName||t.companyName||'?')[0]}</span>}
               </div>
               <div>
-                <h1 style={{color:'#fff',fontWeight:'800',fontSize:'22px',margin:'0 0 6px'}}>{t.companyName}</h1>
+                <h1 style={{color:'#fff',fontWeight:'800',fontSize:'22px',margin:'0 0 6px'}}>{t.tradeName||t.companyName}</h1>
                 {t.businessType && <span style={{background:'rgba(255,199,44,0.3)',color:'#FFC72C',padding:'4px 12px',borderRadius:'20px',fontSize:'13px',fontWeight:'700'}}>{t.businessType}</span>}
               </div>
               {t.isVerified && <span style={{background:'#FFC72C',color:'#1a1a2e',padding:'4px 12px',borderRadius:'20px',fontSize:'12px',fontWeight:'700',marginRight:'auto'}}>✓ موثّق</span>}
@@ -230,7 +230,7 @@ function TraderDetail({ t, onBack }) {
             <div style={{background:'#F8F9FA',borderRadius:'14px',padding:'16px 20px'}}>
               <p style={{color:'#888',fontSize:'13px',fontWeight:'700',margin:'0 0 12px'}}>📤 شارك:</p>
               <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-                <a href={`https://wa.me/?text=${encodeURIComponent(t.companyName + '\n' + window.location.origin + '/og/traders/' + t.id)}`} target="_blank" rel="noreferrer"
+                <a href={`https://wa.me/?text=${encodeURIComponent((t.tradeName||t.companyName||'') + '\n' + window.location.origin + '/og/traders/' + t.id)}`} target="_blank" rel="noreferrer"
                   style={{...socialBtn('#25D366'),width:'auto',padding:'8px 16px',gap:'6px',borderRadius:'10px',fontSize:'13px',fontWeight:'700'}}>💬 واتساب</a>
                 <button onClick={()=>{navigator.clipboard.writeText(window.location.origin+'/directory/'+t.id);alert('تم نسخ الرابط!')}}
                   style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'10px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',fontSize:'13px',fontWeight:'700',fontFamily:'Cairo,sans-serif'}}>🔗 نسخ الرابط</button>
@@ -251,7 +251,7 @@ export function TraderDetailPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get(`/api/traderdirectory/${id}`)
+    api.get(`/traderdirectory/${id}`)
       .then(r => setTrader(r.data))
       .catch(() => navigate('/directory'))
       .finally(() => setLoading(false))
