@@ -409,9 +409,13 @@ function FormField({ field, value, onChange, onVerified }) {
   if (field.type === 'social') return (
     <SocialField formData={field._formData} onChange={onChange} value={value} />
   )
-  if (field.type === 'logo') return (
-    <LogoField value={value} onChange={onChange} existingLogo={field._formData?.photoUrl || field._formData?.logoUrl} isPhoto={field.label?.includes('صورة')} />
-  )
+  if (field.type === 'logo') {
+    const isPhoto = field.label?.includes('صورة') || field.key === '_photo'
+    const existingLogo = isPhoto
+      ? (field._formData?.photoUrl || null)
+      : (field._formData?.logoUrl || null)
+    return <LogoField value={value} onChange={onChange} existingLogo={existingLogo} isPhoto={isPhoto} />
+  }
   if (field.type === 'images') return (
     <ImagesField value={value} onChange={onChange}
       existingImages={field._formData ? (() => { try { return JSON.parse(field._formData.images||'[]') } catch { return field._formData.imageUrl?[field._formData.imageUrl]:[] } })() : []}
@@ -579,17 +583,25 @@ function CrudTable({ title, icon, endpoint, columns, fields: rawFields, addLabel
           fd.append(isMember ? 'photo' : 'logo', form._logo)
           const uploadEp = isMember ? 'upload-photo' : 'upload-logo'
           try {
-            const uploadRes = await api.post(`${API}/${endpoint}/${itemId}/${uploadEp}`, fd, {
-              headers: { Authorization: authHdrs().Authorization }
-            })
-            console.log('Logo upload success:', uploadRes.data)
-            setMsg('✅ تم الحفظ والصورة')
+            await api.post(`${API}/${endpoint}/${itemId}/${uploadEp}`, fd, { headers: { Authorization: authHdrs().Authorization } })
+            setMsg('✅ تم الحفظ والشعار')
           } catch(uploadErr) {
-            console.error('Logo upload error:', uploadErr?.response?.status, uploadErr?.response?.data)
-            setMsg('⚠️ تم الحفظ لكن فشل رفع اللوغو: ' + (uploadErr?.response?.data?.message || uploadErr?.response?.data || uploadErr.message))
+            setMsg('⚠️ تم الحفظ لكن فشل رفع الشعار: ' + (uploadErr?.response?.data?.message || uploadErr.message))
           }
-        } else {
-          console.error('No item ID for logo upload')
+        }
+      }
+      // رفع الصورة الشخصية للتاجر (_photo) منفصلاً عن الشعار
+      if (form._photo && endpoint === 'traderdirectory') {
+        const itemId = savedItem?.id || modal?.item?.id
+        if (itemId) {
+          const fd = new FormData()
+          fd.append('photo', form._photo)
+          try {
+            await api.post(`${API}/${endpoint}/${itemId}/upload-photo`, fd, { headers: { Authorization: authHdrs().Authorization } })
+            setMsg('✅ تم الحفظ والصور')
+          } catch(uploadErr) {
+            setMsg('⚠️ تم الحفظ لكن فشل رفع الصورة الشخصية: ' + (uploadErr?.response?.data?.message || uploadErr.message))
+          }
         }
       }
       // Delete removed images

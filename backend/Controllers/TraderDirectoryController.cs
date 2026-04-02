@@ -112,6 +112,24 @@ public class TraderDirectoryController : ControllerBase {
         return Ok(new { logoUrl = item.LogoUrl });
     }
 
+    [HttpPost("{id}/upload-photo")]
+    public async Task<IActionResult> UploadPhoto(int id, [FromForm] IFormFile photo) {
+        var item = await _db.TraderDirectory.FindAsync(id);
+        if (item == null) return NotFound();
+        if (photo == null || photo.Length == 0) return BadRequest("No file");
+        var dir = _storage.GetFolder("traders");
+        Directory.CreateDirectory(dir);
+        var ext  = Path.GetExtension(photo.FileName).ToLowerInvariant();
+        var ts   = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var name = $"trader_photo_{id}_{ts}{ext}";
+        var path = Path.Combine(dir, name);
+        await using var stream = System.IO.File.Create(path);
+        await photo.CopyToAsync(stream);
+        item.PhotoUrl = $"/uploads/traders/{name}";
+        await _db.SaveChangesAsync();
+        return Ok(new { photoUrl = item.PhotoUrl });
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id) {
         var item = await _db.TraderDirectory.FindAsync(id);
