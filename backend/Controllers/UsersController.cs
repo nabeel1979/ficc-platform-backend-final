@@ -13,7 +13,7 @@ public class UsersController : ControllerBase {
     public UsersController(AppDbContext db) { _db = db; }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll() {
+    public async Task<IActionResult> GetAll([FromQuery] string? search = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 20) {
         // فحص هل المستخدم الحالي SuperAdmin
         var callerUsername = User.Identity?.Name ?? 
             Request.Headers["Authorization"].ToString()
@@ -30,10 +30,14 @@ public class UsersController : ControllerBase {
             query = query.Where(u => u.Role != "SuperAdmin");
         }
 
+        if (!string.IsNullOrEmpty(search))
+            query = query.Where(u => u.Username.Contains(search) || (u.FullName != null && u.FullName.Contains(search)) || (u.Email != null && u.Email.Contains(search)));
+        var total = await query.CountAsync();
         var users = await query
             .Select(u => new { u.Id, u.Username, u.FullName, u.Email, u.Phone, u.Role, u.IsActive, u.CreatedAt, u.ChamberId })
+            .Skip((page-1)*pageSize).Take(pageSize)
             .ToListAsync();
-        return Ok(users);
+        return Ok(new { total, page, pageSize, items = users });
     }
 
     [HttpPost]

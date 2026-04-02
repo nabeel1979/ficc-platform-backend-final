@@ -556,6 +556,7 @@ function CrudTable({ title, icon, endpoint, columns, fields: rawFields, addLabel
       : f
   )
   const [items, setItems]     = useState([])
+  const [total, setTotal]     = useState(0)
   const [loading, setLoading] = useState(true)
   const [search, setSearch]   = useState('')
   const [modal, setModal]     = useState(null) // null | {mode:'add'|'edit'|'delete', item?}
@@ -566,15 +567,21 @@ function CrudTable({ title, icon, endpoint, columns, fields: rawFields, addLabel
   const [pageSize, setPageSize] = useState(10)
   const [page, setPage]         = useState(1)
 
-  const load = async () => {
+  const load = async (p = page, ps = pageSize, q = search) => {
     setLoading(true)
     try {
-      const r = await api.get(`${API}/${endpoint}`, { headers: authHdrs() })
-      setItems(Array.isArray(r.data) ? r.data : r.data.items || [])
-    } catch { setItems([]) }
+      const params = { page: p, pageSize: ps }
+      if (q?.trim()) params.search = q.trim()
+      const r = await api.get(`${API}/${endpoint}`, { headers: authHdrs(), params })
+      const data = Array.isArray(r.data) ? r.data : r.data.items || []
+      setItems(data)
+      setTotal(r.data?.total || data.length)
+    } catch { setItems([]); setTotal(0) }
     setLoading(false)
   }
-  useEffect(() => { load() }, [endpoint])
+  useEffect(() => { setPage(1); load(1, pageSize, '') }, [endpoint])
+  useEffect(() => { setPage(1); load(1, pageSize, search) }, [search])
+  useEffect(() => { load(page, pageSize, search) }, [page, pageSize])
 
   const openAdd  = () => { setForm({}); setVerifiedFields({}); setModal({mode:'add'}) }
   const openEdit = (item) => {
@@ -783,22 +790,23 @@ function CrudTable({ title, icon, endpoint, columns, fields: rawFields, addLabel
           </div>
         )}
       </div>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'10px',flexWrap:'wrap',gap:8}}>
-        <p style={{color:'#aaa',fontSize:'12px',margin:0}}>{filtered.length} سجل {search && `(نتائج البحث)`}</p>
-        {totalPages > 1 && (
-          <div style={{display:'flex',gap:6,alignItems:'center'}}>
-            <button onClick={()=>setPage(1)} disabled={page===1}
-              style={{padding:'5px 10px',borderRadius:7,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>««</button>
-            <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
-              style={{padding:'5px 10px',borderRadius:7,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>← السابق</button>
-            <span style={{fontSize:12,color:'#555',fontFamily:'Cairo,sans-serif',padding:'0 6px'}}>{page} / {totalPages}</span>
-            <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
-              style={{padding:'5px 10px',borderRadius:7,border:'1px solid #dde3ed',background:page===totalPages?'#f5f5f5':'#fff',cursor:page===totalPages?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>التالي →</button>
-            <button onClick={()=>setPage(totalPages)} disabled={page===totalPages}
-              style={{padding:'5px 10px',borderRadius:7,border:'1px solid #dde3ed',background:page===totalPages?'#f5f5f5':'#fff',cursor:page===totalPages?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>»»</button>
+      {(() => {
+        const totalPages = Math.ceil(total / pageSize)
+        return (
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'10px',flexWrap:'wrap',gap:8}}>
+            <p style={{color:'#aaa',fontSize:'12px',margin:0}}>{total} سجل</p>
+            {totalPages > 1 && (
+              <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                <button onClick={()=>setPage(1)} disabled={page===1} style={{padding:'5px 10px',borderRadius:7,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>««</button>
+                <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1} style={{padding:'5px 10px',borderRadius:7,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>← السابق</button>
+                <span style={{fontSize:12,color:'#555',fontFamily:'Cairo,sans-serif',padding:'0 6px'}}>{page} / {totalPages}</span>
+                <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages} style={{padding:'5px 10px',borderRadius:7,border:'1px solid #dde3ed',background:page===totalPages?'#f5f5f5':'#fff',cursor:page===totalPages?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>التالي →</button>
+                <button onClick={()=>setPage(totalPages)} disabled={page===totalPages} style={{padding:'5px 10px',borderRadius:7,border:'1px solid #dde3ed',background:page===totalPages?'#f5f5f5':'#fff',cursor:page===totalPages?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>»»</button>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        )
+      })()}
 
       {/* Add/Edit Modal */}
       {modal && modal.mode !== 'delete' && (

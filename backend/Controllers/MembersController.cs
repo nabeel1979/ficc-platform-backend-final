@@ -13,13 +13,13 @@ public class MembersController : ControllerBase {
     public MembersController(AppDbContext db, FICCPlatform.Services.StorageService storage) { _db = db; _storage = storage; }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] string? chamberId) {
+    public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] string? chamberId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20) {
         var q = _db.Members.AsQueryable();
         if (!string.IsNullOrEmpty(search))
             q = q.Where(m => m.FullName.Contains(search) || (m.ChamberName != null && m.ChamberName.Contains(search)) || (m.Title != null && m.Title.Contains(search)));
         if (!string.IsNullOrEmpty(chamberId) && int.TryParse(chamberId, out int cid))
             q = q.Where(m => m.ChamberId == cid);
-        return Ok(await q.OrderBy(m => m.SortOrder).ThenBy(m => m.Id).ToListAsync());
+        var total = await q.CountAsync(); var items = await q.OrderBy(m => m.SortOrder).ThenBy(m => m.Id).Skip((page-1)*pageSize).Take(pageSize).ToListAsync(); return Ok(new { total, page, pageSize, items });
     }
 
     [HttpGet("{id}")]

@@ -13,13 +13,13 @@ public class ChambersController : ControllerBase {
     public ChambersController(AppDbContext db, FICCPlatform.Services.StorageService storage) { _db = db; _storage = storage; }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] string? governorate) {
+    public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] string? governorate, [FromQuery] int page = 1, [FromQuery] int pageSize = 20) {
         var q = _db.Chambers.AsQueryable();
         if (!string.IsNullOrEmpty(search))
             q = q.Where(c => c.Name.Contains(search) || c.City.Contains(search));
         if (!string.IsNullOrEmpty(governorate))
             q = q.Where(c => c.Governorate == governorate);
-        return Ok(await q.ToListAsync());
+        var total = await q.CountAsync(); var items = await q.Skip((page-1)*pageSize).Take(pageSize).ToListAsync(); return Ok(new { total, page, pageSize, items });
     }
 
     [HttpGet("{id}")]

@@ -13,7 +13,7 @@ public class ShippingController : ControllerBase {
     public ShippingController(AppDbContext db, FICCPlatform.Services.StorageService storage) { _db = db; _storage = storage; }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] string? governorate, [FromQuery] string? type) {
+    public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] string? governorate, [FromQuery] string? type, [FromQuery] int page = 1, [FromQuery] int pageSize = 20) {
         var q = _db.ShippingCompanies.AsQueryable();
         if (!string.IsNullOrEmpty(search))
             q = q.Where(s => s.CompanyName.Contains(search) || (s.Description != null && s.Description.Contains(search)));
@@ -21,7 +21,7 @@ public class ShippingController : ControllerBase {
             q = q.Where(s => s.Governorate == governorate);
         if (!string.IsNullOrEmpty(type))
             q = q.Where(s => s.ShippingType != null && s.ShippingType.Contains(type));
-        return Ok(await q.OrderBy(s => s.CompanyName).ToListAsync());
+        var total = await q.CountAsync(); var items = await q.OrderBy(s => s.CompanyName).Skip((page-1)*pageSize).Take(pageSize).ToListAsync(); return Ok(new { total, page, pageSize, items });
     }
 
     [HttpGet("{id}")]
