@@ -2082,13 +2082,18 @@ function SystemConstantsPanel() {
               <span>#</span><span>القيمة</span><span>الترتيب</span><span>الحالة</span><span>إجراءات</span>
             </div>
             {items.length===0 ? <p style={{textAlign:'center',padding:36,color:'#999'}}>لا توجد عناصر</p> : (() => {
-              const filtered = search.trim() ? (() => {
-                const q = search.trim()
-                const exact = items.filter(i => i.value?.toLowerCase() === q.toLowerCase())
-                const startsWith = items.filter(i => i.value?.toLowerCase().startsWith(q.toLowerCase()) && i.value?.toLowerCase() !== q.toLowerCase())
-                const contains = items.filter(i => i.value?.toLowerCase().includes(q.toLowerCase()) && !i.value?.toLowerCase().startsWith(q.toLowerCase()) && i.value?.toLowerCase() !== q.toLowerCase())
-                return [...exact, ...startsWith, ...contains]
-              })() : items
+              const filtered = search.trim() ? items.filter(i =>
+                i.value?.toLowerCase().includes(search.trim().toLowerCase()) ||
+                i.label?.toLowerCase().includes(search.trim().toLowerCase())
+              ).sort((a,b) => {
+                const q = search.trim().toLowerCase()
+                const av = a.value?.toLowerCase() || '', bv = b.value?.toLowerCase() || ''
+                if (av === q && bv !== q) return -1
+                if (bv === q && av !== q) return 1
+                if (av.startsWith(q) && !bv.startsWith(q)) return -1
+                if (bv.startsWith(q) && !av.startsWith(q)) return 1
+                return 0
+              }) : items
               const totalPages = Math.ceil(filtered.length / pageSize)
               const paged = pageSize >= 1000 ? filtered : filtered.slice((page-1)*pageSize, page*pageSize)
               return (<>
