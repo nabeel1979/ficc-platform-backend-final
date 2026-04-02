@@ -2627,6 +2627,26 @@ function SubscribersPanel() {
                 </div>
               </div>
             ))}
+            {/* القطاعات */}
+            <div style={{marginBottom:'12px'}}>
+              <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'8px'}}>القطاعات</label>
+              <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
+                {['تجارة عامة','استيراد وتصدير','صناعة وتصنيع','مقاولات وإنشاءات','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','طاقة وكهرباء','أخرى'].map(sec=>{
+                  const cur = (() => { try { return JSON.parse(editSub.sectors||'[]') } catch { return [] } })()
+                  const active = cur.includes(sec)
+                  return (
+                    <button key={sec} type="button" onClick={()=>{
+                      const arr = active ? cur.filter(x=>x!==sec) : [...cur, sec]
+                      setEditSub(p=>({...p, sectors: JSON.stringify(arr)}))
+                    }} style={{padding:'4px 10px',borderRadius:'16px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'600',
+                      background:active?'#2C3E6B':'#EEF2FF',color:active?'#fff':'#2C3E6B'}}>
+                      {active?'✓ ':''}{sec}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
             <div style={{display:'flex',gap:'8px',marginTop:'16px'}}>
               <button onClick={async()=>{ await api.put(`${API}/subscribers/${editSub.id}`,editSub); setEditSub(null); load(page,search) }}
                 style={{flex:1,padding:'11px',borderRadius:'10px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'800'}}>💾 حفظ</button>
@@ -2699,7 +2719,7 @@ function SubscribersPanel() {
                   </span>
                 </div>
                 <div style={{fontSize:'11px',color:'#666',marginBottom:'10px'}}>
-                  {notifyLabel(s.notifyBy)} | {sectorsLabel(s.sectors)||'—'}
+                  {notifyLabel(s.notifyBy)}
                 </div>
                 <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
                   {btn(s.isActive!==false?'⏸️ إيقاف':'▶️ تفعيل',()=>toggleActive(s),s.isActive!==false?'#fff8e7':'#f0fdf4',s.isActive!==false?'#b45309':'#16a34a')}
