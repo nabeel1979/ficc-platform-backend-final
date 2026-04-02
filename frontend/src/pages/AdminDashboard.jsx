@@ -1573,20 +1573,20 @@ function SubmissionsPanel() {
                 if (k === '_photo' && typeof v === 'string' && v.startsWith('data:image')) return (
                   <div key={k} style={{display:'flex',gap:'8px',padding:'10px 0',borderBottom:'1px solid #e5e7eb',alignItems:'center'}}>
                     <span style={{color:'#888',fontSize:'13px',minWidth:'120px',textAlign:'right',fontWeight:'700'}}>الصورة الشخصية:</span>
-                    <img src={v} alt="photo" style={{width:'80px',height:'80px',borderRadius:'50%',objectFit:'cover',border:'3px solid #2C3E6B',boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}} />
+                    <img src={v} alt="photo" onClick={()=>setLightbox(v)} style={{width:'80px',height:'80px',borderRadius:'50%',objectFit:'cover',border:'3px solid #2C3E6B',boxShadow:'0 2px 8px rgba(0,0,0,0.1)',cursor:'zoom-in'}} />
                   </div>
                 )
                 // عرض اللوغو
                 if (k === '_logo' && typeof v === 'string' && v.startsWith('data:image')) return (
                   <div key={k} style={{display:'flex',gap:'8px',padding:'10px 0',borderBottom:'1px solid #e5e7eb',alignItems:'center'}}>
                     <span style={{color:'#888',fontSize:'13px',minWidth:'120px',textAlign:'right',fontWeight:'700'}}>شعار الشركة:</span>
-                    <img src={v} alt="logo" style={{width:'80px',height:'80px',borderRadius:'10px',objectFit:'contain',border:'2px solid #2C3E6B',background:'#f5f7fa',padding:'4px'}} />
+                    <img src={v} alt="logo" onClick={()=>setLightbox(v)} style={{width:'80px',height:'80px',borderRadius:'10px',objectFit:'contain',border:'2px solid #2C3E6B',background:'#f5f7fa',padding:'4px',cursor:'zoom-in'}} />
                   </div>
                 )
                 if (typeof v === 'string' && v.startsWith('data:image')) return (
                   <div key={k} style={{display:'flex',gap:'8px',padding:'10px 0',borderBottom:'1px solid #e5e7eb',alignItems:'center'}}>
                     <span style={{color:'#888',fontSize:'13px',minWidth:'120px',textAlign:'right',fontWeight:'700'}}>صورة:</span>
-                    <img src={v} alt={k} style={{width:'120px',height:'80px',borderRadius:'8px',objectFit:'cover',border:'2px solid #dde3ed'}} />
+                    <img src={v} alt={k} onClick={()=>setLightbox(v)} style={{width:'120px',height:'80px',borderRadius:'8px',objectFit:'cover',border:'2px solid #dde3ed',cursor:'zoom-in'}} />
                   </div>
                 )
                 // Arabic labels
