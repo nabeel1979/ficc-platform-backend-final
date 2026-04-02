@@ -11,7 +11,7 @@ const NOTIFY_OPTIONS = [
 
 export default function Subscribe() {
   const [mode, setMode] = useState(null) // 'new' | 'existing'
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(1) // تسجيل جديد: 1=البيانات→2=OTP→3=القطاعات، مسجّل سابق: 1=الهاتف→2=OTP→3=تعديل
   const [form, setForm] = useState({ fullName:'', phone:'', whatsApp:'', email:'', sectors:[], notifyBy:[] })
   const [otp, setOtp] = useState('')
   const [phone, setPhone] = useState('')
@@ -19,6 +19,7 @@ export default function Subscribe() {
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
+  const [otpVerified, setOtpVerified] = useState(false)
 
   const set = (k,v) => setForm(p=>({...p,[k]:v}))
 
@@ -32,9 +33,34 @@ export default function Subscribe() {
   }
   const selectAll = () => set('notifyBy', NOTIFY_OPTIONS.map(o=>o.key))
 
-  // تسجيل جديد
-  const register = async () => {
+  // تسجيل جديد - الخطوة 1: البيانات الأساسية
+  const stepNewSubmit = async () => {
     if (!form.fullName || !form.phone) { setErr('الاسم ورقم الهاتف مطلوبان'); return }
+    setLoading(true); setErr(''); setMsg('')
+    try {
+      await api.post(`${API}/subscribers/send-otp`, { phone: form.phone })
+      setStep(2)
+      setOtp('')
+      setMsg('تم إرسال رمز التأكيد على رقمك 📱')
+    } catch(e) { setErr(e?.response?.data?.message || 'حدث خطأ') }
+    setLoading(false)
+  }
+
+  // تسجيل جديد - الخطوة 2: تحقق OTP
+  const stepNewVerifyOtp = async () => {
+    if (!otp) { setErr('أدخل رمز التأكيد'); return }
+    setLoading(true); setErr('')
+    try {
+      await api.post(`${API}/subscribers/verify-otp`, { phone: form.phone, code: otp })
+      setOtpVerified(true)
+      setStep(3)
+      setMsg('✅ تم تحقق رقمك بنجاح')
+    } catch(e) { setErr(e?.response?.data?.message || 'رمز خاطئ') }
+    setLoading(false)
+  }
+
+  // تسجيل جديد - الخطوة 3: اختيار القطاعات والإشعارات
+  const register = async () => {
     if (form.sectors.length === 0) { setErr('اختر قطاعاً واحداً على الأقل'); return }
     if (form.notifyBy.length === 0) { setErr('اختر طريقة إشعار واحدة على الأقل'); return }
     setLoading(true); setErr('')
@@ -142,16 +168,51 @@ export default function Subscribe() {
           </div>
         )}
 
-        {/* تسجيل جديد */}
+        {/* تسجيل جديد - الخطوة 1: البيانات الأساسية */}
         {mode === 'new' && step === 1 && (
           <div style={{background:'#fff',borderRadius:'16px',padding:'28px',boxShadow:'0 4px 16px rgba(44,62,107,0.08)'}}>
-            <h2 style={{color:'#2C3E6B',fontWeight:'800',margin:'0 0 20px',fontSize:'18px'}}>✨ تسجيل جديد</h2>
+            <h2 style={{color:'#2C3E6B',fontWeight:'800',margin:'0 0 8px',fontSize:'18px'}}>✨ تسجيل جديد</h2>
+            <p style={{color:'#888',fontSize:'13px',margin:'0 0 20px'}}>الخطوة 1 من 3: البيانات الأساسية</p>
             <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
               <div><label style={lbl}>الاسم الكامل *</label><input value={form.fullName} onChange={e=>set('fullName',e.target.value)} placeholder="الاسم والكنية" style={inp}/></div>
               <div><label style={lbl}>رقم الهاتف *</label><input value={form.phone} onChange={e=>set('phone',e.target.value)} placeholder="07xxxxxxxxx" style={{...inp,direction:'ltr'}}/></div>
               <div><label style={lbl}>رقم الواتساب</label><input value={form.whatsApp} onChange={e=>set('whatsApp',e.target.value)} placeholder="نفس الهاتف إذا فارغ" style={{...inp,direction:'ltr'}}/></div>
               <div><label style={lbl}>البريد الإلكتروني</label><input value={form.email} onChange={e=>set('email',e.target.value)} placeholder="email@example.com" style={{...inp,direction:'ltr'}}/></div>
 
+              {err && <div style={{background:'#fee2e2',color:'#dc2626',padding:'10px 14px',borderRadius:'10px',fontSize:'13px'}}>{err}</div>}
+              <button onClick={stepNewSubmit} disabled={loading}
+                style={{padding:'14px',borderRadius:'12px',background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'800',fontSize:'15px'}}>
+                {loading ? '⏳ جاري الإرسال...' : '➜ التالي: تحقق الهاتف'}
+              </button>
+              <button onClick={()=>setMode(null)} style={{padding:'10px',borderRadius:'10px',background:'none',border:'none',color:'#888',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'13px'}}>← رجوع</button>
+            </div>
+          </div>
+        )}
+
+        {/* تسجيل جديد - الخطوة 2: تحقق OTP */}
+        {mode === 'new' && step === 2 && (
+          <div style={{background:'#fff',borderRadius:'16px',padding:'28px',boxShadow:'0 4px 16px rgba(44,62,107,0.08)'}}>
+            <h2 style={{color:'#2C3E6B',fontWeight:'800',margin:'0 0 8px',fontSize:'18px'}}>📲 تحقق رقم الهاتف</h2>
+            <p style={{color:'#888',fontSize:'13px',margin:'0 0 8px'}}>الخطوة 2 من 3: تأكيد OTP</p>
+            {msg && <p style={{color:'#059669',fontSize:'13px',margin:'0 0 16px',background:'#f0fdf4',padding:'10px',borderRadius:'8px'}}>{msg}</p>}
+            <label style={lbl}>أدخل الرمز المرسل على {form.phone}</label>
+            <input value={otp} onChange={e=>setOtp(e.target.value)} placeholder="000000" style={{...inp,letterSpacing:'8px',textAlign:'center',fontSize:'20px',fontWeight:'800'}} maxLength={6}/>
+            {err && <div style={{background:'#fee2e2',color:'#dc2626',padding:'10px 14px',borderRadius:'10px',fontSize:'13px',marginTop:'12px'}}>{err}</div>}
+            <button onClick={stepNewVerifyOtp} disabled={loading} style={{width:'100%',marginTop:'16px',padding:'14px',borderRadius:'12px',background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'800',fontSize:'15px'}}>
+              {loading ? '⏳...' : '✅ التالي: اختر القطاعات'}
+            </button>
+            <button onClick={stepNewSubmit} disabled={loading} style={{width:'100%',marginTop:'8px',padding:'10px',borderRadius:'10px',background:'#f5f7fa',color:'#2C3E6B',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'13px'}}>
+              🔄 أرسل رمز جديد
+            </button>
+          </div>
+        )}
+
+        {/* تسجيل جديد - الخطوة 3: اختيار القطاعات والإشعارات */}
+        {mode === 'new' && step === 3 && (
+          <div style={{background:'#fff',borderRadius:'16px',padding:'28px',boxShadow:'0 4px 16px rgba(44,62,107,0.08)'}}>
+            <h2 style={{color:'#2C3E6B',fontWeight:'800',margin:'0 0 8px',fontSize:'18px'}}>🎯 اختر اهتماماتك</h2>
+            <p style={{color:'#888',fontSize:'13px',margin:'0 0 20px'}}>الخطوة 3 من 3: القطاعات وطرق الإشعار</p>
+            <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
               <div>
                 <label style={lbl}>القطاعات المهتم بها * <span style={{color:'#888',fontWeight:'400'}}>(اختر واحداً أو أكثر)</span></label>
                 <div style={{display:'flex',flexWrap:'wrap',gap:'8px'}}>
@@ -186,9 +247,8 @@ export default function Subscribe() {
               {err && <div style={{background:'#fee2e2',color:'#dc2626',padding:'10px 14px',borderRadius:'10px',fontSize:'13px'}}>{err}</div>}
               <button onClick={register} disabled={loading}
                 style={{padding:'14px',borderRadius:'12px',background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'800',fontSize:'15px'}}>
-                {loading ? '⏳ جاري التسجيل...' : '🔔 سجّل متابعاً'}
+                {loading ? '⏳ جاري التسجيل...' : '🎉 أكمل التسجيل'}
               </button>
-              <button onClick={()=>setMode(null)} style={{padding:'10px',borderRadius:'10px',background:'none',border:'none',color:'#888',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'13px'}}>← رجوع</button>
             </div>
           </div>
         )}
