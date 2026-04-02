@@ -141,6 +141,28 @@ public class NotificationService {
         }
     }
 
+    // إرسال صورة مع نص عبر UltraMsg
+    public async Task<bool> SendWhatsAppImage(string phone, string imageUrl, string caption) {
+        try {
+            var instance = _cfg["UltraMsg:Instance"] ?? "instance167281";
+            var token    = _cfg["UltraMsg:Token"] ?? "ilgqrh6v728bosrh";
+            var url = $"https://api.ultramsg.com/{instance}/messages/image";
+            using var http = new HttpClient();
+            var resp = await http.PostAsync(url, new FormUrlEncodedContent(new Dictionary<string,string>{
+                ["token"]   = token,
+                ["to"]      = NormalizeIraqiPhone(phone),
+                ["image"]   = imageUrl,
+                ["caption"] = caption
+            }));
+            var respBody = await resp.Content.ReadAsStringAsync();
+            _log.LogInformation("UltraMsg Image to {Phone}: {Status}", phone, resp.StatusCode);
+            return resp.IsSuccessStatusCode;
+        } catch (Exception ex) {
+            _log.LogError(ex, "UltraMsg Image send failed");
+            return false;
+        }
+    }
+
     public async Task<bool> SendTwilioSms(string phone, string otp) {
         try {
             var sid   = _cfg["Twilio:AccountSid"];

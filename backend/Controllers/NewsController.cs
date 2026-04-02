@@ -53,14 +53,28 @@ public class NewsController : ControllerBase {
   <p style='color:#aaa;font-size:11px;text-align:center;margin-top:10px'><a href='https://ficc.iq/subscribe' style='color:#4A6FA5'>إلغاء الاشتراك</a></p>
 </div>";
 
+                // صورة الخبر إذا موجودة
+                var imageUrl = "";
+                if (item.Images?.Count > 0)
+                    imageUrl = $"https://ficc.iq{item.Images[0]}";
+                else if (!string.IsNullOrEmpty(item.ImageUrl))
+                    imageUrl = item.ImageUrl.StartsWith("http") ? item.ImageUrl : $"https://ficc.iq{item.ImageUrl}";
+
+                var waCaption = $"🏛️ *اتحاد الغرف التجارية العراقية*\n\n📰 {item.Title}\n\n{(item.Body?.Length > 150 ? item.Body[..150] + "..." : item.Body)}\n\n🔗 {newsUrl}";
+                var smsMsg = $"اتحاد الغرف التجارية العراقية\n📰 {item.Title}\n{newsUrl}";
+
                 foreach (var sub in subscribers) {
                     var notifyBy = new System.Collections.Generic.List<string>();
                     try { notifyBy = System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.List<string>>(sub.NotifyBy ?? "[]") ?? new(); } catch {}
 
                     if (notifyBy.Contains("sms") && !string.IsNullOrEmpty(sub.Phone))
-                        await _notify.SendSmsText(sub.Phone, msg);
-                    if (notifyBy.Contains("whatsapp") && !string.IsNullOrEmpty(sub.WhatsApp))
-                        await _notify.SendSmsText(sub.WhatsApp, msg);
+                        await _notify.SendSmsText(sub.Phone, smsMsg);
+                    if (notifyBy.Contains("whatsapp") && !string.IsNullOrEmpty(sub.WhatsApp)) {
+                        if (!string.IsNullOrEmpty(imageUrl))
+                            await _notify.SendWhatsAppImage(sub.WhatsApp, imageUrl, waCaption);
+                        else
+                            await _notify.SendSmsText(sub.WhatsApp, waCaption);
+                    }
                     if (notifyBy.Contains("email") && !string.IsNullOrEmpty(sub.Email))
                         await _notify.SendEmail(sub.Email, $"📰 {item.Title} | اتحاد الغرف التجارية العراقية", htmlBody);
                 }
