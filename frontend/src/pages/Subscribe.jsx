@@ -25,7 +25,7 @@ function VerifiedField({ label, value, onChange, placeholder, isLtr, required, f
     setLoading(true); setErr('')
     try {
       await api.post(`${API}/subscribers/send-field-otp`, { field, value })
-      setShowOtp(true); setSent(true)
+      setShowOtp(true); setSent(true); setOtp('')
     } catch(e) { setErr(e?.response?.data?.message || 'حدث خطأ') }
     setLoading(false)
   }
@@ -122,7 +122,7 @@ export default function Subscribe() {
     setLoading(true); setErr('')
     try {
       await api.post(`${API}/subscribers/send-otp`, { phone: loginPhone })
-      setStep(2); setMsg('تم إرسال رمز التأكيد 📱')
+      setStep(2); setLoginOtp(''); setMsg('تم إرسال رمز التأكيد 📱')
     } catch(e) { setErr(e?.response?.data?.message || 'الرقم غير مسجّل') }
     setLoading(false)
   }
