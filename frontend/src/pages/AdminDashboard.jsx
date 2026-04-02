@@ -2531,6 +2531,7 @@ function SubscribersPanel() {
   const [editSub, setEditSub] = useState(null)
   const [otpMsg, setOtpMsg] = useState('')
   const [pageSize, setPageSize] = useState(20)
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
 
   const load = async (p=1, q='') => {
     setLoading(true)
@@ -2616,7 +2617,7 @@ function SubscribersPanel() {
       {loading ? <div style={{textAlign:'center',padding:'40px',color:'#888'}}>⏳ جاري التحميل...</div> : (
         <div>
           {/* Desktop: جدول */}
-          <div className="sub-table-wrap" style={{background:'#fff',borderRadius:'16px',overflow:'auto',boxShadow:'0 4px 16px rgba(44,62,107,0.08)'}}>
+          <div className="sub-table-wrap" style={{background:'#fff',borderRadius:'16px',overflow:'auto',boxShadow:'0 4px 16px rgba(44,62,107,0.08)',display:isMobile?'none':'block'}}>
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:'13px',minWidth:'700px'}}>
               <thead>
                 <tr style={{background:'#2C3E6B',color:'#fff'}}>
@@ -2660,7 +2661,7 @@ function SubscribersPanel() {
           </div>
 
           {/* Mobile: بطاقات */}
-          <div style={{display:'none'}} className="sub-cards-wrap">
+          <div className="sub-cards-wrap" style={{display:isMobile?'block':'none'}}>
             {items.map((s,i) => (
               <div key={s.id} style={{background:s.isActive===false?'#fff5f5':'#fff',borderRadius:'14px',padding:'16px',marginBottom:'10px',boxShadow:'0 2px 10px rgba(44,62,107,0.07)',border:'1px solid #eef0f7'}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'8px'}}>
