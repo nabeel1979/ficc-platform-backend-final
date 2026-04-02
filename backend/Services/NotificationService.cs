@@ -155,7 +155,7 @@ public class NotificationService {
             var body = $"اتحاد الغرف التجارية العراقية\nرمز التحقق: {otp}\nصالح 10 دقائق\nلا تشاركه مع أحد";
             var resp = await http.PostAsync(url, new FormUrlEncodedContent(new Dictionary<string,string>{
                 ["To"]   = NormalizeIraqiPhone(phone),
-                ["From"] = _cfg["Twilio:From"] ?? _cfg["Twilio__From"] ?? "IraqChamber",
+                ["From"] = _cfg["Twilio:From"] ?? _cfg["Twilio__From"] ?? "FICC-Iraq",
                 ["Body"] = body
             }));
             var respBody = await resp.Content.ReadAsStringAsync();
@@ -180,7 +180,7 @@ public class NotificationService {
             );
             var resp = await http.PostAsync(url, new FormUrlEncodedContent(new Dictionary<string,string>{
                 ["To"]   = NormalizeIraqiPhone(phone),
-                ["From"] = _cfg["Twilio:From"] ?? "IraqChamber",
+                ["From"] = _cfg["Twilio:From"] ?? "FICC-Iraq",
                 ["Body"] = message
             }));
             _log.LogInformation("SMS to {Phone}: {Status}", phone, resp.StatusCode);
