@@ -52,13 +52,13 @@ export default function TraderDirectory() {
           <input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&fetchTraders()}
             placeholder="🔍 ابحث بالاسم التجاري..."
             style={{flex:'2',minWidth:'180px',padding:'11px 16px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'14px',fontFamily:'Cairo,sans-serif',direction:'rtl',outline:'none'}}/>
-          <select value={bizType} onChange={e=>setBizType(e.target.value)} style={{flex:'1',minWidth:'130px',padding:'11px 14px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'14px',fontFamily:'Cairo,sans-serif',outline:'none',background:'#fff'}}>
-            <option value="">كل التصنيفات</option>
-            {['شركة','مكتب','محل تجاري','صيدلية','مستوصف','مطعم','فندق','مصنع','مؤسسة','وكالة','أخرى'].map(b=><option key={b} value={b}>{b}</option>)}
-          </select>
           <select value={cat} onChange={e=>setCat(e.target.value)} style={{flex:'1',minWidth:'140px',padding:'11px 14px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'14px',fontFamily:'Cairo,sans-serif',outline:'none',background:'#fff'}}>
-            <option value="">كل القطاعات</option>
-            {categories.map(c=><option key={c} value={c}>{c}</option>)}
+            <option value="">كل التصنيفات</option>
+            {['شركة ذات مسؤولية محدودة','شركة مساهمة','مؤسسة فردية','شركة تضامن','وكالة تجارية','فرع شركة أجنبية','تعاونية','أخرى'].map(c=><option key={c} value={c}>{c}</option>)}
+          </select>
+          <select value={bizType} onChange={e=>setBizType(e.target.value)} style={{flex:'1',minWidth:'140px',padding:'11px 14px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'14px',fontFamily:'Cairo,sans-serif',outline:'none',background:'#fff'}}>
+            <option value="">كل الأنشطة</option>
+            {['تجارة عامة','استيراد وتصدير','تجارة جملة','تجارة مفرد','مقاولات وإنشاءات','صناعة وتصنيع','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','أخرى'].map(b=><option key={b} value={b}>{b}</option>)}
           </select>
           <select value={gov} onChange={e=>setGov(e.target.value)} style={{flex:'1',minWidth:'130px',padding:'11px 14px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'14px',fontFamily:'Cairo,sans-serif',outline:'none',background:'#fff'}}>
             <option value="">كل المحافظات</option>
