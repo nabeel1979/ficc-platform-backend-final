@@ -1994,9 +1994,9 @@ function SystemConstantsPanel() {
   ]
 
   const [totalItems, setTotalItems] = useState(0)
-  const load = () => {
-    const params = { category: selected, pageSize: 1000 }
-    if (search.trim()) params.search = search.trim()
+  const load = (p = page, ps = pageSize, q = search) => {
+    const params = { category: selected, page: p, pageSize: ps }
+    if (q.trim()) params.search = q.trim()
     api.get(`${API}/constants`, { headers: authHdrs(), params }).then(r => {
       const data = r.data?.items || r.data || []
       setTotalItems(r.data?.total || data.length)
@@ -2004,8 +2004,9 @@ function SystemConstantsPanel() {
       setAll([])
     }).catch(()=>{})
   }
-  useEffect(() => { load() }, [selected])
-  useEffect(() => { if (search !== undefined) { setPage(1); load() } }, [search])
+  useEffect(() => { setPage(1); load(1, pageSize, search) }, [selected])
+  useEffect(() => { setPage(1); load(1, pageSize, search) }, [search])
+  useEffect(() => { load(page, pageSize, search) }, [page, pageSize])
 
   const save = async e => {
     e.preventDefault(); setMsg('')
@@ -2092,12 +2093,9 @@ function SystemConstantsPanel() {
               <span>#</span><span>القيمة</span><span>الترتيب</span><span>الحالة</span><span>إجراءات</span>
             </div>
             {items.length===0 ? <p style={{textAlign:'center',padding:36,color:'#999'}}>لا توجد عناصر</p> : (() => {
-              const filtered = items
-              const totalPages = Math.ceil(filtered.length / pageSize)
-              const paged = pageSize >= 1000 ? filtered : filtered.slice((page-1)*pageSize, page*pageSize)
+              const totalPages = Math.ceil(totalItems / pageSize)
               return (<>
-                {filtered.length === 0 && <p style={{textAlign:'center',padding:24,color:'#999'}}>لا توجد نتائج للبحث</p>}
-                {paged.map((item,i)=>(
+                {items.map((item,i)=>(
                   <div key={item.id} style={{ display:'grid',gridTemplateColumns:'36px 1fr 56px 70px 90px',padding:'10px 16px',borderBottom:'1px solid #f5f5f5',alignItems:'center',fontSize:13 }}>
                     <span style={{color:'#aaa'}}>{(page-1)*pageSize+i+1}</span>
                     <span style={{fontWeight:600,color:'#333'}}>{item.value}</span>
@@ -2112,18 +2110,12 @@ function SystemConstantsPanel() {
                   </div>
                 ))}
                 {totalPages > 1 && (
-                  <div style={{display:'flex',justifyContent:'center',alignItems:'center',gap:8,padding:'12px',borderTop:'1px solid #f0f0f0'}}>
-                    <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
-                      style={{padding:'6px 12px',borderRadius:8,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:13,fontFamily:'Cairo,sans-serif'}}>
-                      ← السابق
-                    </button>
-                    <span style={{fontSize:13,color:'#555',fontFamily:'Cairo,sans-serif'}}>
-                      صفحة {page} من {totalPages}
-                    </span>
-                    <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
-                      style={{padding:'6px 12px',borderRadius:8,border:'1px solid #dde3ed',background:page===totalPages?'#f5f5f5':'#fff',cursor:page===totalPages?'default':'pointer',fontSize:13,fontFamily:'Cairo,sans-serif'}}>
-                      التالي →
-                    </button>
+                  <div style={{display:'flex',justifyContent:'center',alignItems:'center',gap:6,padding:'12px',borderTop:'1px solid #f0f0f0',flexWrap:'wrap'}}>
+                    <button onClick={()=>setPage(1)} disabled={page===1} style={{padding:'5px 10px',borderRadius:7,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>««</button>
+                    <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1} style={{padding:'5px 10px',borderRadius:7,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>← السابق</button>
+                    <span style={{fontSize:12,color:'#555',fontFamily:'Cairo,sans-serif',padding:'0 6px'}}>{page} / {totalPages} ({totalItems} عنصر)</span>
+                    <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages} style={{padding:'5px 10px',borderRadius:7,border:'1px solid #dde3ed',background:page===totalPages?'#f5f5f5':'#fff',cursor:page===totalPages?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>التالي →</button>
+                    <button onClick={()=>setPage(totalPages)} disabled={page===totalPages} style={{padding:'5px 10px',borderRadius:7,border:'1px solid #dde3ed',background:page===totalPages?'#f5f5f5':'#fff',cursor:page===totalPages?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>»»</button>
                   </div>
                 )}
               </>)
