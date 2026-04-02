@@ -18,7 +18,7 @@ export default function TrackRequest() {
     setLoading(true); setError('')
     try {
       const normalized = phone.startsWith('07') ? '+964' + phone.slice(1) : phone
-      const res = await api.get(`/api/submissions/track?phone=${encodeURIComponent(normalized)}`)
+      const res = await api.get(`/submissions/track?phone=${encodeURIComponent(normalized)}`)
       setRequests(res.data)
       if (!res.data.length) setError('لم يتم العثور على طلبات بهذا الرقم')
     } catch {
