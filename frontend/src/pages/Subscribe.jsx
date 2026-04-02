@@ -47,8 +47,8 @@ function VerifiedField({ label, value, onChange, placeholder, isLtr, required, f
         <input value={value} onChange={e=>{onChange(e.target.value); onVerified(false); setShowOtp(false); setSent(false)}}
           placeholder={placeholder} disabled={verified}
           style={{...inp, flex:1, direction: isLtr?'ltr':'rtl', background: verified?'#f0fdf4':'#fff', borderColor: verified?'#86efac':'#dde3ed'}}/>
-        {!verified && (
-          <button type="button" onClick={sendOtp} disabled={loading || !value}
+        {!verified && value && value.trim().length >= 3 && (
+          <button type="button" onClick={sendOtp} disabled={loading}
             style={{padding:'11px 14px',borderRadius:'10px',background:sent?'#f0fdf4':'#2C3E6B',color:sent?'#16a34a':'#fff',border:sent?'1px solid #86efac':'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700',whiteSpace:'nowrap',flexShrink:0}}>
             {loading ? '⏳' : sent ? '🔄 إعادة إرسال' : '📲 تحقق'}
           </button>
