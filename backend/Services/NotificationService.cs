@@ -108,6 +108,17 @@ public class NotificationService {
 
     // Send OTP via Twilio Direct SMS (Alphanumeric Sender "FICC")
     // Works for Iraq +9647 — bypasses Verify geo-block
+        // تحويل رقم عراقي إلى صيغة دولية
+    private static string NormalizeIraqiPhone(string phone) {
+        phone = phone.Trim().Replace(" ", "").Replace("-", "");
+        if (phone.StartsWith("00964")) return "+" + phone.Substring(2);
+        if (phone.StartsWith("0964"))  return "+" + phone.Substring(1);
+        if (phone.StartsWith("+964"))  return phone;
+        if (phone.StartsWith("07"))    return "+964" + phone.Substring(1);
+        if (phone.StartsWith("7"))     return "+964" + phone;
+        return phone;
+    }
+
     public async Task<bool> SendTwilioSms(string phone, string otp) {
         try {
             var sid   = _cfg["Twilio:AccountSid"];
@@ -121,7 +132,7 @@ public class NotificationService {
             );
             var body = $"اتحاد الغرف التجارية العراقية\nرمز التحقق: {otp}\nصالح 10 دقائق\nلا تشاركه مع أحد";
             var resp = await http.PostAsync(url, new FormUrlEncodedContent(new Dictionary<string,string>{
-                ["To"]   = phone,
+                ["To"]   = NormalizeIraqiPhone(phone),
                 ["From"] = _cfg["Twilio:From"] ?? _cfg["Twilio__From"] ?? "IraqChamber",
                 ["Body"] = body
             }));
@@ -146,7 +157,7 @@ public class NotificationService {
                 "Basic", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"{sid}:{token}"))
             );
             var resp = await http.PostAsync(url, new FormUrlEncodedContent(new Dictionary<string,string>{
-                ["To"]   = phone,
+                ["To"]   = NormalizeIraqiPhone(phone),
                 ["From"] = _cfg["Twilio:From"] ?? "IraqChamber",
                 ["Body"] = message
             }));
