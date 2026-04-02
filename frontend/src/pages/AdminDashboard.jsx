@@ -901,9 +901,9 @@ const FIELDS = {
   traderdirectory: [
     {key:'tradeName',label:'الاسم التجاري',required:true},
     {key:'companyName',label:'اسم الشركة / المنشأة'},
-    {key:'businessType',label:'نوع النشاط التجاري',type:'select',constantsKey:'trader_business_type',options:['شركة','مكتب','محل تجاري','صيدلية','مستوصف','مطعم','فندق','مصنع','مؤسسة','وكالة','أخرى']},
     {key:'tradeCategory',label:'التصنيف التجاري',type:'select',constantsKey:'trader_classification',options:['تجارة عامة','استيراد وتصدير','مواد غذائية','مواد بناء','إلكترونيات وتقنية','ملابس وأزياء','أثاث ومفروشات','معدات وآليات','أدوية ومستلزمات طبية','مجوهرات وساعات','سيارات وقطع غيار','خدمات مالية','خدمات قانونية','خدمات هندسية','تعليم وتدريب','سياحة وسفر','مطاعم وفنادق','تشييد وبناء','طاقة وكهرباء','زراعة ومواد زراعية','أخرى']},
-    {key:'chamberName',label:'رقم العرفة / الغرفة التجارية',type:'chamberSelect'},
+    {key:'businessType',label:'النشاط',type:'select',constantsKey:'trader_business_type',options:['شركة','مكتب','محل تجاري','صيدلية','مستوصف','مطعم','فندق','مصنع','مؤسسة','وكالة','أخرى']},
+    {key:'chamberName',label:'الغرفة التجارية',type:'chamberSelect'},
     {key:'ownerName',label:'صاحب العمل'},
     {key:'governorate',label:'المحافظة',type:'select',options:govOptions},
     {key:'area',label:'المنطقة / الحي'},
@@ -1074,10 +1074,10 @@ export default function AdminDashboard() {
           ])} />
           <Route path="traders" element={T('traderdirectory','دليل التجار','🏢','تاجر',[
             {key:'tradeName',label:'الاسم التجاري'},
-            {key:'businessType',label:'نوع النشاط'},
-            {key:'tradeCategory',label:'التصنيف'},
+            {key:'tradeCategory',label:'التصنيف التجاري'},
+            {key:'businessType',label:'النشاط'},
+            {key:'chamberName',label:'الغرفة التجارية'},
             {key:'ownerName',label:'صاحب العمل'},
-            {key:'governorate',label:'المحافظة'},
             {key:'isVerified',label:'الحالة',render:v=>v?'✅ موثّق':'⏳ بانتظار'},
           ])} />
           <Route path="news" element={T('news','الأخبار','📰','خبر',[
