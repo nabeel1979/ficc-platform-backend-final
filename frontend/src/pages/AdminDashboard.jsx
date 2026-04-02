@@ -283,6 +283,52 @@ function ImagesField({ value, onChange, existingImages: initExisting, existingMa
 }
 
 /* ─── Field Renderer ─── */
+function AdminSearchableSelect({ options, value, onChange, base }) {
+  const [q, setQ] = React.useState('')
+  const [open, setOpen] = React.useState(false)
+  const filtered = q.trim() ? options.filter(o => o.toLowerCase().includes(q.toLowerCase())) : options
+  return (
+    <div style={{position:'relative',fontFamily:'Cairo,sans-serif',direction:'rtl'}}>
+      <div style={{...base,display:'flex',alignItems:'center',padding:0,overflow:'hidden',cursor:'pointer'}} onClick={()=>setOpen(o=>!o)}>
+        {value
+          ? <span style={{flex:1,padding:'10px 14px',fontSize:14,whiteSpace:'normal',wordBreak:'break-word',lineHeight:'1.6',color:'#222'}}>{value}</span>
+          : <span style={{flex:1,padding:'10px 14px',fontSize:14,color:'#aaa'}}>-- اختر أو اكتب --</span>
+        }
+        {value && <button type="button" onClick={e=>{e.stopPropagation();onChange('');setQ('')}} style={{padding:'8px',background:'none',border:'none',cursor:'pointer',color:'#888',fontSize:16}}>✕</button>}
+        <span style={{padding:'10px 10px',color:'#888',fontSize:11}}>▼</span>
+      </div>
+      {open && (
+        <div style={{position:'absolute',top:'100%',right:0,left:0,zIndex:9999,background:'#fff',border:'1px solid #dde3ed',borderRadius:10,boxShadow:'0 8px 24px rgba(0,0,0,0.12)',maxHeight:260,display:'flex',flexDirection:'column'}}>
+          <div style={{padding:'8px',borderBottom:'1px solid #eee',flexShrink:0}}>
+            <input value={q} onChange={e=>setQ(e.target.value)} placeholder="🔍 بحث..." autoFocus
+              style={{width:'100%',padding:'7px 10px',border:'1px solid #dde3ed',borderRadius:7,fontFamily:'Cairo,sans-serif',fontSize:13,boxSizing:'border-box',outline:'none'}} />
+          </div>
+          <div style={{overflowY:'auto'}}>
+            {q.trim() && !options.includes(q.trim()) && (
+              <div onMouseDown={()=>{onChange(q.trim());setQ('');setOpen(false)}}
+                style={{padding:'9px 14px',cursor:'pointer',fontSize:13,color:'#2C3E6B',fontWeight:700,borderBottom:'1px solid #f0f0f0',background:'#EEF2FF'}}>
+                ✏️ إضافة: "{q.trim()}"
+              </div>
+            )}
+            {filtered.length===0
+              ? <div style={{padding:12,color:'#999',textAlign:'center',fontSize:13}}>لا نتائج</div>
+              : filtered.map(o=>(
+                <div key={o} onMouseDown={()=>{onChange(o);setQ('');setOpen(false)}}
+                  style={{padding:'9px 14px',cursor:'pointer',fontSize:13,borderBottom:'1px solid #f5f5f5',whiteSpace:'normal',wordBreak:'break-word',lineHeight:'1.5'}}
+                  onMouseEnter={e=>e.currentTarget.style.background='#f0f4ff'}
+                  onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                  {o}
+                </div>
+              ))
+            }
+          </div>
+        </div>
+      )}
+      {open && <div style={{position:'fixed',inset:0,zIndex:9998}} onClick={()=>setOpen(false)}/>}
+    </div>
+  )
+}
+
 function OtpVerifyField({ field, value, onChange, onVerified }) {
   const [otp, setOtp] = React.useState('')
   const [sent, setSent] = React.useState(false)
@@ -392,14 +438,17 @@ function FormField({ field, value, onChange, onVerified }) {
     <input value={value||''} onChange={e=>onChange(e.target.value)} placeholder={field.placeholder||''}
       style={{width:'100%',padding:'10px 14px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'14px',fontFamily:'Cairo,sans-serif',direction:'rtl',outline:'none',background:'#FAFBFF',boxSizing:'border-box'}} />
   )
-  if (field.type === 'select') {
+  if (field.type === 'select' || field.type === 'searchable-select') {
     const opts = (field.constantsKey && _sysConstants[field.constantsKey]?.length)
-      ? _sysConstants[field.constantsKey]
-      : (field.options || [])
+      ? _sysConstants[field.constantsKey].map(o => o.v||o)
+      : (field.options || []).map(o => o.v||o)
+    if (field.type === 'searchable-select' || opts.length > 10) {
+      return <AdminSearchableSelect options={opts} value={value||''} onChange={onChange} base={base} />
+    }
     return (
       <select value={value||''} onChange={e=>onChange(e.target.value)} style={base}>
         <option value="">-- اختر --</option>
-        {opts.map(o => <option key={o.v||o} value={o.v||o}>{o.l||o}</option>)}
+        {opts.map(o => <option key={o} value={o}>{o}</option>)}
       </select>
     )
   }
@@ -912,8 +961,8 @@ const FIELDS = {
   ],
   traderdirectory: [
     {key:'tradeName',label:'الاسم التجاري',required:true},
-    {key:'businessType',label:'نوع النشاط التجاري',type:'select',constantsKey:'trader_business_type',options:['استيراد وتصدير','تجارة جملة','تجارة مفرد','مقاولات وإنشاءات','صناعة وتصنيع','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','أخرى']},
-    {key:'tradeCategory',label:'التصنيف التجاري',type:'select',constantsKey:'trader_classification',options:['شركة ذات مسؤولية محدودة','شركة مساهمة','مؤسسة فردية','شركة تضامن','وكالة تجارية','فرع شركة أجنبية','تعاونية','أخرى']},
+    {key:'businessType',label:'نوع النشاط التجاري',type:'searchable-select',constantsKey:'trader_business_type',options:['استيراد وتصدير','تجارة جملة','تجارة مفرد','مقاولات وإنشاءات','صناعة وتصنيع','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','أخرى']},
+    {key:'tradeCategory',label:'التصنيف التجاري',type:'searchable-select',constantsKey:'trader_classification',options:['شركة ذات مسؤولية محدودة','شركة مساهمة','مؤسسة فردية','شركة تضامن','وكالة تجارية','فرع شركة أجنبية','تعاونية','أخرى']},
     {key:'chamberName',label:'الغرفة التجارية',type:'chamberSelect'},
     {key:'ownerName',label:'صاحب العمل'},
     {key:'governorate',label:'المحافظة',type:'select',options:govOptions},
