@@ -2185,23 +2185,33 @@ function SecurityPanel() {
       {/* حجب يدوي */}
       <div style={{background:'white',borderRadius:'14px',padding:'16px',marginBottom:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
         <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px',marginBottom:'12px'}}>➕ حجب يدوي</div>
-        <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-          <div style={{flex:1,minWidth:'200px',position:'relative'}}>
-            <input value={blockForm.contact} onChange={e=>setBlockForm(p=>({...p,contact:e.target.value}))}
-              placeholder="إيميل أو رقم هاتف"
-              style={{width:'100%',padding:'10px 12px',border:`1.5px solid ${blockForm.contact?(blockForm.contact.includes('@')?'#4f46e5':'#16a34a'):'#e2e8f0'}`,borderRadius:'10px',fontSize:'13px',fontFamily:'Cairo,sans-serif'}} />
-            {blockForm.contact && (
-              <span style={{position:'absolute',left:'10px',top:'50%',transform:'translateY(-50%)',fontSize:'11px',fontWeight:'700',
-                color:blockForm.contact.includes('@')?'#4f46e5':'#16a34a',background:'#fff',padding:'0 4px'}}>
-                {blockForm.contact.includes('@')?'📧 إيميل':'📱 هاتف'}
-              </span>
-            )}
-          </div>
-          <button onClick={blockManual}
-            style={{padding:'10px 20px',background:'#dc2626',color:'white',border:'none',borderRadius:'10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'13px'}}>
-            🚫 حجب
-          </button>
-        </div>
+        {(() => {
+          const v = blockForm.contact.trim()
+          const isEmail = v.includes('@') && v.includes('.')
+          const isPhone = /^[\d\+\-\s\(\)]{7,}$/.test(v)
+          const isValid = isEmail || isPhone
+          const hint = !v ? '' : isEmail ? '📧 إيميل' : isPhone ? '📱 هاتف' : '❌ غير صحيح'
+          const hintColor = !v ? '' : isValid ? (isEmail ? '#4f46e5' : '#16a34a') : '#dc2626'
+          const borderColor = !v ? '#e2e8f0' : isValid ? hintColor : '#dc2626'
+          return (
+            <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+              <div style={{flex:1,minWidth:'200px',position:'relative'}}>
+                <input value={blockForm.contact} onChange={e=>setBlockForm(p=>({...p,contact:e.target.value}))}
+                  placeholder="إيميل أو رقم هاتف"
+                  style={{width:'100%',padding:'10px 12px',border:`1.5px solid ${borderColor}`,borderRadius:'10px',fontSize:'13px',fontFamily:'Cairo,sans-serif',outline:'none'}} />
+                {v && (
+                  <span style={{position:'absolute',left:'10px',top:'50%',transform:'translateY(-50%)',fontSize:'11px',fontWeight:'700',color:hintColor,background:'#fff',padding:'0 4px'}}>
+                    {hint}
+                  </span>
+                )}
+              </div>
+              <button onClick={blockManual} disabled={!isValid}
+                style={{padding:'10px 20px',background:isValid?'#dc2626':'#ccc',color:'white',border:'none',borderRadius:'10px',cursor:isValid?'pointer':'not-allowed',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'13px',transition:'background 0.2s'}}>
+                🚫 حجب
+              </button>
+            </div>
+          )
+        })()}
       </div>
 
       {/* قائمة المحجوبين */}
