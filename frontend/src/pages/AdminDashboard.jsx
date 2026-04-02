@@ -2704,7 +2704,6 @@ function SubscribersPanel() {
                     <td style={{padding:'10px 16px',textAlign:'center',whiteSpace:'nowrap'}}>
                       {btn(s.isActive!==false?'⏸️ إيقاف':'▶️ تفعيل',()=>toggleActive(s),s.isActive!==false?'#fff8e7':'#f0fdf4',s.isActive!==false?'#b45309':'#16a34a')}
                       {btn('✏️ تعديل',()=>setEditSub({...s}),'#EEF2FF','#4338ca')}
-                      {btn('📲 OTP',()=>resendOtp(s),'#f0fdf4','#16a34a')}
                       {btn('🗑️',()=>del(s.id),'#fee2e2','#dc2626')}
                     </td>
                   </tr>
@@ -2735,7 +2734,6 @@ function SubscribersPanel() {
                 <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
                   {btn(s.isActive!==false?'⏸️ إيقاف':'▶️ تفعيل',()=>toggleActive(s),s.isActive!==false?'#fff8e7':'#f0fdf4',s.isActive!==false?'#b45309':'#16a34a')}
                   {btn('✏️ تعديل',()=>setEditSub({...s}),'#EEF2FF','#4338ca')}
-                  {btn('📲 OTP',()=>resendOtp(s),'#f0fdf4','#16a34a')}
                   {btn('🗑️ حذف',()=>del(s.id),'#fee2e2','#dc2626')}
                 </div>
               </div>
