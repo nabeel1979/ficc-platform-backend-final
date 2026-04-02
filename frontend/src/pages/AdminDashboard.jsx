@@ -1092,15 +1092,18 @@ export default function AdminDashboard() {
   const logout = () => { localStorage.removeItem('ficc_token'); localStorage.removeItem('ficc_user'); navigate('/login') }
 
   useEffect(() => {
-    api.get(`${API}/constants`).then(r => {
+    // جيب الثوابت لكل تصنيف منفصلاً (بدون pagination)
+    const cats = ['trader_business_type','trader_classification','news_category','news_type','trader_sector']
+    Promise.all(cats.map(cat =>
+      api.get(`${API}/constants/${cat}`).then(r => ({ cat, items: r.data || [] })).catch(() => ({ cat, items: [] }))
+    )).then(results => {
       const grouped = {}
-      r.data.forEach(item => {
-        if (!grouped[item.category]) grouped[item.category] = []
-        grouped[item.category].push(item.label || item.value)
+      results.forEach(({ cat, items }) => {
+        grouped[cat] = items.map(i => i.label || i.value)
       })
       _sysConstants = grouped
       setConstants(grouped)
-    }).catch(() => {})
+    })
   }, [])
 
   // ── Auth Guard ──
