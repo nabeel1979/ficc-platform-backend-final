@@ -2030,6 +2030,9 @@ function SecurityPanel() {
   const [filter, setFilter] = React.useState('active')
   const [blockForm, setBlockForm] = React.useState({ contact: '', channel: 'email' })
   const [msg, setMsg] = React.useState('')
+  const [search, setSearch] = React.useState('')
+  const [pageSize, setPageSize] = React.useState(10)
+  const [page, setPage] = React.useState(1)
 
   const load = async () => {
     setLoading(true)
@@ -2108,9 +2111,9 @@ function SecurityPanel() {
         </button>
       </div>
 
-      {/* Stats */}
+      {/* Stats — compact row */}
       {stats && (
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:'12px',marginBottom:'20px'}}>
+        <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
           {[
             ['🚫', 'محجوب حالياً', stats.totalBlocked, '#dc2626'],
             ['⚠️', 'محجوب اليوم', stats.blockedToday, '#f59e0b'],
@@ -2118,10 +2121,10 @@ function SecurityPanel() {
             ['⏱️', 'فشل آخر ساعة', stats.failedLastHour, '#f97316'],
             ['✅', 'نجاح 24 ساعة', stats.successLast24h, '#10b981'],
           ].map(([icon, label, val, color]) => (
-            <div key={label} style={{background:'white',borderRadius:'12px',padding:'14px',textAlign:'center',boxShadow:'0 2px 8px rgba(0,0,0,0.06)',border:'1px solid #e2e8f0'}}>
-              <div style={{fontSize:'22px'}}>{icon}</div>
-              <div style={{fontSize:'24px',fontWeight:'800',color}}>{val}</div>
-              <div style={{fontSize:'11px',color:'#94a3b8'}}>{label}</div>
+            <div key={label} style={{background:'white',borderRadius:'10px',padding:'8px 14px',display:'flex',alignItems:'center',gap:'6px',boxShadow:'0 1px 6px rgba(0,0,0,0.06)',border:'1px solid #e2e8f0',flexShrink:0}}>
+              <span style={{fontSize:'14px'}}>{icon}</span>
+              <span style={{fontSize:'18px',fontWeight:'800',color}}>{val}</span>
+              <span style={{fontSize:'11px',color:'#94a3b8'}}>{label}</span>
             </div>
           ))}
         </div>
@@ -2203,11 +2206,17 @@ function SecurityPanel() {
 
       {/* قائمة المحجوبين */}
       <div style={{background:'white',borderRadius:'14px',padding:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px',flexWrap:'wrap',gap:8}}>
           <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px'}}>📋 الجهات المحجوبة</div>
-          <div style={{display:'flex',gap:'8px'}}>
+          <div style={{display:'flex',gap:'8px',flexWrap:'wrap',alignItems:'center'}}>
+            <input value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}} placeholder="🔍 بحث..."
+              style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',fontSize:'12px',fontFamily:'Cairo,sans-serif',outline:'none',minWidth:'150px'}} />
+            <select value={pageSize} onChange={e=>{setPageSize(+e.target.value);setPage(1)}}
+              style={{padding:'6px 10px',borderRadius:'8px',border:'1px solid #dde3ed',fontSize:'12px',fontFamily:'Cairo,sans-serif',background:'#fff',cursor:'pointer'}}>
+              {[10,50,100,1000].map(n=><option key={n} value={n}>{n}</option>)}
+            </select>
             {['active','all'].map(f => (
-              <button key={f} onClick={()=>setFilter(f)}
+              <button key={f} onClick={()=>{setFilter(f);setPage(1)}}
                 style={{padding:'6px 14px',borderRadius:'8px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'12px',
                   background:filter===f?'#2C3E6B':'#f1f5f9',color:filter===f?'white':'#475569'}}>
                 {f==='active'?'النشطة':'الكل'}
@@ -2220,10 +2229,16 @@ function SecurityPanel() {
           <div style={{textAlign:'center',padding:'40px'}}><div className="ficc-spinner"></div></div>
         ) : blocked.length === 0 ? (
           <div style={{textAlign:'center',padding:'40px',color:'#94a3b8',fontSize:'14px'}}>✅ لا توجد جهات محجوبة</div>
-        ) : (
+        ) : (() => {
+          const filteredBlocked = search.trim() ? blocked.filter(b => b.contact?.includes(search)) : blocked
+          const totalPagesB = Math.ceil(filteredBlocked.length / pageSize)
+          const pagedBlocked = pageSize >= 1000 ? filteredBlocked : filteredBlocked.slice((page-1)*pageSize, page*pageSize)
+          return (<>
           <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-            {blocked.map(b => (
+            {pagedBlocked.length === 0 && <div style={{textAlign:'center',padding:'24px',color:'#94a3b8'}}>لا توجد نتائج</div>}
+            {pagedBlocked.map((b, idx) => (
               <div key={b.id} style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px',borderRadius:'10px',background:b.isActive?'#FEF2F2':'#F8FAFC',border:`1px solid ${b.isActive?'#fecaca':'#e2e8f0'}`}}>
+                <span style={{color:'#aaa',fontSize:'11px',minWidth:'20px'}}>#{(page-1)*pageSize+idx+1}</span>
                 <div style={{flex:1}}>
                   <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}}>
                     <span style={{background:channelBg[b.channel],color:channelColor[b.channel],padding:'2px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}>
@@ -2245,7 +2260,17 @@ function SecurityPanel() {
               </div>
             ))}
           </div>
-        )}
+          {totalPagesB > 1 && (
+            <div style={{display:'flex',justifyContent:'center',gap:6,marginTop:10}}>
+              <button onClick={()=>setPage(1)} disabled={page===1} style={{padding:'4px 9px',borderRadius:7,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:12}}>««</button>
+              <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1} style={{padding:'4px 9px',borderRadius:7,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>← السابق</button>
+              <span style={{fontSize:12,color:'#555',padding:'0 6px',alignSelf:'center'}}>{page} / {totalPagesB}</span>
+              <button onClick={()=>setPage(p=>Math.min(totalPagesB,p+1))} disabled={page===totalPagesB} style={{padding:'4px 9px',borderRadius:7,border:'1px solid #dde3ed',background:page===totalPagesB?'#f5f5f5':'#fff',cursor:page===totalPagesB?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>التالي →</button>
+              <button onClick={()=>setPage(totalPagesB)} disabled={page===totalPagesB} style={{padding:'4px 9px',borderRadius:7,border:'1px solid #dde3ed',background:page===totalPagesB?'#f5f5f5':'#fff',cursor:page===totalPagesB?'default':'pointer',fontSize:12}}>»»</button>
+            </div>
+          )}
+          </>)
+        })()}
       </div>
     </div>
   )
