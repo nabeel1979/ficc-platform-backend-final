@@ -900,8 +900,8 @@ const FIELDS = {
   ],
   traderdirectory: [
     {key:'tradeName',label:'الاسم التجاري',required:true},
-    {key:'tradeCategory',label:'التصنيف التجاري',type:'select',constantsKey:'trader_classification',options:['تجارة عامة','استيراد وتصدير','مواد غذائية','مواد بناء','إلكترونيات وتقنية','ملابس وأزياء','أثاث ومفروشات','معدات وآليات','أدوية ومستلزمات طبية','مجوهرات وساعات','سيارات وقطع غيار','خدمات مالية','خدمات قانونية','خدمات هندسية','تعليم وتدريب','سياحة وسفر','مطاعم وفنادق','تشييد وبناء','طاقة وكهرباء','زراعة ومواد زراعية','أخرى']},
-    {key:'businessType',label:'النشاط',type:'select',constantsKey:'trader_business_type',options:['شركة','مكتب','محل تجاري','صيدلية','مستوصف','مطعم','فندق','مصنع','مؤسسة','وكالة','أخرى']},
+    {key:'businessType',label:'نوع النشاط التجاري',type:'select',constantsKey:'trader_business_type',options:['استيراد وتصدير','تجارة جملة','تجارة مفرد','مقاولات وإنشاءات','صناعة وتصنيع','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','أخرى']},
+    {key:'tradeCategory',label:'التصنيف التجاري',type:'select',constantsKey:'trader_classification',options:['شركة ذات مسؤولية محدودة','شركة مساهمة','مؤسسة فردية','شركة تضامن','وكالة تجارية','فرع شركة أجنبية','تعاونية','أخرى']},
     {key:'chamberName',label:'الغرفة التجارية',type:'chamberSelect'},
     {key:'ownerName',label:'صاحب العمل'},
     {key:'governorate',label:'المحافظة',type:'select',options:govOptions},
@@ -1073,8 +1073,8 @@ export default function AdminDashboard() {
           ])} />
           <Route path="traders" element={T('traderdirectory','دليل التجار','🏢','تاجر',[
             {key:'tradeName',label:'الاسم التجاري'},
-            {key:'tradeCategory',label:'التصنيف التجاري'},
-            {key:'businessType',label:'النشاط'},
+            {key:'businessType',label:'نوع النشاط'},
+            {key:'tradeCategory',label:'التصنيف'},
             {key:'chamberName',label:'الغرفة التجارية'},
             {key:'ownerName',label:'صاحب العمل'},
             {key:'isVerified',label:'الحالة',render:v=>v?'✅ موثّق':'⏳ بانتظار'},
