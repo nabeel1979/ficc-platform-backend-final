@@ -38,9 +38,8 @@ export default function Subscribe() {
     if (!form.fullName || !form.phone) { setErr('الاسم ورقم الهاتف مطلوبان'); return }
     setLoading(true); setErr(''); setMsg('')
     try {
-      await api.post(`${API}/subscribers/send-otp`, { phone: form.phone })
-      setStep(2)
-      setOtp('')
+      await api.post(`${API}/subscribers/send-otp-new`, { phone: form.phone })
+      setStep(2); setOtp('')
       setMsg('تم إرسال رمز التأكيد على رقمك 📱')
     } catch(e) { setErr(e?.response?.data?.message || 'حدث خطأ') }
     setLoading(false)
@@ -51,9 +50,8 @@ export default function Subscribe() {
     if (!otp) { setErr('أدخل رمز التأكيد'); return }
     setLoading(true); setErr('')
     try {
-      await api.post(`${API}/subscribers/verify-otp`, { phone: form.phone, code: otp })
-      setOtpVerified(true)
-      setStep(3)
+      await api.post(`${API}/subscribers/verify-otp-new`, { phone: form.phone, code: otp })
+      setOtpVerified(true); setStep(3)
       setMsg('✅ تم تحقق رقمك بنجاح')
     } catch(e) { setErr(e?.response?.data?.message || 'رمز خاطئ') }
     setLoading(false)

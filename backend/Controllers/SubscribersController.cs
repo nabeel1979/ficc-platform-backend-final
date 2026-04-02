@@ -39,7 +39,43 @@ public class SubscribersController : ControllerBase {
         return Ok(new { id = sub.Id, message = "تم التسجيل بنجاح!" });
     }
 
-    // POST /api/subscribers/send-otp — إرسال OTP للمتابع
+    // POST /api/subscribers/send-otp-new — إرسال OTP للتسجيل الجديد (قبل إنشاء الحساب)
+    [HttpPost("send-otp-new")]
+    public async Task<IActionResult> SendOtpNew([FromBody] PhoneDto dto) {
+        if (string.IsNullOrEmpty(dto.Phone)) return BadRequest(new { message = "رقم الهاتف مطلوب" });
+        var existing = await _db.Subscribers.FirstOrDefaultAsync(s => s.Phone == dto.Phone);
+        if (existing != null) return BadRequest(new { message = "هذا الرقم مسجّل مسبقاً" });
+
+        var otp = new string(System.Linq.Enumerable.Repeat("0123456789", 6)
+            .Select(s => s[new Random().Next(s.Length)]).ToArray());
+
+        // نخزّن الـ OTP بـ UserId=0 والهاتف بـ IpAddress للتمييز
+        var old = await _db.OtpCodes.FirstOrDefaultAsync(o => o.UserId == 0 && o.Type == "subscriber-new" && o.IpAddress == dto.Phone && o.UsedAt == null);
+        if (old != null) _db.OtpCodes.Remove(old);
+
+        _db.OtpCodes.Add(new OtpCode {
+            UserId = 0, Code = otp, Channel = "sms",
+            Type = "subscriber-new", IpAddress = dto.Phone,
+            CreatedAt = DateTime.UtcNow, ExpiresAt = DateTime.UtcNow.AddMinutes(10)
+        });
+        await _db.SaveChangesAsync();
+        await _notify.SendTwilioSms(dto.Phone, otp);
+        return Ok(new { message = "تم إرسال رمز التأكيد" });
+    }
+
+    // POST /api/subscribers/verify-otp-new — تحقق OTP للتسجيل الجديد
+    [HttpPost("verify-otp-new")]
+    public async Task<IActionResult> VerifyOtpNew([FromBody] VerifyOtpDto dto) {
+        var otpRecord = await _db.OtpCodes.FirstOrDefaultAsync(o =>
+            o.UserId == 0 && o.Code == dto.Code && o.Type == "subscriber-new" &&
+            o.IpAddress == dto.Phone && o.UsedAt == null && o.ExpiresAt > DateTime.UtcNow);
+        if (otpRecord == null) return BadRequest(new { message = "رمز غير صحيح أو منتهي الصلاحية" });
+        otpRecord.UsedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        return Ok(new { message = "تم التحقق بنجاح" });
+    }
+
+    // POST /api/subscribers/send-otp — إرسال OTP للمتابع المسجّل سابقاً
     [HttpPost("send-otp")]
     public async Task<IActionResult> SendOtp([FromBody] PhoneDto dto) {
         var sub = await _db.Subscribers.FirstOrDefaultAsync(s => s.Phone == dto.Phone);
