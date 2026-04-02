@@ -20,10 +20,37 @@ public class NotificationService {
             return await SendViaBrevo(toEmail, subject, body, brevoKey);
         }
 
-        // Try ZeptoMail HTTP API
+        // Try ZeptoMail HTTP API + Zoho SMTP fallback
         var zeptoKey = _cfg["ZeptoMail:ApiKey"];
         if (!string.IsNullOrEmpty(zeptoKey)) {
-            return await SendViaZeptoMail(toEmail, subject, body, zeptoKey);
+            var sent = await SendViaZeptoMail(toEmail, subject, body, zeptoKey);
+            if (sent) return true;
+            // fallback to Zoho SMTP if ZeptoMail fails
+        }
+
+        // Zoho SMTP fallback
+        var zohoUser = _cfg["Zoho:Username"] ?? _cfg["Email:Username"];
+        var zohoPass = _cfg["Zoho:Password"] ?? _cfg["Email:Password"];
+        if (!string.IsNullOrEmpty(zohoUser) && !string.IsNullOrEmpty(zohoPass)) {
+            try {
+                using var client = new SmtpClient("smtp.zoho.com", 587) {
+                    EnableSsl = true,
+                    Credentials = new NetworkCredential(zohoUser, zohoPass)
+                };
+                var fromName = _cfg["ZeptoMail:FromName"] ?? "اتحاد الغرف التجارية العراقية";
+                var msg = new MailMessage {
+                    From = new MailAddress(zohoUser, fromName),
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = true
+                };
+                msg.To.Add(toEmail);
+                await client.SendMailAsync(msg);
+                _log.LogInformation("Zoho SMTP sent to {Email}", toEmail);
+                return true;
+            } catch (Exception ex) {
+                _log.LogError(ex, "Zoho SMTP failed");
+            }
         }
 
         // Fallback: SMTP (may be blocked on some hosts)

@@ -19,6 +19,7 @@ const NAV = [
   { to: '/admin/shipping',   label: 'شركات الشحن',    icon: '🚢' },
   { to: '/admin/users',       label: 'المستخدمين',       icon: '🔑' },
   { to: '/admin/submissions', label: 'طلبات الإضافة',   icon: '📬' },
+  { to: '/admin/subscribers', label: 'المتابعون',         icon: '🔔' },
   { to: '/admin/startups',   label: 'ريادة الأعمال',   icon: '🚀' },
   { to: '/admin/constants',  label: 'ثوابت النظام',    icon: '⚙️' },
   { to: '/admin/security',   label: 'إدارة الأمان',    icon: '🔒' },
@@ -1216,6 +1217,7 @@ export default function AdminDashboard() {
           ])} />
           <Route path="submissions" element={<SubmissionsPanel />} />
           <Route path="contacts" element={<ContactsPanel />} />
+          <Route path="subscribers" element={<SubscribersPanel />} />
           <Route path="startups" element={<StartupsAdminPanel />} />
           <Route path="constants" element={<SystemConstantsPanel />} />
           <Route path="security" element={isSuperAdmin ? <SecurityPanel /> : <div style={{padding:'40px',textAlign:'center',color:'#dc2626',fontSize:'18px',fontWeight:'700'}}>⛔ غير مصرّح لك بالوصول</div>} />
@@ -2513,6 +2515,104 @@ function StartupsAdminPanel() {
               )}
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ─── Subscribers Panel ─── */
+function SubscribersPanel() {
+  const [items, setItems] = useState([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [loading, setLoading] = useState(false)
+  const pageSize = 20
+
+  const load = async (p=1, q='') => {
+    setLoading(true)
+    try {
+      const r = await api.get(`${API}/subscribers`, { params: { page: p, pageSize, search: q } })
+      setItems(r.data.items || [])
+      setTotal(r.data.total || 0)
+    } catch(e) { console.error(e) }
+    setLoading(false)
+  }
+
+  useEffect(() => { load(1, search) }, [])
+
+  const del = async (id) => {
+    if (!window.confirm('هل تريد حذف هذا المتابع؟')) return
+    await api.delete(`${API}/subscribers/${id}`)
+    load(page, search)
+  }
+
+  const notifyLabel = (nb) => {
+    try {
+      const arr = JSON.parse(nb || '[]')
+      return arr.map(n => n === 'whatsapp' ? '💬' : n === 'sms' ? '📱' : n === 'email' ? '📧' : n).join(' ')
+    } catch { return nb || '' }
+  }
+
+  const sectorsLabel = (s) => {
+    try { return JSON.parse(s || '[]').join('، ') } catch { return s || '' }
+  }
+
+  return (
+    <div style={{padding:'24px',fontFamily:'Cairo,sans-serif',direction:'rtl'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'20px',flexWrap:'wrap',gap:'12px'}}>
+        <h2 style={{color:'#2C3E6B',fontWeight:'900',fontSize:'20px',margin:0}}>🔔 المتابعون ({total})</h2>
+        <input value={search} onChange={e=>{setSearch(e.target.value); load(1, e.target.value)}}
+          placeholder="بحث بالاسم أو الهاتف..."
+          style={{padding:'9px 14px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'14px',fontFamily:'Cairo,sans-serif',width:'240px',outline:'none'}}/>
+      </div>
+
+      {loading ? <div style={{textAlign:'center',padding:'40px',color:'#888'}}>⏳ جاري التحميل...</div> : (
+        <div style={{background:'#fff',borderRadius:'16px',overflow:'hidden',boxShadow:'0 4px 16px rgba(44,62,107,0.08)'}}>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:'13px'}}>
+            <thead>
+              <tr style={{background:'#2C3E6B',color:'#fff'}}>
+                <th style={{padding:'12px 16px',textAlign:'right'}}>#</th>
+                <th style={{padding:'12px 16px',textAlign:'right'}}>الاسم</th>
+                <th style={{padding:'12px 16px',textAlign:'right'}}>الهاتف</th>
+                <th style={{padding:'12px 16px',textAlign:'right'}}>واتساب</th>
+                <th style={{padding:'12px 16px',textAlign:'right'}}>البريد</th>
+                <th style={{padding:'12px 16px',textAlign:'right'}}>الإشعار</th>
+                <th style={{padding:'12px 16px',textAlign:'right'}}>القطاعات</th>
+                <th style={{padding:'12px 16px',textAlign:'right'}}>التاريخ</th>
+                <th style={{padding:'12px 16px',textAlign:'center'}}>حذف</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((s,i) => (
+                <tr key={s.id} style={{borderBottom:'1px solid #f0f2f7',background:i%2===0?'#fff':'#fafbff'}}>
+                  <td style={{padding:'10px 16px',color:'#888'}}>{(page-1)*pageSize + i + 1}</td>
+                  <td style={{padding:'10px 16px',fontWeight:'700',color:'#2C3E6B'}}>{s.fullName}</td>
+                  <td style={{padding:'10px 16px',direction:'ltr'}}>{s.phone}</td>
+                  <td style={{padding:'10px 16px',direction:'ltr'}}>{s.whatsApp}</td>
+                  <td style={{padding:'10px 16px',fontSize:'12px',color:'#666'}}>{s.email || '—'}</td>
+                  <td style={{padding:'10px 16px',textAlign:'center'}}>{notifyLabel(s.notifyBy)}</td>
+                  <td style={{padding:'10px 16px',fontSize:'12px',color:'#555',maxWidth:'200px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{sectorsLabel(s.sectors) || '—'}</td>
+                  <td style={{padding:'10px 16px',fontSize:'12px',color:'#888'}}>{new Date(s.createdAt).toLocaleDateString('ar-IQ')}</td>
+                  <td style={{padding:'10px 16px',textAlign:'center'}}>
+                    <button onClick={()=>del(s.id)} style={{background:'#fee2e2',color:'#dc2626',border:'none',borderRadius:'8px',padding:'5px 10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px'}}>🗑️</button>
+                  </td>
+                </tr>
+              ))}
+              {items.length === 0 && <tr><td colSpan={9} style={{padding:'40px',textAlign:'center',color:'#aaa'}}>لا يوجد متابعون</td></tr>}
+            </tbody>
+          </table>
+
+          {total > pageSize && (
+            <div style={{padding:'16px',display:'flex',gap:'8px',justifyContent:'center',alignItems:'center'}}>
+              <button onClick={()=>{setPage(1);load(1,search)}} disabled={page===1} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',background:page===1?'#f5f7fa':'#fff',cursor:page===1?'default':'pointer',fontFamily:'Cairo,sans-serif'}}>««</button>
+              <button onClick={()=>{setPage(p=>p-1);load(page-1,search)}} disabled={page===1} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',background:page===1?'#f5f7fa':'#fff',cursor:page===1?'default':'pointer',fontFamily:'Cairo,sans-serif'}}>‹</button>
+              <span style={{fontSize:'13px',color:'#666'}}>صفحة {page} من {Math.ceil(total/pageSize)}</span>
+              <button onClick={()=>{setPage(p=>p+1);load(page+1,search)}} disabled={page>=Math.ceil(total/pageSize)} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}>›</button>
+              <button onClick={()=>{const last=Math.ceil(total/pageSize);setPage(last);load(last,search)}} disabled={page>=Math.ceil(total/pageSize)} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}> »»</button>
+            </div>
+          )}
         </div>
       )}
     </div>
