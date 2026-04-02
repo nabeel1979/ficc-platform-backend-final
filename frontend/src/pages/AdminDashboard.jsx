@@ -1993,9 +1993,19 @@ function SystemConstantsPanel() {
     { key: 'news_category',         label: '🗂️ فئة الخبر',       section: 'الأخبار' },
   ]
 
-  const load = () => api.get(`${API}/constants`, { headers: authHdrs() }).then(r => { setAll(r.data); setItems(r.data.filter(i => i.category === selected)) }).catch(()=>{})
-  useEffect(() => { load() }, [])
-  useEffect(() => { setItems(all.filter(i => i.category === selected)); setShowForm(false); setEditing(null); setPage(1); setSearch('') }, [selected, all])
+  const [totalItems, setTotalItems] = useState(0)
+  const load = () => {
+    const params = { category: selected, pageSize: 1000 }
+    if (search.trim()) params.search = search.trim()
+    api.get(`${API}/constants`, { headers: authHdrs(), params }).then(r => {
+      const data = r.data?.items || r.data || []
+      setTotalItems(r.data?.total || data.length)
+      setItems(Array.isArray(data) ? data : [])
+      setAll([])
+    }).catch(()=>{})
+  }
+  useEffect(() => { load() }, [selected])
+  useEffect(() => { if (search !== undefined) { setPage(1); load() } }, [search])
 
   const save = async e => {
     e.preventDefault(); setMsg('')
@@ -2040,9 +2050,9 @@ function SystemConstantsPanel() {
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
-            <h3 style={{ margin: 0, color: '#2C3E6B', fontSize: 16 }}>{CATS.find(c=>c.key===selected)?.label} <span style={{color:'#888',fontSize:12,fontWeight:400}}>({items.length} عنصر{search && ` — ${items.filter(i=>i.value?.includes(search)||i.label?.includes(search)).length} نتيجة`})</span></h3>
+            <h3 style={{ margin: 0, color: '#2C3E6B', fontSize: 16 }}>{CATS.find(c=>c.key===selected)?.label} <span style={{color:'#888',fontSize:12,fontWeight:400}}>({totalItems} عنصر{search && ` — ${items.length} نتيجة`})</span></h3>
             <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
-              <input value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}}
+              <input value={search} onChange={e=>{setSearch(e.target.value)}}
                 placeholder="🔍 بحث..."
                 style={{padding:'6px 12px',borderRadius:8,border:'1px solid #dde3ed',fontSize:13,fontFamily:'Cairo,sans-serif',minWidth:'160px',outline:'none'}} />
               <select value={pageSize} onChange={e=>{setPageSize(+e.target.value);setPage(1)}}
@@ -2082,18 +2092,7 @@ function SystemConstantsPanel() {
               <span>#</span><span>القيمة</span><span>الترتيب</span><span>الحالة</span><span>إجراءات</span>
             </div>
             {items.length===0 ? <p style={{textAlign:'center',padding:36,color:'#999'}}>لا توجد عناصر</p> : (() => {
-              const filtered = search.trim() ? items.filter(i =>
-                i.value?.toLowerCase().includes(search.trim().toLowerCase()) ||
-                i.label?.toLowerCase().includes(search.trim().toLowerCase())
-              ).sort((a,b) => {
-                const q = search.trim().toLowerCase()
-                const av = a.value?.toLowerCase() || '', bv = b.value?.toLowerCase() || ''
-                if (av === q && bv !== q) return -1
-                if (bv === q && av !== q) return 1
-                if (av.startsWith(q) && !bv.startsWith(q)) return -1
-                if (bv.startsWith(q) && !av.startsWith(q)) return 1
-                return 0
-              }) : items
+              const filtered = items
               const totalPages = Math.ceil(filtered.length / pageSize)
               const paged = pageSize >= 1000 ? filtered : filtered.slice((page-1)*pageSize, page*pageSize)
               return (<>

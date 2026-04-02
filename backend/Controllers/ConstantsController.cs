@@ -19,10 +19,30 @@ public class ConstantsController : ControllerBase
             .Select(c => new { c.Id, c.Value, c.Label })
             .ToListAsync());
 
-    // Admin - إدارة كاملة (لا يحتاج auth للقراءة)
+    // Admin - إدارة كاملة مع pagination وبحث
     [HttpGet]
-    public async Task<IActionResult> GetAll() =>
-        Ok(await _db.SystemConstants.OrderBy(c => c.Category).ThenBy(c => c.SortOrder).ToListAsync());
+    public async Task<IActionResult> GetAll(
+        [FromQuery] string? category = null,
+        [FromQuery] string? search = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50) {
+        var q = _db.SystemConstants.AsQueryable();
+        if (!string.IsNullOrEmpty(category))
+            q = q.Where(c => c.Category == category);
+        if (!string.IsNullOrEmpty(search))
+            q = q.Where(c => c.Value.Contains(search));
+        var total = await q.CountAsync();
+        // المطابقة الكاملة أولاً
+        var exact = string.IsNullOrEmpty(search) ? new List<FICCPlatform.Models.SystemConstant>()
+            : await q.Where(c => c.Value == search).ToListAsync();
+        var rest = await q
+            .Where(c => string.IsNullOrEmpty(search) || c.Value != search)
+            .OrderBy(c => c.SortOrder).ThenBy(c => c.Value)
+            .Skip((page - 1) * pageSize).Take(pageSize)
+            .ToListAsync();
+        var items = exact.Concat(rest).Take(pageSize).ToList();
+        return Ok(new { total, page, pageSize, items });
+    }
 
     [HttpPost, Authorize]
     public async Task<IActionResult> Create([FromBody] SystemConstant dto)
