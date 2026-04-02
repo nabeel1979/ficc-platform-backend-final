@@ -304,53 +304,81 @@ export default function Subscribe() {
 
         {/* مسجّل سابق - خطوة 3: تعديل */}
         {mode === 'existing' && step === 3 && (
-          <div style={{background:'#fff',borderRadius:'16px',padding:'28px',boxShadow:'0 4px 16px rgba(44,62,107,0.08)'}}>
-            <h2 style={{color:'#2C3E6B',fontWeight:'800',margin:'0 0 20px',fontSize:'18px'}}>✏️ تعديل بياناتك</h2>
-            <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
-              <div>
-                <label style={{display:'block',fontSize:'13px',fontWeight:'700',color:'#2C3E6B',marginBottom:'6px'}}>الاسم الكامل</label>
-                <input value={form.fullName} onChange={e=>set('fullName',e.target.value)}
-                  style={{width:'100%',padding:'11px 14px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'14px',fontFamily:'Cairo,sans-serif',outline:'none',boxSizing:'border-box'}}/>
+          <div style={{fontFamily:'Cairo,sans-serif',direction:'rtl'}}>
+            {/* Header بروفايل */}
+            <div style={{background:'linear-gradient(135deg,#1a1a2e,#2C3E6B)',borderRadius:'20px',padding:'28px',textAlign:'center',marginBottom:'16px',position:'relative'}}>
+              <div style={{width:'72px',height:'72px',borderRadius:'50%',background:'linear-gradient(135deg,#FFC72C,#f59e0b)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'32px',margin:'0 auto 12px',boxShadow:'0 4px 16px rgba(0,0,0,0.3)'}}>
+                {form.fullName?.charAt(0) || '👤'}
               </div>
-              <VerifiedField label="رقم الواتساب" value={form.whatsApp} onChange={v=>set('whatsApp',v)}
-                placeholder="07xxxxxxxxx" isLtr field="whatsapp"
-                verified={verified.whatsApp} onVerified={v=>setV('whatsApp',v)}/>
-              <VerifiedField label="البريد الإلكتروني" value={form.email} onChange={v=>set('email',v)}
-                placeholder="email@example.com" isLtr field="email"
-                verified={verified.email} onVerified={v=>setV('email',v)}/>
-              <div>
-                <label style={{display:'block',fontSize:'13px',fontWeight:'700',color:'#2C3E6B',marginBottom:'8px'}}>القطاعات</label>
-                <div style={{display:'flex',flexWrap:'wrap',gap:'8px',marginBottom:'8px'}}>
-                  {SECTORS.map(s=>(
-                    <button key={s} type="button" onClick={()=>toggleSector(s)}
-                      style={{padding:'6px 14px',borderRadius:'20px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'600',
-                        background:form.sectors.includes(s)?'#2C3E6B':'#EEF2FF',color:form.sectors.includes(s)?'#fff':'#2C3E6B'}}>
-                      {form.sectors.includes(s)?'✓ ':''}{s}
-                    </button>
-                  ))}
+              <h2 style={{color:'#fff',fontWeight:'900',fontSize:'20px',margin:'0 0 4px'}}>{form.fullName}</h2>
+              <p style={{color:'rgba(255,255,255,0.6)',fontSize:'13px',margin:0,direction:'ltr'}}>{form.phone}</p>
+            </div>
+
+            {/* البيانات */}
+            <div style={{background:'#fff',borderRadius:'16px',padding:'20px',boxShadow:'0 4px 16px rgba(44,62,107,0.08)',marginBottom:'12px'}}>
+              <h3 style={{color:'#2C3E6B',fontWeight:'800',fontSize:'15px',margin:'0 0 16px',paddingBottom:'10px',borderBottom:'2px solid #FFC72C'}}>👤 البيانات الشخصية</h3>
+              <div style={{display:'flex',flexDirection:'column',gap:'14px'}}>
+                <div>
+                  <label style={{display:'block',fontSize:'12px',fontWeight:'700',color:'#888',marginBottom:'5px'}}>الاسم الكامل</label>
+                  <input value={form.fullName} onChange={e=>set('fullName',e.target.value)}
+                    style={{width:'100%',padding:'11px 14px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'14px',fontFamily:'Cairo,sans-serif',outline:'none',boxSizing:'border-box',background:'#fafbff'}}/>
                 </div>
+                <VerifiedField label="رقم الواتساب" value={form.whatsApp} onChange={v=>set('whatsApp',v)}
+                  placeholder="07xxxxxxxxx" isLtr field="whatsapp"
+                  verified={verified.whatsApp} onVerified={v=>setV('whatsApp',v)}/>
+                <VerifiedField label="البريد الإلكتروني" value={form.email} onChange={v=>set('email',v)}
+                  placeholder="email@example.com" isLtr field="email"
+                  verified={verified.email} onVerified={v=>setV('email',v)}/>
+              </div>
+            </div>
+
+            {/* القطاعات */}
+            <div style={{background:'#fff',borderRadius:'16px',padding:'20px',boxShadow:'0 4px 16px rgba(44,62,107,0.08)',marginBottom:'12px'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px',paddingBottom:'10px',borderBottom:'2px solid #FFC72C'}}>
+                <h3 style={{color:'#2C3E6B',fontWeight:'800',fontSize:'15px',margin:0}}>🏭 القطاعات</h3>
                 <button type="button" onClick={()=>set('sectors', form.sectors.length===SECTORS.length ? [] : [...SECTORS])}
-                  style={{padding:'6px 14px',borderRadius:'8px',background:'#FFF8E7',color:'#B8860B',border:'1px solid #fde68a',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700'}}>
+                  style={{padding:'5px 12px',borderRadius:'8px',background:'#FFF8E7',color:'#B8860B',border:'1px solid #fde68a',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700'}}>
                   {form.sectors.length===SECTORS.length ? '❌ إلغاء الكل' : '✅ اختر الكل'}
                 </button>
               </div>
-              <div>
-                <label style={{display:'block',fontSize:'13px',fontWeight:'700',color:'#2C3E6B',marginBottom:'8px'}}>طريقة الإشعار</label>
-                <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-                  {NOTIFY_OPTIONS.map(o=>(
-                    <button key={o.key} type="button" onClick={()=>toggleNotify(o.key)}
-                      style={{padding:'8px 16px',borderRadius:'10px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'13px',fontWeight:'700',
-                        background:form.notifyBy.includes(o.key)?'#059669':'#F0FDF4',color:form.notifyBy.includes(o.key)?'#fff':'#059669'}}>
-                      {form.notifyBy.includes(o.key)?'✓ ':''}{o.label}
-                    </button>
-                  ))}
-                  <button onClick={selectAll} type="button" style={{padding:'8px 14px',borderRadius:'10px',background:'#FFF8E7',color:'#B8860B',border:'1px solid #fde68a',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700'}}>كل الطرق</button>
-                </div>
+              <div style={{display:'flex',flexWrap:'wrap',gap:'8px'}}>
+                {SECTORS.map(s=>(
+                  <button key={s} type="button" onClick={()=>toggleSector(s)}
+                    style={{padding:'7px 14px',borderRadius:'20px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'600',transition:'all 0.15s',
+                      background:form.sectors.includes(s)?'#2C3E6B':'#EEF2FF',color:form.sectors.includes(s)?'#fff':'#2C3E6B',
+                      boxShadow:form.sectors.includes(s)?'0 2px 8px rgba(44,62,107,0.25)':'none'}}>
+                    {form.sectors.includes(s)?'✓ ':''}{s}
+                  </button>
+                ))}
               </div>
-              {err && <div style={{background:'#fee2e2',color:'#dc2626',padding:'10px 14px',borderRadius:'10px',fontSize:'13px'}}>{err}</div>}
-              {msg && <div style={{background:'#d1fae5',color:'#065f46',padding:'10px 14px',borderRadius:'10px',fontSize:'13px'}}>{msg}</div>}
-              <button onClick={update} disabled={loading} style={btnPrimary}>{loading?'⏳...':'💾 حفظ التعديلات'}</button>
             </div>
+
+            {/* طريقة الإشعار */}
+            <div style={{background:'#fff',borderRadius:'16px',padding:'20px',boxShadow:'0 4px 16px rgba(44,62,107,0.08)',marginBottom:'16px'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px',paddingBottom:'10px',borderBottom:'2px solid #FFC72C'}}>
+                <h3 style={{color:'#2C3E6B',fontWeight:'800',fontSize:'15px',margin:0}}>📢 طريقة الإشعار</h3>
+                <button onClick={selectAll} type="button" style={{padding:'5px 12px',borderRadius:'8px',background:'#F0FDF4',color:'#16a34a',border:'1px solid #86efac',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700'}}>
+                  ✅ كل الطرق
+                </button>
+              </div>
+              <div style={{display:'flex',gap:'10px',flexWrap:'wrap'}}>
+                {NOTIFY_OPTIONS.map(o=>(
+                  <button key={o.key} type="button" onClick={()=>toggleNotify(o.key)}
+                    style={{flex:1,minWidth:'100px',padding:'12px 8px',borderRadius:'12px',border:'2px solid',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'13px',fontWeight:'700',textAlign:'center',transition:'all 0.15s',
+                      background:form.notifyBy.includes(o.key)?'#059669':'#fff',
+                      color:form.notifyBy.includes(o.key)?'#fff':'#059669',
+                      borderColor:form.notifyBy.includes(o.key)?'#059669':'#86efac'}}>
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {err && <div style={{background:'#fee2e2',color:'#dc2626',padding:'12px 16px',borderRadius:'12px',fontSize:'13px',marginBottom:'12px',fontWeight:'700'}}>{err}</div>}
+            {msg && <div style={{background:'#d1fae5',color:'#065f46',padding:'12px 16px',borderRadius:'12px',fontSize:'13px',marginBottom:'12px',fontWeight:'700'}}>{msg}</div>}
+            <button onClick={update} disabled={loading} style={{...btnPrimary,borderRadius:'14px',fontSize:'16px',padding:'15px'}}>
+              {loading?'⏳ جاري الحفظ...':'💾 حفظ التعديلات'}
+            </button>
           </div>
         )}
       </div>
