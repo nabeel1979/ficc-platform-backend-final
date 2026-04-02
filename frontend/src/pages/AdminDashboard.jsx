@@ -1994,26 +1994,29 @@ function SystemConstantsPanel() {
   ]
 
   const [totalItems, setTotalItems] = useState(0)
-  const load = (p = page, ps = pageSize, q = search) => {
-    const params = { category: selected, page: p, pageSize: ps }
-    if (q.trim()) params.search = q.trim()
+
+  const doLoad = React.useCallback((p, ps, cat, q) => {
+    const params = { category: cat, page: p, pageSize: ps }
+    if (q && q.trim()) params.search = q.trim()
     api.get(`${API}/constants`, { headers: authHdrs(), params }).then(r => {
       const data = r.data?.items || r.data || []
       setTotalItems(r.data?.total || data.length)
       setItems(Array.isArray(data) ? data : [])
-      setAll([])
     }).catch(()=>{})
-  }
-  useEffect(() => { setPage(1); load(1, pageSize, search) }, [selected])
-  useEffect(() => { setPage(1); load(1, pageSize, search) }, [search])
-  useEffect(() => { load(page, pageSize, search) }, [page, pageSize])
+  }, [])
+
+  // عند تغيير القسم أو البحث → رجع للصفحة 1
+  useEffect(() => { setPage(1); doLoad(1, pageSize, selected, search) }, [selected])
+  useEffect(() => { setPage(1); doLoad(1, pageSize, selected, search) }, [search])
+  // عند تغيير الصفحة أو عدد العناصر
+  useEffect(() => { doLoad(page, pageSize, selected, search) }, [page, pageSize])
 
   const save = async e => {
     e.preventDefault(); setMsg('')
     try {
       if (editing) await api.put(`${API}/constants/${editing}`, { ...form, category: selected }, { headers: authHdrs() })
       else await api.post(`${API}/constants`, { ...form, category: selected }, { headers: authHdrs() })
-      setShowForm(false); setEditing(null); setForm({ value: '', label: '', sortOrder: 0, isActive: true }); load()
+      setShowForm(false); setEditing(null); setForm({ value: '', label: '', sortOrder: 0, isActive: true }); doLoad(page, pageSize, selected, search)
     } catch(e) { setMsg(e.response?.data?.message || 'خطأ') }
   }
 
@@ -2021,7 +2024,7 @@ function SystemConstantsPanel() {
     if (!confirm('حذف هذه القيمة؟')) return
     try {
       await api.delete(`${API}/constants/${id}`, { headers: authHdrs() })
-      load()
+      doLoad(page, pageSize, selected, search)
     } catch(e) {
       const msg = e?.response?.data?.message || 'حدث خطأ'
       alert(msg)
