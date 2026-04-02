@@ -900,7 +900,6 @@ const FIELDS = {
   ],
   traderdirectory: [
     {key:'tradeName',label:'الاسم التجاري',required:true},
-    {key:'companyName',label:'اسم الشركة / المنشأة'},
     {key:'tradeCategory',label:'التصنيف التجاري',type:'select',constantsKey:'trader_classification',options:['تجارة عامة','استيراد وتصدير','مواد غذائية','مواد بناء','إلكترونيات وتقنية','ملابس وأزياء','أثاث ومفروشات','معدات وآليات','أدوية ومستلزمات طبية','مجوهرات وساعات','سيارات وقطع غيار','خدمات مالية','خدمات قانونية','خدمات هندسية','تعليم وتدريب','سياحة وسفر','مطاعم وفنادق','تشييد وبناء','طاقة وكهرباء','زراعة ومواد زراعية','أخرى']},
     {key:'businessType',label:'النشاط',type:'select',constantsKey:'trader_business_type',options:['شركة','مكتب','محل تجاري','صيدلية','مستوصف','مطعم','فندق','مصنع','مؤسسة','وكالة','أخرى']},
     {key:'chamberName',label:'الغرفة التجارية',type:'chamberSelect'},
