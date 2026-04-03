@@ -62,7 +62,10 @@ function VerifiedField({ label, value, onChange, placeholder, isLtr, required, f
         <div style={{marginTop:'10px',padding:'14px',background:'#EEF2FF',borderRadius:'10px',border:'1px solid #c7d2fe'}}>
           <p style={{margin:'0 0 8px',fontSize:'12px',color:'#4338ca',fontWeight:'600'}}>💬 سيصل الرمز عبر الواتساب — أدخله هنا</p>
           <div style={{display:'flex',gap:'8px'}}>
-            <input value={otp} onChange={e=>setOtp(e.target.value)} maxLength={6} placeholder="000000"
+            <input value={otp}
+              onChange={e=>setOtp(e.target.value.replace(/\D/g,'').slice(0,6))}
+              onPaste={e=>{e.preventDefault();const t=e.clipboardData.getData('text').replace(/\D/g,'').slice(0,6);setOtp(t)}}
+              maxLength={6} placeholder="000000" inputMode="numeric" autoComplete="one-time-code"
               style={{flex:1,padding:'10px',borderRadius:'8px',border:'1.5px solid #c7d2fe',fontSize:'18px',fontWeight:'800',letterSpacing:'6px',textAlign:'center',fontFamily:'monospace',outline:'none'}}/>
             <button type="button" onClick={verifyOtp} disabled={loading}
               style={{padding:'10px 16px',borderRadius:'8px',background:'#16a34a',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'13px',fontWeight:'800'}}>
@@ -299,7 +302,10 @@ export default function Subscribe() {
             <h2 style={{color:'#2C3E6B',fontWeight:'800',margin:'0 0 8px',fontSize:'18px'}}>📲 رمز التأكيد</h2>
             <p style={{color:'#059669',fontSize:'13px',margin:'0 0 12px',background:'#f0fdf4',padding:'10px',borderRadius:'8px',fontWeight:'700'}}>💬 سيصل الرمز عبر الواتساب</p>
             {msg && <p style={{color:'#059669',fontSize:'13px',margin:'0 0 12px',background:'#f0fdf4',padding:'10px',borderRadius:'8px'}}>{msg}</p>}
-            <input value={loginOtp} onChange={e=>setLoginOtp(e.target.value)} placeholder="000000"
+            <input value={loginOtp}
+              onChange={e=>setLoginOtp(e.target.value.replace(/\D/g,'').slice(0,6))}
+              onPaste={e=>{e.preventDefault();const t=e.clipboardData.getData('text').replace(/\D/g,'').slice(0,6);setLoginOtp(t)}}
+              placeholder="000000" inputMode="numeric" autoComplete="one-time-code"
               style={{width:'100%',padding:'12px',border:'1.5px solid #c7d2fe',borderRadius:'10px',fontSize:'22px',fontWeight:'800',letterSpacing:'8px',textAlign:'center',fontFamily:'monospace',outline:'none',boxSizing:'border-box'}} maxLength={6}/>
             {err && <div style={{background:'#fee2e2',color:'#dc2626',padding:'10px 14px',borderRadius:'10px',fontSize:'13px',marginTop:'12px'}}>{err}</div>}
             <button onClick={verifyLogin} disabled={loading} style={{...btnPrimary,marginTop:'16px'}}>{loading?'⏳...':'✅ تأكيد الدخول'}</button>

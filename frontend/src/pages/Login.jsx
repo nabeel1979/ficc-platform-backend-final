@@ -325,7 +325,10 @@ export default function Login({ onLogin }) {
             </div>
           )}
           <div style={{marginBottom:'12px'}}>
-            <input placeholder="رمز التحقق" value={form.otp} onChange={e=>set('otp',e.target.value)} maxLength={6}
+            <input placeholder="رمز التحقق" value={form.otp}
+              onChange={e=>set('otp',e.target.value.replace(/[^0-9]/g,'').slice(0,6))}
+              onPaste={e=>{e.preventDefault();const t=e.clipboardData.getData('text').replace(/[^0-9]/g,'').slice(0,6);set('otp',t)}}
+              maxLength={6} inputMode="numeric" autoComplete="one-time-code"
               style={{width:'100%',padding:'14px',borderRadius:'12px',border:'1.5px solid #dde3ed',fontSize:'22px',fontFamily:'monospace',textAlign:'center',outline:'none',background:'#FAFBFF',boxSizing:'border-box',letterSpacing:'8px',direction:'ltr'}}/>
           </div>
           {inp('كلمة المرور الجديدة (6+ أحرف)','newPass','password')}
