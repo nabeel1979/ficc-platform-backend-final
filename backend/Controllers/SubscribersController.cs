@@ -41,12 +41,15 @@ public class SubscribersController : ControllerBase {
 
     // دالة مشتركة للتحقق من Rate Limit
     private async Task<(bool blocked, string message)> CheckRateLimit(string key, string keyType) {
+        const int MAX_ATTEMPTS = 5;
+        const int BLOCK_HOURS = 1;
+
         var record = await _db.RateLimitBlocks.FirstOrDefaultAsync(r => r.Key == key && r.KeyType == keyType);
         if (record != null) {
             // إذا محظور ولسه ما انتهى الحظر
             if (record.BlockedUntil.HasValue && record.BlockedUntil > DateTime.UtcNow) {
                 var remaining = (int)(record.BlockedUntil.Value - DateTime.UtcNow).TotalMinutes + 1;
-                return (true, $"تم حظر هذا الرقم مؤقتاً. حاول مرة أخرى بعد {remaining} دقيقة");
+                return (true, $"⛔ تم حظر هذا الرقم مؤقتاً. حاول مرة أخرى بعد {remaining} دقيقة");
             }
             // إذا انتهى الحظر — أعد التهيئة
             if (record.BlockedUntil.HasValue && record.BlockedUntil <= DateTime.UtcNow) {
@@ -56,17 +59,20 @@ public class SubscribersController : ControllerBase {
             }
             record.Attempts++;
             record.UpdatedAt = DateTime.UtcNow;
-            if (record.Attempts >= 5) {
-                record.BlockedUntil = DateTime.UtcNow.AddHours(1);
+            if (record.Attempts >= MAX_ATTEMPTS) {
+                record.BlockedUntil = DateTime.UtcNow.AddHours(BLOCK_HOURS);
                 await _db.SaveChangesAsync();
-                return (true, "تم تجاوز الحد المسموح. تم حظر الوصول لمدة ساعة");
+                return (true, $"⛔ تجاوزت الحد المسموح ({MAX_ATTEMPTS} محاولات). تم حظر الوصول لمدة ساعة");
             }
             await _db.SaveChangesAsync();
+            int remaining2 = MAX_ATTEMPTS - record.Attempts;
+            return (false, $"تبقى لك {remaining2} محاولة");
         } else {
             _db.RateLimitBlocks.Add(new RateLimitBlock { Key = key, KeyType = keyType, Attempts = 1 });
             await _db.SaveChangesAsync();
+            int remaining3 = MAX_ATTEMPTS - 1;
+            return (false, $"تبقى لك {remaining3} محاولات");
         }
-        return (false, "");
     }
 
     // POST /api/subscribers/send-field-otp — إرسال OTP لحقل معين (phone/whatsapp/email)
@@ -77,6 +83,8 @@ public class SubscribersController : ControllerBase {
         // التحقق من Rate Limit
         var (blocked, blockMsg) = await CheckRateLimit(dto.Value, dto.Field);
         if (blocked) return StatusCode(429, new { message = blockMsg });
+        // أضف رسالة المحاولات للـ response
+        var attemptsInfo = blockMsg; // "تبقى لك X محاولة"
         var otp = new string(System.Linq.Enumerable.Repeat("0123456789", 6)
             .Select(s => s[new Random().Next(s.Length)]).ToArray());
         var typeKey = $"sub-{dto.Field}";
@@ -94,7 +102,7 @@ public class SubscribersController : ControllerBase {
             await _notify.SendWhatsAppOtp(dto.Value, otp); // واتساب فقط
         else
             await _notify.SendTwilioSms(dto.Value, otp);   // SMS فقط للهاتف
-        return Ok(new { message = "تم إرسال رمز التأكيد" });
+        return Ok(new { message = "تم إرسال رمز التأكيد", attemptsInfo });
     }
 
     // POST /api/subscribers/verify-field-otp — تحقق OTP لحقل معين

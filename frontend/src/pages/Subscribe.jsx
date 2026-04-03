@@ -24,9 +24,13 @@ function VerifiedField({ label, value, onChange, placeholder, isLtr, required, f
     if (!value || value.trim().length < 3) { setErr('أدخل القيمة أولاً'); return }
     setLoading(true); setErr('')
     try {
-      await api.post(`${API}/subscribers/send-field-otp`, { field, value })
+      const r = await api.post(`${API}/subscribers/send-field-otp`, { field, value })
       setShowOtp(true); setSent(true); setOtp('')
-    } catch(e) { setErr(e?.response?.data?.message || 'حدث خطأ') }
+      if (r.data?.attemptsInfo) setErr('⚠️ ' + r.data.attemptsInfo)
+    } catch(e) {
+      const msg = e?.response?.data?.message || 'حدث خطأ'
+      setErr(e?.response?.status === 429 ? '⛔ ' + msg : msg)
+    }
     setLoading(false)
   }
 
