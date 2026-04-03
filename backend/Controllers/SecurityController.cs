@@ -171,17 +171,27 @@ public class SecurityController : ControllerBase {
         return Ok(new { message = "تم الحجب اليدوي بنجاح" });
     }
 
-    // GET /api/security/ratelimits/report — تقرير كامل
+    // GET /api/security/ratelimits/report — تقرير كامل مع فلتر تاريخ وبحث
     [HttpGet("ratelimits/report"), Authorize]
-    public async Task<IActionResult> GetRateLimitReport() {
+    public async Task<IActionResult> GetRateLimitReport(
+        [FromQuery] DateTime? from = null,
+        [FromQuery] DateTime? to = null,
+        [FromQuery] string? search = null) {
         var now = DateTime.UtcNow;
-        var items = await _db.RateLimitBlocks.OrderByDescending(r => r.UpdatedAt).Take(500).ToListAsync();
+        var fromDate = from ?? now.Date; // افتراضي: من بداية اليوم
+        var toDate   = to   ?? now;      // افتراضي: حتى الآن
+        var q = _db.RateLimitBlocks.AsQueryable();
+        q = q.Where(r => r.UpdatedAt >= fromDate && r.UpdatedAt <= toDate);
+        if (!string.IsNullOrEmpty(search))
+            q = q.Where(r => r.Key.Contains(search));
+        var items = await q.OrderByDescending(r => r.UpdatedAt).Take(1000).ToListAsync();
         return Ok(new {
             total = items.Count,
-            activeBlocked = items.Count(r => r.BlockedUntil != null && r.BlockedUntil > now),
+            activeBlocked = items.Count(r => r.BlockedUntil != null && r.BlockedUntil > now || r.IsManual),
             manualBlocked = items.Count(r => r.IsManual),
             autoBlocked = items.Count(r => !r.IsManual && r.BlockedUntil != null && r.BlockedUntil > now),
             unblocked = items.Count(r => r.UnblockedAt != null),
+            fromDate = fromDate, toDate = toDate,
             items = items
         });
     }

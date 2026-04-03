@@ -2177,6 +2177,9 @@ function SecurityPanel() {
   const [reasonPopup, setReasonPopup] = React.useState(null) // {key, keyType, id?}
   const [reasonText, setReasonText] = React.useState('')
   const [refreshing, setRefreshing] = React.useState(false)
+  const [reportSearch, setReportSearch] = React.useState('')
+  const [reportFrom, setReportFrom] = React.useState(() => new Date().toISOString().slice(0,10))
+  const [reportTo, setReportTo] = React.useState(() => new Date().toISOString().slice(0,16))
 
   const hdrs = () => ({ Authorization: `Bearer ${getToken()}` })
 
@@ -2197,8 +2200,14 @@ function SecurityPanel() {
   }
 
   const loadReport = async () => {
-    try { const r = await api.get('/security/ratelimits/report', { headers: hdrs() }); setReport(r.data) }
-    catch {}
+    try {
+      const params = new URLSearchParams()
+      if (reportFrom) params.append('from', new Date(reportFrom).toISOString())
+      params.append('to', reportTo ? new Date(reportTo).toISOString() : new Date().toISOString())
+      if (reportSearch) params.append('search', reportSearch)
+      const r = await api.get(`/security/ratelimits/report?${params}`, { headers: hdrs() })
+      setReport(r.data)
+    } catch {}
   }
 
   const loadStats = async () => {
