@@ -317,8 +317,7 @@ export default function Subscribe() {
         {mode === 'existing' && step === 2 && (
           <div style={{background:'#fff',borderRadius:'16px',padding:'28px',boxShadow:'0 4px 16px rgba(44,62,107,0.08)'}}>
             <h2 style={{color:'#2C3E6B',fontWeight:'800',margin:'0 0 8px',fontSize:'18px'}}>📲 رمز التأكيد</h2>
-            <p style={{color:'#059669',fontSize:'13px',margin:'0 0 12px',background:'#f0fdf4',padding:'10px',borderRadius:'8px',fontWeight:'700'}}>💬 سيصل الرمز عبر الواتساب</p>
-            {msg && <p style={{color:'#059669',fontSize:'13px',margin:'0 0 12px',background:'#f0fdf4',padding:'10px',borderRadius:'8px'}}>{msg}</p>}
+            {msg && <p style={{color:'#059669',fontSize:'13px',margin:'0 0 12px',background:'#f0fdf4',padding:'10px',borderRadius:'8px',fontWeight:'700'}}>{msg}</p>}
             <input value={loginOtp}
               onChange={e=>setLoginOtp(e.target.value.replace(/\D/g,'').slice(0,6))}
               onPaste={e=>{e.preventDefault();const t=e.clipboardData.getData('text').replace(/\D/g,'').slice(0,6);setLoginOtp(t)}}
