@@ -59,8 +59,8 @@ public class OtpController : ControllerBase {
             });
             await _db.SaveChangesAsync();
 
-            sent = await _notify.SendTwilioSms(phone, smsCode);
-            return Ok(new { sent, message = sent ? "تم إرسال رمز التحقق عبر SMS" : "فشل الإرسال", channel, dest, twilioVerify = false });
+            sent = await _notify.SendWhatsAppOtp(phone, smsCode);
+            return Ok(new { sent, message = sent ? "تم إرسال رمز التحقق عبر الواتساب 💬" : "فشل الإرسال", channel, dest, twilioVerify = false });
         } else {
             if (string.IsNullOrEmpty(user.Email))
                 return BadRequest(new { message = "لا يوجد بريد إلكتروني مسجل" });
@@ -214,7 +214,7 @@ public class OtpController : ControllerBase {
             bool sent = false;
             if (dto.Channel == "sms") {
                 var phone = dto.Value.StartsWith("07") ? "+964" + dto.Value[1..] : dto.Value;
-                sent = await _notify.SendTwilioSms(phone, otp);
+                sent = await _notify.SendWhatsAppOtp(phone, otp);
             } else {
                 var purpose = "التحقق من البريد الإلكتروني";
                 sent = await _notify.SendEmail(dto.Value, $"رمز التحقق — {purpose}", _notify.OtpEmailHtml(otp, purpose));
@@ -289,7 +289,7 @@ public class OtpController : ControllerBase {
             bool sent = false;
             if (dto.Channel == "sms") {
                 var phone = dto.Value.StartsWith("07") ? "+964" + dto.Value[1..] : dto.Value;
-                sent = await _notify.SendTwilioSms(phone, otp);
+                sent = await _notify.SendWhatsAppOtp(phone, otp);
             } else {
                 var purpose = "التحقق من البريد الإلكتروني";
                 sent = await _notify.SendEmail(dto.Value, $"رمز التحقق — {purpose}", _notify.OtpEmailHtml(otp, purpose));
