@@ -2148,363 +2148,346 @@ function SystemConstantsPanel() {
 }
 
 function SecurityPanel() {
-  const [blocked, setBlocked] = React.useState([])
+  const [tab, setTab] = React.useState('blocks') // blocks | ratelimits | report
+  const [blocks, setBlocks] = React.useState([])
+  const [rateLimits, setRateLimits] = React.useState([])
+  const [report, setReport] = React.useState(null)
   const [stats, setStats] = React.useState(null)
   const [channels, setChannels] = React.useState({ smsDisabled: false, emailDisabled: false })
-  const [loading, setLoading] = React.useState(true)
+  const [loading, setLoading] = React.useState(false)
   const [filter, setFilter] = React.useState('active')
-  const [blockForm, setBlockForm] = React.useState({ contact: '', channel: 'email' })
-  const [msg, setMsg] = React.useState('')
   const [search, setSearch] = React.useState('')
-  const [pageSize, setPageSize] = React.useState(10)
-  const [page, setPage] = React.useState(1)
-  const [rateLimits, setRateLimits] = React.useState([])
+  const [rateTypeFilter, setRateTypeFilter] = React.useState('')
   const [showAllRate, setShowAllRate] = React.useState(false)
+  const [msg, setMsg] = React.useState('')
+  const [manualKey, setManualKey] = React.useState('')
+  const [manualKeyType, setManualKeyType] = React.useState('phone')
 
-  const loadRateLimits = async (all=false, keyType='') => {
+  const hdrs = () => ({ Authorization: `Bearer ${getToken()}` })
+
+  const loadBlocks = async () => {
+    setLoading(true)
+    try { const r = await api.get(`/security/blocked?activeOnly=${filter==='active'}`, { headers: hdrs() }); setBlocks(r.data || []) }
+    catch {}
+    setLoading(false)
+  }
+
+  const loadRateLimits = async () => {
     try {
-      let url = `${API}/security/ratelimits?blockedOnly=${!all}`
-      if (keyType) url += `&keyType=${keyType}`
-      const r = await api.get(url, { headers: authHdrs() })
+      const params = new URLSearchParams({ blockedOnly: showAllRate ? 'false' : 'true' })
+      if (rateTypeFilter) params.append('keyType', rateTypeFilter)
+      const r = await api.get(`/security/ratelimits?${params}`, { headers: hdrs() })
       setRateLimits(r.data || [])
     } catch {}
   }
 
-  const unblockRate = async (id) => {
-    await api.post(`${API}/security/ratelimits/unblock/${id}`, {}, { headers: authHdrs() })
-    setMsg('✅ تم فك الحظر')
-    loadRateLimits(showAllRate)
+  const loadReport = async () => {
+    try { const r = await api.get('/security/ratelimits/report', { headers: hdrs() }); setReport(r.data) }
+    catch {}
   }
 
-  const deleteRate = async (id) => {
-    await api.delete(`${API}/security/ratelimits/${id}`, { headers: authHdrs() })
-    loadRateLimits(showAllRate)
+  const loadStats = async () => {
+    try { const r = await api.get('/security/stats', { headers: hdrs() }); setStats(r.data) } catch {}
+    try { const r = await api.get('/security/channels', { headers: hdrs() }); setChannels(r.data) } catch {}
   }
 
-  const load = async () => {
-    setLoading(true)
-    try {
-      const [bl, st, ch] = await Promise.all([
-        api.get(`${API}/security/blocked?activeOnly=${filter === 'active'}`, { headers: authHdrs() }),
-        api.get(`${API}/security/stats`, { headers: authHdrs() }),
-        api.get(`${API}/security/channels`, { headers: authHdrs() })
-      ])
-      setBlocked(bl.data)
-      setStats(st.data)
-      setChannels(ch.data)
-    } catch {}
-    setLoading(false)
-  }
-
-  const toggleChannel = async (channel, disable) => {
-    const action = disable ? 'disable' : 'enable'
-    const ch = channel === 'sms' ? 'SMS' : 'الإيميل'
-    if (!window.confirm(`${disable ? 'إيقاف' : 'تفعيل'} ${ch}؟`)) return
-    
-    // تحديث فوري للـ UI
-    setChannels(prev => ({
-      ...prev,
-      [channel === 'sms' ? 'smsDisabled' : 'emailDisabled']: disable
-    }))
-    setMsg(`${disable ? '🔴 جاري إيقاف' : '✅ جاري تفعيل'} ${ch}...`)
-    
-    try {
-      await api.post(`${API}/security/channels/${channel}/${action}`, {}, { headers: authHdrs() })
-      setMsg(`${disable ? '🔴 تم إيقاف' : '✅ تم تفعيل'} ${ch}`)
-    } catch (e) {
-      setMsg('❌ حدث خطأ')
-      load()
-    }
-  }
-
-  React.useEffect(() => { load() }, [filter])
-  React.useEffect(() => { loadRateLimits(showAllRate) }, [showAllRate])
+  React.useEffect(() => { loadStats(); loadBlocks() }, [])
+  React.useEffect(() => { if (tab==='blocks') loadBlocks() }, [filter, tab])
+  React.useEffect(() => { if (tab==='ratelimits') loadRateLimits() }, [showAllRate, rateTypeFilter, tab])
+  React.useEffect(() => { if (tab==='report') loadReport() }, [tab])
 
   const unblock = async (id) => {
-    if (!window.confirm('فك الحجب؟')) return
-    await api.post(`${API}/security/unblock/${id}`, {}, { headers: authHdrs() })
-    setMsg('✅ تم فك الحجب')
-    load()
+    await api.post(`/security/unblock/${id}`, {}, { headers: hdrs() })
+    setMsg('✅ تم فك الحجب'); loadBlocks()
   }
 
   const blockManual = async () => {
-    if (!blockForm.contact) return
-    // تحديد النوع تلقائياً حسب المدخل
-    const isEmail = blockForm.contact.includes('@')
-    const detectedChannel = isEmail ? 'email' : 'sms'
+    if (!manualKey.trim()) return
     try {
-      await api.post(`${API}/security/block`, { contact: blockForm.contact, channel: detectedChannel }, { headers: authHdrs() })
-      setMsg(`✅ تم حجب ${isEmail ? 'الإيميل' : 'رقم الهاتف'} بنجاح`)
-      setBlockForm({ contact: '', channel: 'email' })
-      load()
-    } catch (e) {
-      setMsg('❌ ' + (e?.response?.data?.message || 'حدث خطأ'))
-    }
+      const r = await api.post('/security/ratelimits/block', { key: manualKey.trim(), keyType: manualKeyType }, { headers: hdrs() })
+      setMsg('🚫 ' + r.data.message); setManualKey(''); loadRateLimits()
+    } catch(e) { setMsg('❌ ' + (e?.response?.data?.message || 'فشل')) }
   }
 
-  const channelBg = { email: '#EEF2FF', sms: '#F0FDF4' }
-  const channelColor = { email: '#4f46e5', sms: '#16a34a' }
+  const unblockRate = async (id) => {
+    await api.post(`/security/ratelimits/unblock/${id}`, {}, { headers: hdrs() })
+    setMsg('✅ تم فك الحظر'); loadRateLimits()
+  }
+
+  const deleteRate = async (id) => {
+    await api.delete(`/security/ratelimits/${id}`, { headers: hdrs() })
+    loadRateLimits()
+  }
+
+  const toggleChannel = async (ch, disabled) => {
+    await api.post(`/security/channels/${ch}/${disabled?'disable':'enable'}`, {}, { headers: hdrs() })
+    setChannels(p => ({...p, [ch==='sms'?'smsDisabled':'emailDisabled']: disabled}))
+  }
+
+  const fmtDate = (d) => d ? new Date(d).toLocaleString('ar-IQ') : '—'
+  const isActBlocked = (r) => r.blockedUntil && (new Date(r.blockedUntil) > new Date() || r.isManual)
 
   return (
-    <div style={{padding:'24px',fontFamily:'Cairo,sans-serif',direction:'rtl',background:'#F0F4F8',minHeight:'100%'}}>
+    <div style={{padding:'20px',fontFamily:'Cairo,sans-serif',direction:'rtl',maxWidth:'1000px'}}>
+      <h2 style={{color:'#2C3E6B',fontWeight:'900',fontSize:'20px',margin:'0 0 16px'}}>🔒 الأمان والحجب</h2>
 
-      {/* Header */}
-      <div style={{background:'linear-gradient(135deg,#dc2626,#991b1b)',borderRadius:'16px',padding:'20px 24px',marginBottom:'20px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-        <div>
-          <h2 style={{color:'white',fontWeight:'800',margin:'0 0 4px',fontSize:'20px'}}>🔒 إدارة الأمان</h2>
-          <p style={{color:'rgba(255,255,255,0.7)',margin:0,fontSize:'13px'}}>مراقبة محاولات OTP والجهات المحجوبة</p>
-        </div>
-        <button onClick={load} style={{padding:'10px 16px',borderRadius:'10px',background:'rgba(255,255,255,0.15)',color:'white',border:'1px solid rgba(255,255,255,0.2)',cursor:'pointer',fontSize:'13px',fontWeight:'700',fontFamily:'Cairo,sans-serif'}}>
-          🔄 تحديث
-        </button>
-      </div>
-
-      {/* Stats — compact row */}
+      {/* Stats */}
       {stats && (
-        <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:'10px',marginBottom:'16px'}}>
           {[
-            ['🚫', 'محجوب حالياً', stats.totalBlocked, '#dc2626'],
-            ['⚠️', 'محجوب اليوم', stats.blockedToday, '#f59e0b'],
-            ['❌', 'فشل 24 ساعة', stats.failedLast24h, '#ef4444'],
-            ['⏱️', 'فشل آخر ساعة', stats.failedLastHour, '#f97316'],
-            ['✅', 'نجاح 24 ساعة', stats.successLast24h, '#10b981'],
-          ].map(([icon, label, val, color]) => (
-            <div key={label} style={{background:'white',borderRadius:'10px',padding:'8px 14px',display:'flex',alignItems:'center',gap:'6px',boxShadow:'0 1px 6px rgba(0,0,0,0.06)',border:'1px solid #e2e8f0',flexShrink:0}}>
-              <span style={{fontSize:'14px'}}>{icon}</span>
-              <span style={{fontSize:'18px',fontWeight:'800',color}}>{val}</span>
-              <span style={{fontSize:'11px',color:'#94a3b8'}}>{label}</span>
+            {l:'محجوب الآن',v:stats.totalBlocked,c:'#dc2626',bg:'#fee2e2'},
+            {l:'محجوب اليوم',v:stats.blockedToday,c:'#d97706',bg:'#fef3c7'},
+            {l:'فشل آخر 24س',v:stats.failedLast24h,c:'#7c3aed',bg:'#ede9fe'},
+            {l:'نجح آخر 24س',v:stats.successLast24h,c:'#059669',bg:'#d1fae5'},
+          ].map(s=>(
+            <div key={s.l} style={{background:s.bg,borderRadius:'12px',padding:'12px 14px',border:`1px solid ${s.c}22`}}>
+              <div style={{fontSize:'22px',fontWeight:'900',color:s.c}}>{s.v}</div>
+              <div style={{fontSize:'11px',color:s.c,fontWeight:'700'}}>{s.l}</div>
             </div>
           ))}
         </div>
       )}
 
-      {msg && <div style={{background:'#F0FDF4',border:'1px solid #bbf7d0',borderRadius:'10px',padding:'12px',marginBottom:'16px',color:'#16a34a',fontWeight:'700'}}>{msg}</div>}
+      {msg && <div style={{background:'#f0fdf4',border:'1px solid #86efac',borderRadius:'10px',padding:'10px 14px',marginBottom:'12px',fontSize:'13px',color:'#16a34a',fontWeight:'700'}}>{msg}</div>}
 
-      {/* مفاتيح الإيقاف الطارئ */}
-      <div style={{background:'white',borderRadius:'14px',padding:'16px',marginBottom:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
-        <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px',marginBottom:'12px'}}>⚡ إيقاف طارئ</div>
-        <div className="security-channels-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
-
-          {/* SMS */}
-          <div style={{padding:'16px',borderRadius:'12px',background: channels.smsDisabled ? '#FEF2F2' : '#F0FDF4',border:`1.5px solid ${channels.smsDisabled ? '#fecaca' : '#bbf7d0'}`,transition:'all 0.3s ease'}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
-              <span style={{fontWeight:'700',fontSize:'15px'}}>
-                {channels.smsDisabled ? '🔴' : '📱'} SMS
-              </span>
-              <span style={{padding:'6px 12px',borderRadius:'20px',fontSize:'12px',fontWeight:'700',
-                background: channels.smsDisabled ? '#dc2626' : '#16a34a', color:'white',transition:'all 0.3s ease'}}>
-                {channels.smsDisabled ? '🔴 متوقف' : '✅ يعمل'}
-              </span>
-            </div>
-            <button onClick={() => toggleChannel('sms', !channels.smsDisabled)}
-              style={{width:'100%',padding:'12px',borderRadius:'10px',border:'none',cursor:'pointer',
-                fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'13px',
-                background: channels.smsDisabled ? '#16a34a' : '#dc2626',
-                color:'white',transition:'all 0.3s ease',transform:'scale(1)',
-                '&:hover':{transform:'scale(1.02)'}}}>
-              {channels.smsDisabled ? '✅ تفعيل SMS' : '🔴 إيقاف SMS'}
-            </button>
-          </div>
-
-          {/* Email */}
-          <div style={{padding:'16px',borderRadius:'12px',background: channels.emailDisabled ? '#FEF2F2' : '#F0FDF4',border:`1.5px solid ${channels.emailDisabled ? '#fecaca' : '#bbf7d0'}`,transition:'all 0.3s ease'}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
-              <span style={{fontWeight:'700',fontSize:'15px'}}>
-                {channels.emailDisabled ? '🔴' : '📧'} الإيميل
-              </span>
-              <span style={{padding:'6px 12px',borderRadius:'20px',fontSize:'12px',fontWeight:'700',
-                background: channels.emailDisabled ? '#dc2626' : '#16a34a', color:'white',transition:'all 0.3s ease'}}>
-                {channels.emailDisabled ? '🔴 متوقف' : '✅ يعمل'}
-              </span>
-            </div>
-            <button onClick={() => toggleChannel('email', !channels.emailDisabled)}
-              style={{width:'100%',padding:'12px',borderRadius:'10px',border:'none',cursor:'pointer',
-                fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'13px',
-                background: channels.emailDisabled ? '#16a34a' : '#dc2626',
-                color:'white',transition:'all 0.3s ease',transform:'scale(1)',
-                '&:hover':{transform:'scale(1.02)'}}}>
-              {channels.emailDisabled ? '✅ تفعيل الإيميل' : '🔴 إيقاف الإيميل'}
-            </button>
-          </div>
-
-        </div>
+      {/* Tabs */}
+      <div style={{display:'flex',gap:'8px',marginBottom:'16px',borderBottom:'2px solid #e2e8f0',paddingBottom:'8px'}}>
+        {[['blocks','🚫 الحجب اليدوي'],['ratelimits','🛡️ حظر OTP'],['report','📊 التقارير']].map(([k,l])=>(
+          <button key={k} onClick={()=>setTab(k)}
+            style={{padding:'8px 18px',borderRadius:'10px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'13px',
+              background:tab===k?'#2C3E6B':'#f1f5f9',color:tab===k?'#fff':'#475569'}}>
+            {l}
+          </button>
+        ))}
       </div>
 
-      {/* حجب يدوي */}
-      <div style={{background:'white',borderRadius:'14px',padding:'16px',marginBottom:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
-        <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px',marginBottom:'12px'}}>➕ حجب يدوي</div>
-        {(() => {
-          const v = blockForm.contact.trim()
-          const isEmail = v.includes('@') && v.includes('.')
-          const isPhone = /^[\d\+\-\s\(\)]{7,}$/.test(v)
-          const isValid = isEmail || isPhone
-          const hint = !v ? '' : isEmail ? '📧 إيميل' : isPhone ? '📱 هاتف' : '❌ غير صحيح'
-          const hintColor = !v ? '' : isValid ? (isEmail ? '#4f46e5' : '#16a34a') : '#dc2626'
-          const borderColor = !v ? '#e2e8f0' : isValid ? hintColor : '#dc2626'
-          return (
+      {/* ─── TAB 1: الحجب اليدوي ─── */}
+      {tab==='blocks' && (
+        <div>
+          {/* حجب جديد */}
+          <div style={{background:'#fff',borderRadius:'14px',padding:'16px',marginBottom:'14px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
+            <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px',marginBottom:'12px'}}>➕ حجب يدوي جديد</div>
             <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-              <div style={{flex:1,minWidth:'200px',position:'relative'}}>
-                <input value={blockForm.contact} onChange={e=>setBlockForm(p=>({...p,contact:e.target.value}))}
-                  placeholder="إيميل أو رقم هاتف"
-                  style={{width:'100%',padding:'10px 12px',border:`1.5px solid ${borderColor}`,borderRadius:'10px',fontSize:'13px',fontFamily:'Cairo,sans-serif',outline:'none'}} />
-                {v && (
-                  <span style={{position:'absolute',left:'10px',top:'50%',transform:'translateY(-50%)',fontSize:'11px',fontWeight:'700',color:hintColor,background:'#fff',padding:'0 4px'}}>
-                    {hint}
-                  </span>
-                )}
+              <input value={manualKey} onChange={e=>setManualKey(e.target.value)} placeholder="رقم الهاتف أو الإيميل"
+                style={{flex:1,minWidth:'180px',padding:'10px 12px',border:'1.5px solid #dde3ed',borderRadius:'10px',fontSize:'13px',fontFamily:'Cairo,sans-serif',outline:'none'}}/>
+              <select value={manualKeyType} onChange={e=>setManualKeyType(e.target.value)}
+                style={{padding:'10px 12px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',background:'#fff'}}>
+                <option value="phone">📱 هاتف</option>
+                <option value="whatsapp">💬 واتساب</option>
+                <option value="email">📧 إيميل</option>
+                <option value="phone-login">🔑 تسجيل دخول</option>
+              </select>
+              <button onClick={blockManual} style={{padding:'10px 20px',background:'#dc2626',color:'#fff',border:'none',borderRadius:'10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'13px'}}>
+                🚫 حجب دائم
+              </button>
+            </div>
+            <p style={{fontSize:'11px',color:'#888',margin:'6px 0 0'}}>⚠️ الحجب اليدوي دائم ولا يُفك تلقائياً — يحتاج فك يدوي</p>
+          </div>
+
+          {/* قائمة المحجوبين */}
+          <div style={{background:'#fff',borderRadius:'14px',padding:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px',flexWrap:'wrap',gap:'8px'}}>
+              <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px'}}>📋 الجهات المحجوبة</div>
+              <div style={{display:'flex',gap:'6px'}}>
+                {['active','all'].map(f=>(
+                  <button key={f} onClick={()=>setFilter(f)}
+                    style={{padding:'6px 14px',borderRadius:'8px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'12px',
+                      background:filter===f?'#2C3E6B':'#f1f5f9',color:filter===f?'#fff':'#475569'}}>
+                    {f==='active'?'النشطة':'الكل'}
+                  </button>
+                ))}
+                <button onClick={loadBlocks} style={{padding:'6px 10px',borderRadius:'8px',background:'#f0f2f7',color:'#666',border:'none',cursor:'pointer'}}>🔄</button>
               </div>
-              <button onClick={blockManual} disabled={!isValid}
-                style={{padding:'10px 20px',background:isValid?'#dc2626':'#ccc',color:'white',border:'none',borderRadius:'10px',cursor:isValid?'pointer':'not-allowed',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'13px',transition:'background 0.2s'}}>
+            </div>
+            {blocks.length===0 ? <p style={{textAlign:'center',color:'#aaa',padding:'24px'}}>✅ لا توجد جهات محجوبة</p> : (
+              <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+                {blocks.map(b=>(
+                  <div key={b.id} style={{display:'flex',alignItems:'center',gap:'10px',padding:'12px',borderRadius:'10px',
+                    background:b.isActive?'#fff5f5':'#f8fafc',border:`1px solid ${b.isActive?'#fecaca':'#e2e8f0'}`}}>
+                    <div style={{flex:1}}>
+                      <div style={{display:'flex',gap:'6px',marginBottom:'4px',flexWrap:'wrap'}}>
+                        <span style={{background:'#EEF2FF',color:'#4338ca',padding:'2px 8px',borderRadius:'12px',fontSize:'11px',fontWeight:'700'}}>
+                          {b.channel==='email'?'📧 إيميل':'📱 هاتف'}
+                        </span>
+                        {b.isActive && <span style={{background:'#fee2e2',color:'#dc2626',padding:'2px 8px',borderRadius:'12px',fontSize:'11px',fontWeight:'700'}}>🚫 محجوب</span>}
+                        <span style={{background:'#f0f0f0',color:'#666',padding:'2px 8px',borderRadius:'12px',fontSize:'11px'}}>يدوي</span>
+                      </div>
+                      <div style={{fontWeight:'700',color:'#1e293b',fontSize:'14px',direction:'ltr',textAlign:'right'}}>{b.contact}</div>
+                      <div style={{fontSize:'11px',color:'#94a3b8',marginTop:'2px'}}>تاريخ الحجب: {fmtDate(b.blockedAt)}</div>
+                    </div>
+                    {b.isActive && (
+                      <button onClick={()=>unblock(b.id)} style={{padding:'8px 14px',background:'#dcfce7',color:'#16a34a',border:'none',borderRadius:'10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'12px',flexShrink:0}}>
+                        ✅ فك الحجب
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── TAB 2: حظر OTP ─── */}
+      {tab==='ratelimits' && (
+        <div style={{background:'#fff',borderRadius:'14px',padding:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px',flexWrap:'wrap',gap:'8px'}}>
+            <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px'}}>🛡️ حظر المتابعين (OTP Rate Limit)</div>
+            <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
+              <select value={rateTypeFilter} onChange={e=>{setRateTypeFilter(e.target.value)}}
+                style={{padding:'6px 10px',borderRadius:'8px',border:'1px solid #dde3ed',fontSize:'12px',fontFamily:'Cairo,sans-serif',background:'#fff'}}>
+                <option value=''>كل الأنواع</option>
+                <option value='phone-login'>🔑 دخول</option>
+                <option value='phone'>📱 هاتف</option>
+                <option value='whatsapp'>💬 واتساب</option>
+                <option value='email'>📧 إيميل</option>
+              </select>
+              <button onClick={()=>setShowAllRate(!showAllRate)}
+                style={{padding:'6px 12px',borderRadius:'8px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700',
+                  background:showAllRate?'#EEF2FF':'#FFF8E7',color:showAllRate?'#4338ca':'#B8860B'}}>
+                {showAllRate?'المحجوبين فقط':'عرض الكل'}
+              </button>
+              <button onClick={loadRateLimits} style={{padding:'6px 10px',borderRadius:'8px',background:'#f0f2f7',color:'#666',border:'none',cursor:'pointer'}}>🔄</button>
+            </div>
+          </div>
+
+          {/* حجب يدوي OTP */}
+          <div style={{background:'#fafbff',borderRadius:'10px',padding:'12px',marginBottom:'12px',border:'1px solid #e2e8f0'}}>
+            <div style={{fontSize:'12px',fontWeight:'700',color:'#555',marginBottom:'8px'}}>➕ حجب يدوي دائم</div>
+            <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
+              <input value={manualKey} onChange={e=>setManualKey(e.target.value)} placeholder="رقم الهاتف أو الإيميل"
+                style={{flex:1,minWidth:'160px',padding:'8px 12px',border:'1.5px solid #dde3ed',borderRadius:'9px',fontSize:'13px',fontFamily:'Cairo,sans-serif',outline:'none'}}/>
+              <select value={manualKeyType} onChange={e=>setManualKeyType(e.target.value)}
+                style={{padding:'8px 10px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',background:'#fff'}}>
+                <option value="phone">📱 هاتف</option>
+                <option value="whatsapp">💬 واتساب</option>
+                <option value="email">📧 إيميل</option>
+                <option value="phone-login">🔑 دخول</option>
+              </select>
+              <button onClick={blockManual} style={{padding:'8px 16px',background:'#dc2626',color:'#fff',border:'none',borderRadius:'9px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'12px'}}>
                 🚫 حجب
               </button>
             </div>
-          )
-        })()}
-      </div>
-
-      {/* قائمة المحجوبين */}
-      <div style={{background:'white',borderRadius:'14px',padding:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px',flexWrap:'wrap',gap:8}}>
-          <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px'}}>📋 الجهات المحجوبة</div>
-          <div style={{display:'flex',gap:'8px',flexWrap:'wrap',alignItems:'center'}}>
-            <input value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}} placeholder="🔍 بحث..."
-              style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',fontSize:'12px',fontFamily:'Cairo,sans-serif',outline:'none',minWidth:'150px'}} />
-            <select value={pageSize} onChange={e=>{setPageSize(+e.target.value);setPage(1)}}
-              style={{padding:'6px 10px',borderRadius:'8px',border:'1px solid #dde3ed',fontSize:'12px',fontFamily:'Cairo,sans-serif',background:'#fff',cursor:'pointer'}}>
-              {[10,50,100,1000].map(n=><option key={n} value={n}>{n}</option>)}
-            </select>
-            {['active','all'].map(f => (
-              <button key={f} onClick={()=>{setFilter(f);setPage(1)}}
-                style={{padding:'6px 14px',borderRadius:'8px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'12px',
-                  background:filter===f?'#2C3E6B':'#f1f5f9',color:filter===f?'white':'#475569'}}>
-                {f==='active'?'النشطة':'الكل'}
-              </button>
-            ))}
           </div>
-        </div>
 
-        {loading ? (
-          <div style={{textAlign:'center',padding:'40px'}}><div className="ficc-spinner"></div></div>
-        ) : blocked.length === 0 ? (
-          <div style={{textAlign:'center',padding:'40px',color:'#94a3b8',fontSize:'14px'}}>✅ لا توجد جهات محجوبة</div>
-        ) : (() => {
-          const filteredBlocked = search.trim() ? blocked.filter(b => b.contact?.includes(search)) : blocked
-          const totalPagesB = Math.ceil(filteredBlocked.length / pageSize)
-          const pagedBlocked = pageSize >= 1000 ? filteredBlocked : filteredBlocked.slice((page-1)*pageSize, page*pageSize)
-          return (<>
-          <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-            {pagedBlocked.length === 0 && <div style={{textAlign:'center',padding:'24px',color:'#94a3b8'}}>لا توجد نتائج</div>}
-            {pagedBlocked.map((b, idx) => (
-              <div key={b.id} style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px',borderRadius:'10px',background:b.isActive?'#FEF2F2':'#F8FAFC',border:`1px solid ${b.isActive?'#fecaca':'#e2e8f0'}`}}>
-                <span style={{color:'#aaa',fontSize:'11px',minWidth:'20px'}}>#{(page-1)*pageSize+idx+1}</span>
-                <div style={{flex:1}}>
-                  <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}}>
-                    <span style={{background:channelBg[b.channel],color:channelColor[b.channel],padding:'2px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}>
-                      {b.channel === 'email' ? '✉️ إيميل' : '📱 هاتف'}
-                    </span>
-                    {b.isActive && <span style={{background:'#FEF2F2',color:'#dc2626',padding:'2px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}>🚫 محجوب</span>}
-                  </div>
-                  <div style={{fontWeight:'700',color:'#1e293b',fontSize:'14px'}}>{b.contact}</div>
-                  <div style={{fontSize:'11px',color:'#94a3b8'}}>
-                    {new Date(b.blockedAt).toLocaleString('ar-IQ')} {b.ipAddress && `— IP: ${b.ipAddress}`}
-                  </div>
-                </div>
-                {b.isActive && (
-                  <button onClick={() => unblock(b.id)}
-                    style={{padding:'8px 16px',background:'#10b981',color:'white',border:'none',borderRadius:'10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'13px',flexShrink:0}}>
-                    ✅ فك الحجب
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-          {totalPagesB > 1 && (
-            <div style={{display:'flex',justifyContent:'center',gap:6,marginTop:10}}>
-              <button onClick={()=>setPage(1)} disabled={page===1} style={{padding:'4px 9px',borderRadius:7,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:12}}>««</button>
-              <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1} style={{padding:'4px 9px',borderRadius:7,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>← السابق</button>
-              <span style={{fontSize:12,color:'#555',padding:'0 6px',alignSelf:'center'}}>{page} / {totalPagesB}</span>
-              <button onClick={()=>setPage(p=>Math.min(totalPagesB,p+1))} disabled={page===totalPagesB} style={{padding:'4px 9px',borderRadius:7,border:'1px solid #dde3ed',background:page===totalPagesB?'#f5f5f5':'#fff',cursor:page===totalPagesB?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>التالي →</button>
-              <button onClick={()=>setPage(totalPagesB)} disabled={page===totalPagesB} style={{padding:'4px 9px',borderRadius:7,border:'1px solid #dde3ed',background:page===totalPagesB?'#f5f5f5':'#fff',cursor:page===totalPagesB?'default':'pointer',fontSize:12}}>»»</button>
+          {rateLimits.length===0 ? <p style={{textAlign:'center',color:'#aaa',padding:'20px',fontSize:'13px'}}>✅ لا يوجد حظر حالي</p> : (
+            <div style={{overflowX:'auto'}}>
+              <table style={{width:'100%',borderCollapse:'collapse',fontSize:'12px',minWidth:'500px'}}>
+                <thead>
+                  <tr style={{background:'#f5f7fa'}}>
+                    {['الرقم / الإيميل','النوع','المحاولات','الحالة','فك الحجب تلقائياً','إجراء'].map(h=>(
+                      <th key={h} style={{padding:'8px 10px',textAlign:'right',color:'#555',fontWeight:'700'}}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rateLimits.map((r,i)=>{
+                    const isBlocked = isActBlocked(r)
+                    const isManual = r.isManual
+                    const typeLabel = r.keyType==='phone-login'?'🔑 دخول':r.keyType==='whatsapp'?'💬 واتساب':r.keyType==='email'?'📧 إيميل':'📱 هاتف'
+                    const autoUnblock = !isManual && r.blockedUntil ? fmtDate(r.blockedUntil) : isManual ? '⛔ يدوي — لا يُفك تلقائياً' : '—'
+                    return (
+                      <tr key={r.id} style={{borderBottom:'1px solid #f0f2f7',background:isBlocked?(isManual?'#fff0f0':'#fff5f5'):i%2===0?'#fff':'#fafbff'}}>
+                        <td style={{padding:'8px 10px',fontWeight:'700',direction:'ltr',fontSize:'12px'}}>{r.key}</td>
+                        <td style={{padding:'8px 10px'}}>
+                          <span style={{padding:'2px 7px',borderRadius:'12px',background:'#EEF2FF',color:'#4338ca',fontSize:'11px',fontWeight:'700'}}>{typeLabel}</span>
+                          {isManual && <span style={{marginRight:'4px',padding:'2px 7px',borderRadius:'12px',background:'#fee2e2',color:'#dc2626',fontSize:'10px',fontWeight:'700'}}>يدوي</span>}
+                        </td>
+                        <td style={{padding:'8px 10px',textAlign:'center'}}>
+                          <span style={{padding:'2px 8px',borderRadius:'12px',fontWeight:'800',fontSize:'12px',
+                            background:r.attempts>=5?'#fee2e2':r.attempts>=3?'#fff8e7':'#f0fdf4',
+                            color:r.attempts>=5?'#dc2626':r.attempts>=3?'#b45309':'#16a34a'}}>{r.attempts}/5</span>
+                        </td>
+                        <td style={{padding:'8px 10px',fontSize:'11px',fontWeight:isBlocked?'700':'400',color:isBlocked?'#dc2626':'#16a34a'}}>
+                          {isBlocked?'⛔ محجوب':'✅ غير محجوب'}
+                        </td>
+                        <td style={{padding:'8px 10px',fontSize:'11px',color:isManual?'#dc2626':'#555'}}>{autoUnblock}</td>
+                        <td style={{padding:'8px 10px',whiteSpace:'nowrap'}}>
+                          {isBlocked && (
+                            <button onClick={()=>unblockRate(r.id)} style={{background:'#dcfce7',color:'#16a34a',border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',marginLeft:'4px'}}>✅ فك</button>
+                          )}
+                          <button onClick={()=>deleteRate(r.id)} style={{background:'#fee2e2',color:'#dc2626',border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700'}}>🗑️</button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
-          </>)
-        })()}
-      </div>
-
-      {/* ─── حظر المتابعين (RateLimit) ─── */}
-      <div style={{background:'white',borderRadius:'14px',padding:'16px',marginTop:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px',flexWrap:'wrap',gap:'8px'}}>
-          <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px'}}>🛡️ حظر المتابعين (OTP Rate Limit)</div>
-          <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
-
-            <select onChange={e=>{
-              const val = e.target.value
-              loadRateLimits(showAllRate, val)
-            }} style={{padding:'5px 10px',borderRadius:'8px',border:'1px solid #dde3ed',fontSize:'12px',fontFamily:'Cairo,sans-serif',background:'#fff'}}>
-              <option value=''>كل الأنواع</option>
-              <option value='phone-login'>🔑 تسجيل دخول</option>
-              <option value='phone'>📱 هاتف (تسجيل)</option>
-              <option value='whatsapp'>💬 واتساب</option>
-              <option value='email'>📧 إيميل</option>
-            </select>
-            <button onClick={()=>setShowAllRate(!showAllRate)}
-              style={{padding:'5px 12px',borderRadius:'8px',background:showAllRate?'#EEF2FF':'#FFF8E7',color:showAllRate?'#4338ca':'#B8860B',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700'}}>
-              {showAllRate?'المحجوبين فقط':'عرض الكل'}
-            </button>
-            <button onClick={()=>loadRateLimits(showAllRate)} style={{padding:'5px 10px',borderRadius:'8px',background:'#f0f2f7',color:'#666',border:'none',cursor:'pointer',fontSize:'12px'}}>🔄</button>
-          </div>
         </div>
-        {rateLimits.length === 0 ? (
-          <p style={{color:'#aaa',textAlign:'center',padding:'20px',fontSize:'13px'}}>لا يوجد حظر حالي ✅</p>
-        ) : (
-          <div style={{overflow:'auto'}}>
-            <table style={{width:'100%',borderCollapse:'collapse',fontSize:'12px',minWidth:'400px'}}>
-              <thead>
-                <tr style={{background:'#f5f7fa'}}>
-                  <th style={{padding:'8px 12px',textAlign:'right',color:'#555'}}>الرقم / الإيميل</th>
-                  <th style={{padding:'8px 12px',textAlign:'right',color:'#555'}}>النوع</th>
-                  <th style={{padding:'8px 12px',textAlign:'center',color:'#555'}}>المحاولات</th>
-                  <th style={{padding:'8px 12px',textAlign:'right',color:'#555'}}>محجوب حتى</th>
-                  <th style={{padding:'8px 12px',textAlign:'center',color:'#555'}}>إجراء</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rateLimits.map((r,i)=>{
-                  const isBlocked = r.blockedUntil && new Date(r.blockedUntil) > new Date()
-                  const typeMap = {'phone-login':'🔑 دخول','whatsapp':'💬 واتساب','email':'📧 إيميل','phone':'📱 هاتف','phone-login':'🔑 دخول'}
-                  return (
-                    <tr key={r.id} style={{borderBottom:'1px solid #f0f2f7',background:isBlocked?'#fff5f5':i%2===0?'#fff':'#fafbff'}}>
-                      <td style={{padding:'8px 12px',fontWeight:'700',direction:'ltr'}}>{r.key}</td>
-                      <td style={{padding:'8px 12px'}}>
-                        <span style={{padding:'2px 8px',borderRadius:'12px',background:'#EEF2FF',color:'#4338ca',fontSize:'11px',fontWeight:'700'}}>
-                          {r.keyType==='phone-login'?'🔑 دخول':r.keyType==='whatsapp'?'💬 واتساب':r.keyType==='email'?'📧 إيميل':'📱 هاتف'}
-                        </span>
-                      </td>
-                      <td style={{padding:'8px 12px',textAlign:'center'}}>
-                        <span style={{padding:'2px 8px',borderRadius:'12px',background:r.attempts>=5?'#fee2e2':r.attempts>=3?'#fff8e7':'#f0fdf4',
-                          color:r.attempts>=5?'#dc2626':r.attempts>=3?'#b45309':'#16a34a',fontWeight:'800'}}>{r.attempts}/5</span>
-                      </td>
-                      <td style={{padding:'8px 12px',fontSize:'11px',color:isBlocked?'#dc2626':'#888',fontWeight:isBlocked?'700':'400'}}>
-                        {isBlocked ? `⛔ حتى ${new Date(r.blockedUntil).toLocaleTimeString('ar-IQ')}` : '✅ غير محجوب'}
-                      </td>
-                      <td style={{padding:'8px 12px',textAlign:'center',whiteSpace:'nowrap'}}>
-                        {isBlocked && (
-                          <button onClick={()=>unblockRate(r.id)} style={{background:'#dcfce7',color:'#16a34a',border:'none',borderRadius:'7px',padding:'4px 10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',margin:'1px'}}>✅ فك الحظر</button>
-                        )}
-                        <button onClick={()=>deleteRate(r.id)} style={{background:'#fee2e2',color:'#dc2626',border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',margin:'1px'}}>🗑️</button>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+      )}
+
+      {/* ─── TAB 3: التقارير ─── */}
+      {tab==='report' && (
+        <div>
+          <div style={{display:'flex',justifyContent:'flex-end',marginBottom:'10px'}}>
+            <button onClick={loadReport} style={{padding:'6px 14px',borderRadius:'8px',background:'#f0f2f7',color:'#666',border:'none',cursor:'pointer',fontSize:'12px'}}>🔄 تحديث</button>
           </div>
-        )}
-      </div>
+          {!report ? <p style={{textAlign:'center',color:'#aaa',padding:'40px'}}>جاري التحميل...</p> : (<>
+            {/* ملخص */}
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(130px,1fr))',gap:'10px',marginBottom:'16px'}}>
+              {[
+                {l:'إجمالي السجلات',v:report.total,c:'#2C3E6B',bg:'#EEF2FF'},
+                {l:'محجوب الآن',v:report.activeBlocked,c:'#dc2626',bg:'#fee2e2'},
+                {l:'حجب يدوي',v:report.manualBlocked,c:'#7c3aed',bg:'#ede9fe'},
+                {l:'حجب تلقائي',v:report.autoBlocked,c:'#d97706',bg:'#fef3c7'},
+                {l:'تم فك حجبهم',v:report.unblocked,c:'#059669',bg:'#d1fae5'},
+              ].map(s=>(
+                <div key={s.l} style={{background:s.bg,borderRadius:'12px',padding:'12px 14px'}}>
+                  <div style={{fontSize:'24px',fontWeight:'900',color:s.c}}>{s.v}</div>
+                  <div style={{fontSize:'11px',color:s.c,fontWeight:'700'}}>{s.l}</div>
+                </div>
+              ))}
+            </div>
+            {/* جدول التقرير الكامل */}
+            <div style={{background:'#fff',borderRadius:'14px',padding:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
+              <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px',marginBottom:'12px'}}>📋 السجل الكامل ({report.total})</div>
+              <div style={{overflowX:'auto'}}>
+                <table style={{width:'100%',borderCollapse:'collapse',fontSize:'12px',minWidth:'600px'}}>
+                  <thead>
+                    <tr style={{background:'#f5f7fa'}}>
+                      {['الرقم / الإيميل','النوع','المحاولات','الحالة','نوع الحجب','فك الحجب','فك بواسطة'].map(h=>(
+                        <th key={h} style={{padding:'8px 10px',textAlign:'right',color:'#555',fontWeight:'700'}}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(report.items||[]).map((r,i)=>{
+                      const isBlocked = isActBlocked(r)
+                      return (
+                        <tr key={r.id} style={{borderBottom:'1px solid #f0f2f7',background:i%2===0?'#fff':'#fafbff'}}>
+                          <td style={{padding:'7px 10px',fontWeight:'700',direction:'ltr',fontSize:'12px'}}>{r.key}</td>
+                          <td style={{padding:'7px 10px',fontSize:'11px'}}>
+                            {r.keyType==='phone-login'?'🔑 دخول':r.keyType==='whatsapp'?'💬 واتساب':r.keyType==='email'?'📧 إيميل':'📱 هاتف'}
+                          </td>
+                          <td style={{padding:'7px 10px',textAlign:'center',fontWeight:'700'}}>{r.attempts}</td>
+                          <td style={{padding:'7px 10px',fontSize:'11px',color:isBlocked?'#dc2626':'#16a34a',fontWeight:'700'}}>
+                            {isBlocked?'⛔ محجوب':'✅ مفتوح'}
+                          </td>
+                          <td style={{padding:'7px 10px'}}>
+                            {r.isManual
+                              ? <span style={{background:'#fee2e2',color:'#dc2626',padding:'2px 8px',borderRadius:'12px',fontSize:'10px',fontWeight:'700'}}>يدوي دائم</span>
+                              : <span style={{background:'#fef3c7',color:'#b45309',padding:'2px 8px',borderRadius:'12px',fontSize:'10px',fontWeight:'700'}}>تلقائي (ساعة)</span>
+                            }
+                          </td>
+                          <td style={{padding:'7px 10px',fontSize:'11px',color:'#555'}}>{r.unblockedAt||'—'}</td>
+                          <td style={{padding:'7px 10px',fontSize:'11px',color:'#555'}}>{r.unblockedBy||'—'}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>)}
+        </div>
+      )}
 
     </div>
   )
 }
+
 
 // ─── Startups Admin Panel ───
 function StartupsAdminPanel() {

@@ -104,8 +104,9 @@ public class SecurityController : ControllerBase {
     // GET /api/security/ratelimits — محاولات المتابعين المحجوبة
     [HttpGet("ratelimits"), Authorize]
     public async Task<IActionResult> GetRateLimits([FromQuery] bool blockedOnly = true, [FromQuery] string? keyType = null) {
+        var now = DateTime.UtcNow;
         var q = _db.RateLimitBlocks.AsQueryable();
-        if (blockedOnly) q = q.Where(r => r.BlockedUntil != null && r.BlockedUntil > DateTime.UtcNow);
+        if (blockedOnly) q = q.Where(r => r.BlockedUntil != null && r.BlockedUntil > now && !r.IsManual || r.IsManual && r.BlockedUntil != null);
         if (!string.IsNullOrEmpty(keyType)) q = q.Where(r => r.KeyType == keyType);
         var items = await q.OrderByDescending(r => r.UpdatedAt).Take(200).ToListAsync();
         return Ok(items);
@@ -116,9 +117,50 @@ public class SecurityController : ControllerBase {
     public async Task<IActionResult> UnblockRateLimit(int id) {
         var r = await _db.RateLimitBlocks.FindAsync(id);
         if (r == null) return NotFound();
-        r.Attempts = 0; r.BlockedUntil = null; r.UpdatedAt = DateTime.UtcNow;
+        var admin = User.FindFirst(ClaimTypes.Name)?.Value ?? "admin";
+        r.Attempts = 0; r.BlockedUntil = null; r.IsManual = false;
+        r.UnblockedAt = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+        r.UnblockedBy = admin;
+        r.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return Ok(new { message = "تم فك الحظر" });
+    }
+
+    // POST /api/security/ratelimits/block — حجب يدوي
+    [HttpPost("ratelimits/block"), Authorize]
+    public async Task<IActionResult> ManualBlockRateLimit([FromBody] ManualBlockDto dto) {
+        if (string.IsNullOrWhiteSpace(dto.Key))
+            return BadRequest(new { message = "الرقم أو الإيميل مطلوب" });
+        var existing = await _db.RateLimitBlocks.FirstOrDefaultAsync(r => r.Key == dto.Key);
+        if (existing != null) {
+            existing.IsManual = true;
+            existing.BlockedUntil = DateTime.MaxValue;
+            existing.UpdatedAt = DateTime.UtcNow;
+        } else {
+            _db.RateLimitBlocks.Add(new RateLimitBlock {
+                Key = dto.Key, KeyType = dto.KeyType ?? "phone",
+                IsManual = true, Attempts = 0,
+                BlockedUntil = DateTime.MaxValue,
+                FirstAttemptAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
+            });
+        }
+        await _db.SaveChangesAsync();
+        return Ok(new { message = "تم الحجب اليدوي بنجاح" });
+    }
+
+    // GET /api/security/ratelimits/report — تقرير كامل
+    [HttpGet("ratelimits/report"), Authorize]
+    public async Task<IActionResult> GetRateLimitReport() {
+        var now = DateTime.UtcNow;
+        var items = await _db.RateLimitBlocks.OrderByDescending(r => r.UpdatedAt).Take(500).ToListAsync();
+        return Ok(new {
+            total = items.Count,
+            activeBlocked = items.Count(r => r.BlockedUntil != null && r.BlockedUntil > now),
+            manualBlocked = items.Count(r => r.IsManual),
+            autoBlocked = items.Count(r => !r.IsManual && r.BlockedUntil != null && r.BlockedUntil > now),
+            unblocked = items.Count(r => r.UnblockedAt != null),
+            items = items
+        });
     }
 
     // DELETE /api/security/ratelimits/{id}
@@ -133,3 +175,4 @@ public class SecurityController : ControllerBase {
 }
 
 public record BlockDto(string Contact, string Channel);
+public record ManualBlockDto(string Key, string? KeyType);
