@@ -114,3 +114,15 @@ img { display: block; }
   .security-stats-row { flex-direction: column; }
   .security-stats-row > div { width: 100%; }
 }
+
+/* ─── Print Styles ─── */
+@media print {
+  body { font-family: 'Cairo', sans-serif; direction: rtl; }
+  nav, header, aside, .sidebar, button:not(.print-show), 
+  [class*="sidebar"], [class*="nav"] { display: none !important; }
+  * { box-shadow: none !important; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th, td { border: 1px solid #ddd; padding: 6px; text-align: right; }
+  th { background: #2C3E6B !important; color: white !important; -webkit-print-color-adjust: exact; }
+  @page { margin: 1.5cm; size: A4 landscape; }
+}

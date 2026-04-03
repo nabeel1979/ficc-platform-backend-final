@@ -2449,7 +2449,14 @@ function SecurityPanel() {
             </div>
             {/* جدول التقرير الكامل */}
             <div style={{background:'#fff',borderRadius:'14px',padding:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
-              <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px',marginBottom:'12px'}}>📋 السجل الكامل ({report.total})</div>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
+                <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px'}}>📋 السجل الكامل ({report.total})</div>
+                <button onClick={()=>window.print()} title="طباعة التقرير"
+                  style={{padding:'7px 14px',borderRadius:'8px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',
+                    display:'inline-flex',alignItems:'center',gap:'6px',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700'}}>
+                  🖨️ طباعة
+                </button>
+              </div>
               <div style={{overflowX:'auto'}}>
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:'12px',minWidth:'600px'}}>
                   <thead>
