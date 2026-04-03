@@ -69,6 +69,11 @@ public class SubscribersController : ControllerBase {
             if (record.Attempts >= MAX_ATTEMPTS) {
                 record.BlockedUntil = DateTime.UtcNow.AddHours(BLOCK_HOURS);
                 await _db.SaveChangesAsync();
+                // إشعار الأدمن بالإيميل
+                _ = Task.Run(async () => {
+                    var html = $"<div dir='rtl' style='font-family:Cairo,sans-serif;padding:20px;'><h2 style='color:#dc2626;'>🚨 حجب تلقائي — منصة FICC</h2><p><b>الجهة:</b> {key}</p><p><b>النوع:</b> {keyType}</p><p><b>المحاولات:</b> {MAX_ATTEMPTS}</p><p><b>الوقت:</b> {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC</p><p><b>محجوب حتى:</b> {DateTime.UtcNow.AddHours(BLOCK_HOURS):yyyy-MM-dd HH:mm} UTC</p><a href='https://ficc.iq/admin/security' style='background:#2C3E6B;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:12px;'>فك الحجب من لوحة التحكم</a></div>";
+                    await _notify.SendEmail("engnabeelalmulla@gmail.com", "🚨 حجب تلقائي — FICC Platform", html);
+                });
                 return (true, $"⛔ تجاوزت الحد المسموح ({MAX_ATTEMPTS} محاولات خلال {WINDOW_MINUTES} دقيقة). تم حظر الوصول لمدة ساعة");
             }
             await _db.SaveChangesAsync();

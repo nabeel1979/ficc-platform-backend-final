@@ -22,6 +22,7 @@ function VerifiedField({ label, value, onChange, placeholder, isLtr, required, f
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
   const [sent, setSent] = useState(false)
+  const [hint, setHint] = useState('')
 
   const lbl = { display:'block', fontSize:'13px', fontWeight:'700', color:'#2C3E6B', marginBottom:'6px' }
   const inp = { width:'100%', padding:'11px 14px', borderRadius:'10px', border:'1.5px solid #dde3ed', fontSize:'14px', fontFamily:'Cairo,sans-serif', outline:'none', boxSizing:'border-box' }
@@ -32,7 +33,7 @@ function VerifiedField({ label, value, onChange, placeholder, isLtr, required, f
     try {
       const r = await api.post(`${API}/subscribers/send-field-otp`, { field, value })
       setShowOtp(true); setSent(true); setOtp('')
-      if (r.data?.attemptsInfo) setErr('⚠️ ' + r.data.attemptsInfo)
+      if (r.data?.attemptsInfo) setHint('⚠️ ' + r.data.attemptsInfo); else setHint('')
     } catch(e) {
       const msg = e?.response?.data?.message || 'حدث خطأ'
       setErr(e?.response?.status === 429 ? '⛔ ' + msg : msg)
@@ -80,6 +81,7 @@ function VerifiedField({ label, value, onChange, placeholder, isLtr, required, f
           </div>
         </div>
       )}
+      {hint && <p style={{color:'#b45309',fontSize:'11px',margin:'4px 0 0',fontWeight:'600'}}>{hint}</p>}
       {err && <p style={{color:'#dc2626',fontSize:'12px',margin:'6px 0 0'}}>{err}</p>}
     </div>
   )
