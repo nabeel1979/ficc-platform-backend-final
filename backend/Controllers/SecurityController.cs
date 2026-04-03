@@ -103,10 +103,11 @@ public class SecurityController : ControllerBase {
 
     // GET /api/security/ratelimits — محاولات المتابعين المحجوبة
     [HttpGet("ratelimits"), Authorize]
-    public async Task<IActionResult> GetRateLimits([FromQuery] bool blockedOnly = true) {
+    public async Task<IActionResult> GetRateLimits([FromQuery] bool blockedOnly = true, [FromQuery] string? keyType = null) {
         var q = _db.RateLimitBlocks.AsQueryable();
         if (blockedOnly) q = q.Where(r => r.BlockedUntil != null && r.BlockedUntil > DateTime.UtcNow);
-        var items = await q.OrderByDescending(r => r.UpdatedAt).Take(100).ToListAsync();
+        if (!string.IsNullOrEmpty(keyType)) q = q.Where(r => r.KeyType == keyType);
+        var items = await q.OrderByDescending(r => r.UpdatedAt).Take(200).ToListAsync();
         return Ok(items);
     }
 

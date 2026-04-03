@@ -2161,9 +2161,11 @@ function SecurityPanel() {
   const [rateLimits, setRateLimits] = React.useState([])
   const [showAllRate, setShowAllRate] = React.useState(false)
 
-  const loadRateLimits = async (all=false) => {
+  const loadRateLimits = async (all=false, keyType='') => {
     try {
-      const r = await api.get(`${API}/security/ratelimits?blockedOnly=${!all}`, { headers: authHdrs() })
+      let url = `${API}/security/ratelimits?blockedOnly=${!all}`
+      if (keyType) url += `&keyType=${keyType}`
+      const r = await api.get(url, { headers: authHdrs() })
       setRateLimits(r.data || [])
     } catch {}
   }
@@ -2431,9 +2433,31 @@ function SecurityPanel() {
 
       {/* ─── حظر المتابعين (RateLimit) ─── */}
       <div style={{background:'white',borderRadius:'14px',padding:'16px',marginTop:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px',flexWrap:'wrap',gap:'8px'}}>
           <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px'}}>🛡️ حظر المتابعين (OTP Rate Limit)</div>
-          <div style={{display:'flex',gap:'6px'}}>
+          <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
+            {/* فلتر النوع */}
+            {[
+              {v:'',l:'الكل'},
+              {v:'phone-login',l:'🔑 دخول'},
+              {v:'phone',l:'📱 هاتف'},
+              {v:'whatsapp',l:'💬 واتساب'},
+              {v:'email',l:'📧 إيميل'},
+              {v:'sub-phone',l:'📋 استمارة'}
+            ].map(({v,l})=>{
+              const [rateTypeFilter, setRateTypeFilter] = React.useState ? null : null
+              return null
+            })}
+            <select onChange={e=>{
+              const val = e.target.value
+              loadRateLimits(showAllRate, val)
+            }} style={{padding:'5px 10px',borderRadius:'8px',border:'1px solid #dde3ed',fontSize:'12px',fontFamily:'Cairo,sans-serif',background:'#fff'}}>
+              <option value=''>كل الأنواع</option>
+              <option value='phone-login'>🔑 تسجيل دخول</option>
+              <option value='phone'>📱 هاتف (تسجيل)</option>
+              <option value='whatsapp'>💬 واتساب</option>
+              <option value='email'>📧 إيميل</option>
+            </select>
             <button onClick={()=>setShowAllRate(!showAllRate)}
               style={{padding:'5px 12px',borderRadius:'8px',background:showAllRate?'#EEF2FF':'#FFF8E7',color:showAllRate?'#4338ca':'#B8860B',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700'}}>
               {showAllRate?'المحجوبين فقط':'عرض الكل'}
@@ -2450,30 +2474,39 @@ function SecurityPanel() {
                 <tr style={{background:'#f5f7fa'}}>
                   <th style={{padding:'8px 12px',textAlign:'right',color:'#555'}}>الرقم / الإيميل</th>
                   <th style={{padding:'8px 12px',textAlign:'right',color:'#555'}}>النوع</th>
-                  <th style={{padding:'8px 12px',textAlign:'right',color:'#555'}}>المحاولات</th>
+                  <th style={{padding:'8px 12px',textAlign:'center',color:'#555'}}>المحاولات</th>
                   <th style={{padding:'8px 12px',textAlign:'right',color:'#555'}}>محجوب حتى</th>
                   <th style={{padding:'8px 12px',textAlign:'center',color:'#555'}}>إجراء</th>
                 </tr>
               </thead>
               <tbody>
-                {rateLimits.map((r,i)=>(
-                  <tr key={r.id} style={{borderBottom:'1px solid #f0f2f7',background:r.blockedUntil&&new Date(r.blockedUntil)>new Date()?'#fff5f5':'#fff'}}>
-                    <td style={{padding:'8px 12px',fontWeight:'700',direction:'ltr'}}>{r.key}</td>
-                    <td style={{padding:'8px 12px'}}>{r.keyType==='phone-login'?'🔑 دخول':r.keyType==='whatsapp'?'💬 واتساب':r.keyType==='email'?'📧 إيميل':'📱 هاتف'}</td>
-                    <td style={{padding:'8px 12px',textAlign:'center'}}>
-                      <span style={{padding:'2px 8px',borderRadius:'12px',background:r.attempts>=5?'#fee2e2':'#fff8e7',color:r.attempts>=5?'#dc2626':'#b45309',fontWeight:'700'}}>{r.attempts}</span>
-                    </td>
-                    <td style={{padding:'8px 12px',fontSize:'11px',color:r.blockedUntil&&new Date(r.blockedUntil)>new Date()?'#dc2626':'#888'}}>
-                      {r.blockedUntil ? new Date(r.blockedUntil).toLocaleTimeString('ar-IQ') : '—'}
-                    </td>
-                    <td style={{padding:'8px 12px',textAlign:'center',whiteSpace:'nowrap'}}>
-                      {r.blockedUntil && new Date(r.blockedUntil) > new Date() && (
-                        <button onClick={()=>unblockRate(r.id)} style={{background:'#dcfce7',color:'#16a34a',border:'none',borderRadius:'7px',padding:'4px 10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',margin:'1px'}}>✅ فك الحظر</button>
-                      )}
-                      <button onClick={()=>deleteRate(r.id)} style={{background:'#fee2e2',color:'#dc2626',border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',margin:'1px'}}>🗑️</button>
-                    </td>
-                  </tr>
-                ))}
+                {rateLimits.map((r,i)=>{
+                  const isBlocked = r.blockedUntil && new Date(r.blockedUntil) > new Date()
+                  const typeMap = {'phone-login':'🔑 دخول','whatsapp':'💬 واتساب','email':'📧 إيميل','phone':'📱 هاتف','phone-login':'🔑 دخول'}
+                  return (
+                    <tr key={r.id} style={{borderBottom:'1px solid #f0f2f7',background:isBlocked?'#fff5f5':i%2===0?'#fff':'#fafbff'}}>
+                      <td style={{padding:'8px 12px',fontWeight:'700',direction:'ltr'}}>{r.key}</td>
+                      <td style={{padding:'8px 12px'}}>
+                        <span style={{padding:'2px 8px',borderRadius:'12px',background:'#EEF2FF',color:'#4338ca',fontSize:'11px',fontWeight:'700'}}>
+                          {r.keyType==='phone-login'?'🔑 دخول':r.keyType==='whatsapp'?'💬 واتساب':r.keyType==='email'?'📧 إيميل':'📱 هاتف'}
+                        </span>
+                      </td>
+                      <td style={{padding:'8px 12px',textAlign:'center'}}>
+                        <span style={{padding:'2px 8px',borderRadius:'12px',background:r.attempts>=5?'#fee2e2':r.attempts>=3?'#fff8e7':'#f0fdf4',
+                          color:r.attempts>=5?'#dc2626':r.attempts>=3?'#b45309':'#16a34a',fontWeight:'800'}}>{r.attempts}/5</span>
+                      </td>
+                      <td style={{padding:'8px 12px',fontSize:'11px',color:isBlocked?'#dc2626':'#888',fontWeight:isBlocked?'700':'400'}}>
+                        {isBlocked ? `⛔ حتى ${new Date(r.blockedUntil).toLocaleTimeString('ar-IQ')}` : '✅ غير محجوب'}
+                      </td>
+                      <td style={{padding:'8px 12px',textAlign:'center',whiteSpace:'nowrap'}}>
+                        {isBlocked && (
+                          <button onClick={()=>unblockRate(r.id)} style={{background:'#dcfce7',color:'#16a34a',border:'none',borderRadius:'7px',padding:'4px 10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',margin:'1px'}}>✅ فك الحظر</button>
+                        )}
+                        <button onClick={()=>deleteRate(r.id)} style={{background:'#fee2e2',color:'#dc2626',border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',margin:'1px'}}>🗑️</button>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

@@ -39,9 +39,10 @@ public class SubscribersController : ControllerBase {
         return Ok(new { id = sub.Id, message = "تم التسجيل بنجاح!" });
     }
 
-    // دالة مشتركة للتحقق من Rate Limit
+    // دالة مشتركة للتحقق من Rate Limit (5 محاولات خلال 30 دقيقة)
     private async Task<(bool blocked, string message)> CheckRateLimit(string key, string keyType) {
         const int MAX_ATTEMPTS = 5;
+        const int WINDOW_MINUTES = 30;  // نافذة 30 دقيقة
         const int BLOCK_HOURS = 1;
 
         var record = await _db.RateLimitBlocks.FirstOrDefaultAsync(r => r.Key == key && r.KeyType == keyType);
@@ -50,6 +51,12 @@ public class SubscribersController : ControllerBase {
             if (record.BlockedUntil.HasValue && record.BlockedUntil > DateTime.UtcNow) {
                 var remaining = (int)(record.BlockedUntil.Value - DateTime.UtcNow).TotalMinutes + 1;
                 return (true, $"⛔ تم حظر هذا الرقم مؤقتاً. حاول مرة أخرى بعد {remaining} دقيقة");
+            }
+            // إذا انتهت نافذة 30 دقيقة — أعد التهيئة
+            if ((DateTime.UtcNow - record.FirstAttemptAt).TotalMinutes >= WINDOW_MINUTES) {
+                record.Attempts = 0;
+                record.BlockedUntil = null;
+                record.FirstAttemptAt = DateTime.UtcNow;
             }
             // إذا انتهى الحظر — أعد التهيئة
             if (record.BlockedUntil.HasValue && record.BlockedUntil <= DateTime.UtcNow) {
@@ -62,16 +69,15 @@ public class SubscribersController : ControllerBase {
             if (record.Attempts >= MAX_ATTEMPTS) {
                 record.BlockedUntil = DateTime.UtcNow.AddHours(BLOCK_HOURS);
                 await _db.SaveChangesAsync();
-                return (true, $"⛔ تجاوزت الحد المسموح ({MAX_ATTEMPTS} محاولات). تم حظر الوصول لمدة ساعة");
+                return (true, $"⛔ تجاوزت الحد المسموح ({MAX_ATTEMPTS} محاولات خلال {WINDOW_MINUTES} دقيقة). تم حظر الوصول لمدة ساعة");
             }
             await _db.SaveChangesAsync();
             int remaining2 = MAX_ATTEMPTS - record.Attempts;
-            return (false, $"تبقى لك {remaining2} محاولة");
+            return (false, $"تبقى لك {remaining2} محاولة خلال {(int)(WINDOW_MINUTES - (DateTime.UtcNow - record.FirstAttemptAt).TotalMinutes)} دقيقة");
         } else {
             _db.RateLimitBlocks.Add(new RateLimitBlock { Key = key, KeyType = keyType, Attempts = 1 });
             await _db.SaveChangesAsync();
-            int remaining3 = MAX_ATTEMPTS - 1;
-            return (false, $"تبقى لك {remaining3} محاولات");
+            return (false, $"تبقى لك {MAX_ATTEMPTS - 1} محاولات خلال {WINDOW_MINUTES} دقيقة");
         }
     }
 
