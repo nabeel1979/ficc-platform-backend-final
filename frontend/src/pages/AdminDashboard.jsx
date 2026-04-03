@@ -2896,7 +2896,20 @@ function SubscribersPanel() {
 /* ─── Knowledge Base Panel ─── */
 const KB_CATS = ['الكمارك','المصارف','الغرف التجارية','الاستثمار','تجارة عامة','استيراد وتصدير','صناعة وتصنيع','مقاولات وإنشاءات','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','طاقة وكهرباء','أخرى']
 
-function KBFormModal({ form, setForm, editItem, save, setShowAdd, setEditItem, msg, setMsg }) {
+function KBFormModal({ form: initForm, editItem, onSave, setShowAdd, setEditItem }) {
+  const [form, setForm] = React.useState(initForm || { title:'', keywords:'', type:'text', answer:'', linkUrl:'', filePath:'', category:'' })
+  const [msg, setMsg] = React.useState('')
+
+  const save = async () => {
+    if (!form.title) { setMsg('❌ العنوان مطلوب'); return }
+    try {
+      if (editItem) await api.put(`/knowledge/${editItem.id}`, form, { headers: authHdrs() })
+      else await api.post('/knowledge', form, { headers: authHdrs() })
+      setMsg('✅ تم الحفظ'); onSave()
+      setTimeout(() => { setShowAdd(false); setEditItem(null) }, 800)
+    } catch { setMsg('❌ فشل الحفظ') }
+  }
+
   return (
     <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.55)',zIndex:1000,display:'flex',alignItems:'flex-start',justifyContent:'center',padding:'16px',overflowY:'auto'}}>
       <div style={{background:'#fff',borderRadius:'16px',padding:'20px',width:'100%',maxWidth:'520px',direction:'rtl',fontFamily:'Cairo,sans-serif',marginTop:'16px',marginBottom:'16px'}}>
@@ -2959,7 +2972,7 @@ function KBFormModal({ form, setForm, editItem, save, setShowAdd, setEditItem, m
                     const file = e.target.files[0]; if (!file) return
                     const fd = new FormData(); fd.append('file', file)
                     try {
-                      const r = await api.post(`${''}/knowledge/upload-file`, fd, { headers: { ...authHdrs(), 'Content-Type': 'multipart/form-data' } })
+                      const r = await api.post(`/knowledge/upload-file`, fd, { headers: { ...authHdrs(), 'Content-Type': 'multipart/form-data' } })
                       setForm(p=>({...p, filePath: r.data.path}))
                     } catch { alert('فشل رفع الملف') }
                   }} style={{display:'none'}}/>
@@ -3060,7 +3073,7 @@ function KnowledgePanel() {
 
   return (
     <div style={{padding:'24px',fontFamily:'Cairo,sans-serif',direction:'rtl'}}>
-      {showAdd && <KBFormModal form={form} setForm={setForm} editItem={editItem} save={save} setShowAdd={setShowAdd} setEditItem={setEditItem} msg={msg} setMsg={setMsg}/>}
+      {showAdd && <KBFormModal form={editItem||{}} editItem={editItem} onSave={()=>load(page,search)} setShowAdd={setShowAdd} setEditItem={setEditItem}/>}
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px',flexWrap:'wrap',gap:'10px'}}>
         <h2 style={{color:'#2C3E6B',fontWeight:'900',fontSize:'20px',margin:0}}>🧠 قاعدة المعرفة ({total})</h2>
         <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
