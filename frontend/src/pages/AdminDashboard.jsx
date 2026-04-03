@@ -2980,9 +2980,32 @@ function KnowledgePanel() {
           </div>
         )}
         <div style={{marginBottom:'16px'}}>
-          <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>الإجابة / المحتوى</label>
-          <textarea value={form.answer||''} onChange={e=>setForm(p=>({...p,answer:e.target.value}))} rows={5}
-            style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',resize:'vertical',boxSizing:'border-box'}}/>
+          <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'6px'}}>الإجابة / المحتوى</label>
+          {/* شريط أدوات التنسيق */}
+          <div style={{display:'flex',gap:'4px',marginBottom:'6px',flexWrap:'wrap'}}>
+            {[
+              {label:'ع', title:'عريض', before:'**', after:'**'},
+              {label:'م', title:'مائل', before:'_', after:'_'},
+              {label:'—', title:'خط أفقي', before:'\n---\n', after:''},
+              {label:'• قائمة', title:'قائمة نقطية', before:'\n• ', after:''},
+              {label:'1. ترقيم', title:'قائمة مرقمة', before:'\n1. ', after:''},
+              {label:'🔗 رابط', title:'رابط', before:'[النص](', after:')'},
+            ].map(({label,title,before,after})=>(
+              <button key={label} type="button" title={title} onClick={()=>{
+                const ta = document.getElementById('kb-answer-ta')
+                if (!ta) return
+                const start = ta.selectionStart, end = ta.selectionEnd
+                const sel = form.answer?.substring(start,end) || ''
+                const newVal = (form.answer||'').substring(0,start) + before + sel + after + (form.answer||'').substring(end)
+                setForm(p=>({...p,answer:newVal}))
+                setTimeout(()=>{ ta.focus(); ta.setSelectionRange(start+before.length, start+before.length+sel.length) }, 10)
+              }} style={{padding:'4px 10px',borderRadius:'6px',background:'#f0f2f7',color:'#444',border:'1px solid #dde3ed',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'600'}}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <textarea id="kb-answer-ta" value={form.answer||''} onChange={e=>setForm(p=>({...p,answer:e.target.value}))} rows={7}
+            style={{width:'100%',padding:'10px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',resize:'vertical',boxSizing:'border-box',lineHeight:'1.8'}}/>
         </div>
         {msg && <div style={{color:msg.startsWith('✅')?'#16a34a':'#dc2626',fontSize:'13px',marginBottom:'8px'}}>{msg}</div>}
         <div style={{display:'flex',gap:'8px'}}>
