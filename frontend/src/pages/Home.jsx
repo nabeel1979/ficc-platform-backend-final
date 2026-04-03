@@ -54,6 +54,7 @@ export default function Home() {
         <p className="sub-ar">المرجع الأول للتجارة والأعمال في العراق</p>
         <div className="hero-btns">
           <Link to="/subscribe" className="btn-hero-primary" style={{background:'rgba(255,199,44,0.2)',borderColor:'rgba(255,199,44,0.5)',color:'#FFC72C'}}>🔔 سجّل متابعاً</Link>
+          <Link to="/chat" className="btn-hero-outline" style={{background:'rgba(16,185,129,0.15)',borderColor:'rgba(16,185,129,0.4)',color:'#10b981'}}>💬 راسلنا</Link>
           <Link to="/register" className="btn-hero-outline">✅ سجّل نشاطك</Link>
           <Link to="/directory" className="btn-hero-outline">🔍 دليل التجار والشركات</Link>
         </div>

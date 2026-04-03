@@ -20,6 +20,8 @@ const NAV = [
   { to: '/admin/users',       label: 'المستخدمين',       icon: '🔑' },
   { to: '/admin/submissions', label: 'طلبات الإضافة',   icon: '📬' },
   { to: '/admin/subscribers', label: 'المتابعون',         icon: '🔔' },
+  { to: '/admin/knowledge',   label: 'قاعدة المعرفة',    icon: '🧠' },
+  { to: '/admin/chats',       label: 'المحادثات',         icon: '💬' },
   { to: '/admin/startups',   label: 'ريادة الأعمال',   icon: '🚀' },
   { to: '/admin/constants',  label: 'ثوابت النظام',    icon: '⚙️' },
   { to: '/admin/security',   label: 'إدارة الأمان',    icon: '🔒' },
@@ -1218,6 +1220,8 @@ export default function AdminDashboard() {
           <Route path="submissions" element={<SubmissionsPanel />} />
           <Route path="contacts" element={<ContactsPanel />} />
           <Route path="subscribers" element={<SubscribersPanel />} />
+          <Route path="knowledge" element={<KnowledgePanel />} />
+          <Route path="chats" element={<AdminChatsPanel />} />
           <Route path="startups" element={<StartupsAdminPanel />} />
           <Route path="constants" element={<SystemConstantsPanel />} />
           <Route path="security" element={isSuperAdmin ? <SecurityPanel /> : <div style={{padding:'40px',textAlign:'center',color:'#dc2626',fontSize:'18px',fontWeight:'700'}}>⛔ غير مصرّح لك بالوصول</div>} />
@@ -2790,6 +2794,283 @@ function SubscribersPanel() {
         </div>
         )
       })()}
+    </div>
+  )
+}
+
+/* ─── Knowledge Base Panel ─── */
+function KnowledgePanel() {
+  const [items, setItems] = useState([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [editItem, setEditItem] = useState(null)
+  const [showAdd, setShowAdd] = useState(false)
+  const [form, setForm] = useState({ title:'', keywords:'', type:'text', answer:'', linkUrl:'', category:'' })
+  const [msg, setMsg] = useState('')
+  const [importFile, setImportFile] = useState(null)
+  const pageSize = 20
+
+  const load = async (p=1, q='') => {
+    setLoading(true)
+    try {
+      const r = await api.get(`${API}/knowledge`, { params: { page: p, pageSize, search: q }, headers: authHdrs() })
+      setItems(r.data.items || [])
+      setTotal(r.data.total || 0)
+    } catch {}
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [])
+
+  const save = async () => {
+    if (!form.title) { setMsg('⚠️ العنوان مطلوب'); return }
+    try {
+      if (editItem) {
+        await api.put(`${API}/knowledge/${editItem.id}`, form, { headers: authHdrs() })
+      } else {
+        await api.post(`${API}/knowledge`, form, { headers: authHdrs() })
+      }
+      setMsg('✅ تم الحفظ'); setEditItem(null); setShowAdd(false)
+      setForm({ title:'', keywords:'', type:'text', answer:'', linkUrl:'', category:'' })
+      load(page, search)
+    } catch { setMsg('❌ حدث خطأ') }
+  }
+
+  const del = async (id) => {
+    if (!window.confirm('حذف؟')) return
+    await api.delete(`${API}/knowledge/${id}`, { headers: authHdrs() })
+    load(page, search)
+  }
+
+  const importExcel = async () => {
+    if (!importFile) return
+    const fd = new FormData(); fd.append('file', importFile)
+    try {
+      const r = await api.post(`${API}/knowledge/import-excel`, fd, { headers: { ...authHdrs(), 'Content-Type': 'multipart/form-data' } })
+      setMsg('✅ ' + r.data.message); setImportFile(null); load()
+    } catch { setMsg('❌ فشل الاستيراد') }
+  }
+
+  const openEdit = (item) => { setEditItem(item); setForm({...item}); setShowAdd(true) }
+
+  const typeLabel = (t) => t === 'link' ? '🔗 رابط' : t === 'file' ? '📎 ملف' : '📝 نص'
+
+  const FormModal = () => (
+    <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px'}}>
+      <div style={{background:'#fff',borderRadius:'16px',padding:'24px',width:'100%',maxWidth:'520px',direction:'rtl',fontFamily:'Cairo,sans-serif',maxHeight:'90vh',overflow:'auto'}}>
+        <h3 style={{color:'#2C3E6B',margin:'0 0 16px',fontWeight:'800'}}>{editItem?'✏️ تعديل':'➕ إضافة'} معرفة</h3>
+        {[['العنوان *','title'],['المفاتيح (كلمات مفتاحية مفصولة بفاصلة)','keywords'],['التصنيف','category']].map(([lbl,k])=>(
+          <div key={k} style={{marginBottom:'12px'}}>
+            <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>{lbl}</label>
+            <input value={form[k]||''} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))}
+              style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',boxSizing:'border-box'}}/>
+          </div>
+        ))}
+        <div style={{marginBottom:'12px'}}>
+          <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>النوع</label>
+          <select value={form.type} onChange={e=>setForm(p=>({...p,type:e.target.value}))}
+            style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif'}}>
+            <option value="text">📝 نص</option>
+            <option value="link">🔗 رابط</option>
+            <option value="file">📎 ملف</option>
+          </select>
+        </div>
+        {form.type === 'link' && (
+          <div style={{marginBottom:'12px'}}>
+            <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>الرابط</label>
+            <input value={form.linkUrl||''} onChange={e=>setForm(p=>({...p,linkUrl:e.target.value}))} placeholder="https://"
+              style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',direction:'ltr',boxSizing:'border-box'}}/>
+          </div>
+        )}
+        <div style={{marginBottom:'16px'}}>
+          <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>الإجابة / المحتوى</label>
+          <textarea value={form.answer||''} onChange={e=>setForm(p=>({...p,answer:e.target.value}))} rows={5}
+            style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',resize:'vertical',boxSizing:'border-box'}}/>
+        </div>
+        {msg && <div style={{color:msg.startsWith('✅')?'#16a34a':'#dc2626',fontSize:'13px',marginBottom:'8px'}}>{msg}</div>}
+        <div style={{display:'flex',gap:'8px'}}>
+          <button onClick={save} style={{flex:1,padding:'11px',borderRadius:'10px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'800'}}>💾 حفظ</button>
+          <button onClick={()=>{setShowAdd(false);setEditItem(null);setMsg('')}} style={{flex:1,padding:'11px',borderRadius:'10px',background:'#f5f7fa',color:'#666',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}>إلغاء</button>
+        </div>
+      </div>
+    </div>
+  )
+
+  return (
+    <div style={{padding:'24px',fontFamily:'Cairo,sans-serif',direction:'rtl'}}>
+      {showAdd && <FormModal/>}
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px',flexWrap:'wrap',gap:'10px'}}>
+        <h2 style={{color:'#2C3E6B',fontWeight:'900',fontSize:'20px',margin:0}}>🧠 قاعدة المعرفة ({total})</h2>
+        <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+          <input value={search} onChange={e=>{setSearch(e.target.value);load(1,e.target.value)}} placeholder="بحث..."
+            style={{padding:'9px 12px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',width:'160px',outline:'none'}}/>
+          <label style={{padding:'9px 14px',borderRadius:'10px',background:'#f0fdf4',color:'#16a34a',border:'1px solid #86efac',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'13px',fontWeight:'700'}}>
+            📥 استيراد CSV
+            <input type="file" accept=".csv,.xlsx" onChange={e=>setImportFile(e.target.files[0])} style={{display:'none'}}/>
+          </label>
+          {importFile && <button onClick={importExcel} style={{padding:'9px 14px',borderRadius:'10px',background:'#059669',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'13px',fontWeight:'700'}}>✅ رفع</button>}
+          <button onClick={()=>{setShowAdd(true);setEditItem(null);setForm({title:'',keywords:'',type:'text',answer:'',linkUrl:'',category:''})}}
+            style={{padding:'9px 16px',borderRadius:'10px',background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'13px',fontWeight:'700'}}>
+            + إضافة
+          </button>
+        </div>
+      </div>
+      {msg && !showAdd && <div style={{background:'#f0fdf4',color:'#16a34a',padding:'10px 14px',borderRadius:'10px',marginBottom:'12px',fontWeight:'700'}}>{msg}</div>}
+      <div style={{background:'#fff',borderRadius:'16px',overflow:'auto',boxShadow:'0 4px 16px rgba(44,62,107,0.08)'}}>
+        <table style={{width:'100%',borderCollapse:'collapse',fontSize:'13px',minWidth:'600px'}}>
+          <thead>
+            <tr style={{background:'#2C3E6B',color:'#fff'}}>
+              <th style={{padding:'12px 16px',textAlign:'right'}}>#</th>
+              <th style={{padding:'12px 16px',textAlign:'right'}}>العنوان</th>
+              <th style={{padding:'12px 16px',textAlign:'right'}}>المفاتيح</th>
+              <th style={{padding:'12px 16px',textAlign:'right'}}>النوع</th>
+              <th style={{padding:'12px 16px',textAlign:'right'}}>التصنيف</th>
+              <th style={{padding:'12px 16px',textAlign:'center'}}>إجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((k,i) => (
+              <tr key={k.id} style={{borderBottom:'1px solid #f0f2f7',background:i%2===0?'#fff':'#fafbff'}}>
+                <td style={{padding:'10px 16px',color:'#888'}}>{(page-1)*pageSize+i+1}</td>
+                <td style={{padding:'10px 16px',fontWeight:'700',color:'#2C3E6B',maxWidth:'200px'}}>
+                  <div>{k.title}</div>
+                  {k.answer && <div style={{fontSize:'11px',color:'#888',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{k.answer.slice(0,60)}...</div>}
+                </td>
+                <td style={{padding:'10px 16px',fontSize:'12px',color:'#666',maxWidth:'150px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{k.keywords}</td>
+                <td style={{padding:'10px 16px'}}><span style={{padding:'3px 8px',borderRadius:'12px',fontSize:'11px',fontWeight:'700',background:'#EEF2FF',color:'#4338ca'}}>{typeLabel(k.type)}</span></td>
+                <td style={{padding:'10px 16px',fontSize:'12px',color:'#666'}}>{k.category||'—'}</td>
+                <td style={{padding:'10px 16px',textAlign:'center',whiteSpace:'nowrap'}}>
+                  <button onClick={()=>openEdit(k)} style={{background:'#EEF2FF',color:'#4338ca',border:'none',borderRadius:'7px',padding:'4px 10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',margin:'1px'}}>✏️ تعديل</button>
+                  <button onClick={()=>del(k.id)} style={{background:'#fee2e2',color:'#dc2626',border:'none',borderRadius:'7px',padding:'4px 10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',margin:'1px'}}>🗑️</button>
+                </td>
+              </tr>
+            ))}
+            {items.length===0 && <tr><td colSpan={6} style={{padding:'40px',textAlign:'center',color:'#aaa'}}>لا توجد بيانات</td></tr>}
+          </tbody>
+        </table>
+        {total > pageSize && (
+          <div style={{padding:'12px',display:'flex',gap:'8px',justifyContent:'center',alignItems:'center'}}>
+            <button onClick={()=>{setPage(1);load(1,search)}} disabled={page===1} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:page===1?'default':'pointer',fontFamily:'Cairo,sans-serif'}}>««</button>
+            <button onClick={()=>{const p=page-1;setPage(p);load(p,search)}} disabled={page===1} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:page===1?'default':'pointer',fontFamily:'Cairo,sans-serif'}}>‹</button>
+            <span style={{fontSize:'13px',color:'#666'}}>صفحة {page} من {Math.ceil(total/pageSize)}</span>
+            <button onClick={()=>{const p=page+1;setPage(p);load(p,search)}} disabled={page>=Math.ceil(total/pageSize)} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}>›</button>
+            <button onClick={()=>{const last=Math.ceil(total/pageSize);setPage(last);load(last,search)}} disabled={page>=Math.ceil(total/pageSize)} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}>»»</button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* ─── Admin Chats Panel ─── */
+function AdminChatsPanel() {
+  const [chats, setChats] = useState([])
+  const [total, setTotal] = useState(0)
+  const [activeChat, setActiveChat] = useState(null)
+  const [messages, setMessages] = useState([])
+  const [reply, setReply] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [msg, setMsg] = useState('')
+  const bottomRef = useRef(null)
+
+  const load = async () => {
+    try {
+      const r = await api.get(`${API}/chat/all`, { params: { status: statusFilter }, headers: authHdrs() })
+      setChats(r.data.items || [])
+      setTotal(r.data.total || 0)
+    } catch {}
+  }
+
+  const loadMessages = async (chatId, subscriberId) => {
+    try {
+      const r = await api.get(`${API}/chat/${chatId}/messages?subscriberId=${subscriberId}`)
+      setMessages(r.data.messages || [])
+      setActiveChat(r.data.chat)
+    } catch {}
+  }
+
+  useEffect(() => { load() }, [statusFilter])
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
+
+  const sendReply = async () => {
+    if (!reply.trim() || !activeChat) return
+    try {
+      await api.post(`${API}/chat/${activeChat.id}/admin-reply`, { body: reply }, { headers: authHdrs() })
+      setReply('')
+      loadMessages(activeChat.id, activeChat.subscriberId)
+      setMsg('✅ تم الإرسال'); setTimeout(()=>setMsg(''), 2000)
+    } catch { setMsg('❌ حدث خطأ') }
+  }
+
+  if (activeChat) return (
+    <div style={{height:'calc(100vh - 60px)',display:'flex',flexDirection:'column',fontFamily:'Cairo,sans-serif',direction:'rtl'}}>
+      <div style={{background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',padding:'14px 20px',display:'flex',alignItems:'center',gap:'10px'}}>
+        <button onClick={()=>{setActiveChat(null);setMessages([]);load()}} style={{background:'none',border:'none',color:'#fff',cursor:'pointer',fontSize:'18px'}}>←</button>
+        <div style={{flex:1}}>
+          <div style={{color:'#fff',fontWeight:'800',fontSize:'14px'}}>{activeChat.subject}</div>
+          <div style={{color:'rgba(255,255,255,0.6)',fontSize:'11px'}}>المتابع #{activeChat.subscriberId}</div>
+        </div>
+        {msg && <span style={{color:'#FFC72C',fontSize:'12px',fontWeight:'700'}}>{msg}</span>}
+      </div>
+      <div style={{flex:1,overflow:'auto',padding:'16px',display:'flex',flexDirection:'column',gap:'10px'}}>
+        {messages.map(m=>(
+          <div key={m.id} style={{display:'flex',justifyContent:m.sender==='user'?'flex-start':'flex-end'}}>
+            <div style={{maxWidth:'75%',padding:'10px 14px',borderRadius:m.sender==='user'?'18px 18px 18px 4px':'18px 18px 4px 18px',
+              background:m.sender==='user'?'#f0f2f7':m.sender==='admin'?'linear-gradient(135deg,#059669,#047857)':'linear-gradient(135deg,#2C3E6B,#4A6FA5)',
+              color:m.sender==='user'?'#333':'#fff',fontSize:'13px',lineHeight:'1.6',whiteSpace:'pre-wrap'}}>
+              <div style={{fontSize:'10px',color:m.sender==='user'?'#888':'rgba(255,255,255,0.6)',marginBottom:'3px'}}>
+                {m.sender==='user'?'👤 المتابع':m.sender==='admin'?'👨‍💼 الأدمن':'🤖 المساعد'}
+              </div>
+              {m.body}
+            </div>
+          </div>
+        ))}
+        <div ref={bottomRef}/>
+      </div>
+      <div style={{padding:'12px 16px',background:'#fff',borderTop:'1px solid #eef0f7',display:'flex',gap:'8px'}}>
+        <input value={reply} onChange={e=>setReply(e.target.value)} onKeyDown={e=>e.key==='Enter'&&sendReply()}
+          placeholder="اكتب ردك..."
+          style={{flex:1,padding:'10px 14px',borderRadius:'24px',border:'1.5px solid #dde3ed',fontSize:'14px',fontFamily:'Cairo,sans-serif',outline:'none'}}/>
+        <button onClick={sendReply} disabled={!reply.trim()}
+          style={{padding:'10px 18px',borderRadius:'24px',background:reply.trim()?'#2C3E6B':'#f0f2f7',color:reply.trim()?'#fff':'#aaa',border:'none',cursor:reply.trim()?'pointer':'default',fontFamily:'Cairo,sans-serif',fontWeight:'800'}}>
+          إرسال ←
+        </button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div style={{padding:'24px',fontFamily:'Cairo,sans-serif',direction:'rtl'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px',flexWrap:'wrap',gap:'10px'}}>
+        <h2 style={{color:'#2C3E6B',fontWeight:'900',fontSize:'20px',margin:0}}>💬 المحادثات ({total})</h2>
+        <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}
+          style={{padding:'9px 12px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',background:'#fff'}}>
+          <option value=''>كل الحالات</option>
+          <option value='open'>🟡 مفتوح</option>
+          <option value='answered'>✅ مُجاب</option>
+          <option value='closed'>⬛ مغلق</option>
+        </select>
+      </div>
+      {chats.length===0 ? (
+        <div style={{background:'#fff',borderRadius:'14px',padding:'40px',textAlign:'center',color:'#aaa'}}>💬 لا توجد محادثات</div>
+      ) : chats.map(c=>(
+        <div key={c.id} onClick={()=>loadMessages(c.id, c.subscriberId)}
+          style={{background:'#fff',borderRadius:'14px',padding:'16px',marginBottom:'10px',cursor:'pointer',boxShadow:'0 2px 8px rgba(44,62,107,0.06)',display:'flex',justifyContent:'space-between',alignItems:'center',border:'1px solid #eef0f7'}}>
+          <div>
+            <div style={{fontWeight:'800',color:'#2C3E6B',fontSize:'14px'}}>{c.subject}</div>
+            <div style={{fontSize:'12px',color:'#888',marginTop:'2px'}}>
+              {c.subscriber?.fullName} — {new Date(c.updatedAt||c.createdAt).toLocaleString('ar-IQ')}
+            </div>
+          </div>
+          <span style={{padding:'3px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:'700',
+            background:c.status==='answered'?'#dcfce7':c.status==='closed'?'#f1f5f9':'#fff8e7',
+            color:c.status==='answered'?'#16a34a':c.status==='closed'?'#6b7280':'#b45309'}}>
+            {c.status==='answered'?'✅ مُجاب':c.status==='closed'?'مغلق':'🟡 مفتوح'}
+          </span>
+        </div>
+      ))}
     </div>
   )
 }
