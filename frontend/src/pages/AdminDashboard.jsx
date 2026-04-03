@@ -45,6 +45,18 @@ function Modal({ title, onClose, children }) {
   )
 }
 
+/* ─── Refresh Button Component ─── */
+function RefreshBtn({ onClick, spinning }) {
+  return (
+    <button onClick={onClick} title="تحديث"
+      style={{padding:'10px',borderRadius:'50%',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',
+        width:'42px',height:'42px',display:'inline-flex',alignItems:'center',justifyContent:'center',
+        boxShadow:'0 2px 8px rgba(44,62,107,0.3)',flexShrink:0}}>
+      <span style={{display:'inline-block',animation:spinning?'spin 0.6s linear infinite':'none',fontSize:'22px',lineHeight:1}}>↻</span>
+    </button>
+  )
+}
+
 /* ─── Social Field Component ─── */
 function SocialField({ formData, onChange, value }) {
   const init = value || {}
@@ -1318,7 +1330,7 @@ function SubmissionsPanel() {
           <p style={{color:'rgba(255,255,255,0.6)',margin:0,fontSize:'13px'}}>مراجعة وإدارة طلبات الانضمام</p>
         </div>
         <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
-          <button onClick={load} style={{padding:'10px 16px',borderRadius:'10px',background:'rgba(255,255,255,0.15)',color:'white',border:'1px solid rgba(255,255,255,0.2)',cursor:'pointer',fontSize:'13px',fontWeight:'700',fontFamily:'Cairo,sans-serif'}}>🔄 تحديث</button>
+          <RefreshBtn onClick={load} spinning={false}/>
           <a href="/register" target="_blank" style={{padding:'10px 16px',borderRadius:'10px',background:'#10b981',color:'#fff',textDecoration:'none',fontSize:'13px',fontWeight:'700',fontFamily:'Cairo,sans-serif'}}>🔗 رابط التسجيل</a>
         </div>
       </div>
@@ -2303,13 +2315,7 @@ function SecurityPanel() {
             </button>
           ))}
         </div>
-        <button onClick={()=>{setRefreshing(true);(tab==='report'?loadReport():loadRateLimits()).finally(()=>setRefreshing(false))}}
-          title="تحديث"
-          style={{padding:'10px',borderRadius:'50%',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',
-            width:'42px',height:'42px',display:'inline-flex',alignItems:'center',justifyContent:'center',
-            boxShadow:'0 2px 8px rgba(44,62,107,0.3)'}}>
-          <span style={{display:'inline-block',animation:refreshing?'spin 0.6s linear infinite':'none',fontSize:'22px',lineHeight:1}}>↻</span>
-        </button>
+        <RefreshBtn onClick={()=>{setRefreshing(true);(tab==='report'?loadReport():loadRateLimits()).finally(()=>setRefreshing(false))}} spinning={refreshing}/>
       </div>
 
       {/* ─── TAB 2: حظر OTP ─── */}
