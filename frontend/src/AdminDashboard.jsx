@@ -2256,7 +2256,7 @@ function SecurityPanel() {
       {/* مفاتيح الإيقاف الطارئ */}
       <div style={{background:'white',borderRadius:'14px',padding:'16px',marginBottom:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
         <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px',marginBottom:'12px'}}>⚡ إيقاف طارئ</div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
+        <div className="security-channels-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
 
           {/* SMS */}
           <div style={{padding:'16px',borderRadius:'12px',background: channels.smsDisabled ? '#FEF2F2' : '#F0FDF4',border:`1.5px solid ${channels.smsDisabled ? '#fecaca' : '#bbf7d0'}`,transition:'all 0.3s ease'}}>
@@ -2531,6 +2531,8 @@ function SubscribersPanel() {
   const [editSub, setEditSub] = useState(null)
   const [otpMsg, setOtpMsg] = useState('')
   const [pageSize, setPageSize] = useState(20)
+  const [notifyFilter, setNotifyFilter] = useState('')
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
 
   const load = async (p=1, q='') => {
     setLoading(true)
@@ -2578,10 +2580,17 @@ function SubscribersPanel() {
     <div style={{padding:'24px',fontFamily:'Cairo,sans-serif',direction:'rtl'}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'20px',flexWrap:'wrap',gap:'12px'}}>
         <h2 style={{color:'#2C3E6B',fontWeight:'900',fontSize:'20px',margin:0}}>🔔 المتابعون ({total})</h2>
-        <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+        <div style={{display:'flex',gap:'8px',alignItems:'center',flexWrap:'wrap'}}>
           <input value={search} onChange={e=>{setSearch(e.target.value); load(1, e.target.value)}}
             placeholder="بحث بالاسم أو الهاتف..."
-            style={{padding:'9px 14px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'14px',fontFamily:'Cairo,sans-serif',width:'200px',outline:'none'}}/>
+            style={{padding:'9px 14px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'14px',fontFamily:'Cairo,sans-serif',width:'180px',outline:'none'}}/>
+          <select value={notifyFilter} onChange={e=>setNotifyFilter(e.target.value)}
+            style={{padding:'9px 12px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',background:'#fff',cursor:'pointer'}}>
+            <option value=''>📢 كل الطرق</option>
+            <option value='whatsapp'>💬 واتساب</option>
+            <option value='sms'>📱 SMS</option>
+            <option value='email'>📧 إيميل</option>
+          </select>
           <select value={pageSize} onChange={e=>{setPageSize(+e.target.value);setPage(1);load(1,search)}}
             style={{padding:'9px 12px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',background:'#fff',cursor:'pointer'}}>
             {[10,20,50,100].map(n=><option key={n} value={n}>{n}</option>)}
@@ -2596,16 +2605,96 @@ function SubscribersPanel() {
         <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center'}}>
           <div style={{background:'#fff',borderRadius:'16px',padding:'28px',width:'400px',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
             <h3 style={{color:'#2C3E6B',margin:'0 0 16px'}}>✏️ تعديل المتابع</h3>
-            {[['الاسم','fullName'],['الهاتف','phone'],['واتساب','whatsApp'],['الإيميل','email']].map(([lbl,k])=>(
+            {/* حقل الاسم */}
+            <div style={{marginBottom:'12px'}}>
+              <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>الاسم</label>
+              <input value={editSub.fullName||''} onChange={e=>setEditSub(p=>({...p,fullName:e.target.value}))}
+                style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',boxSizing:'border-box'}}/>
+            </div>
+            {/* حقول مع زر تحقق */}
+            {[
+              {lbl:'رقم الهاتف', k:'phone', field:'phone'},
+              {lbl:'واتساب',     k:'whatsApp', field:'whatsapp'},
+              {lbl:'الإيميل',   k:'email', field:'email'},
+            ].map(({lbl,k,field})=>(
               <div key={k} style={{marginBottom:'12px'}}>
                 <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>{lbl}</label>
-                <input value={editSub[k]||''} onChange={e=>setEditSub(p=>({...p,[k]:e.target.value}))}
-                  style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',boxSizing:'border-box'}}/>
+                <div style={{display:'flex',gap:'6px'}}>
+                  <input value={editSub[k]||''} onChange={e=>setEditSub(p=>({...p,[k]:e.target.value}))}
+                    style={{flex:1,padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',direction:field==='email'?'ltr':'ltr',boxSizing:'border-box'}}/>
+                  <button type="button" onClick={async()=>{
+                    const val = editSub[k]
+                    if(!val){alert('أدخل القيمة أولاً');return}
+                    try{
+                      await api.post(`${API}/subscribers/send-field-otp`,{field,value:val})
+                      alert(`✅ تم إرسال رمز التحقق إلى ${val}`)
+                    }catch(e){alert(e?.response?.data?.message||'فشل الإرسال')}
+                  }} style={{padding:'9px 12px',borderRadius:'9px',background:'#EEF2FF',color:'#4338ca',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700',whiteSpace:'nowrap'}}>
+                    📲 تحقق
+                  </button>
+                </div>
               </div>
             ))}
+            {/* القطاعات */}
+            <div style={{marginBottom:'12px'}}>
+              <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'8px'}}>القطاعات</label>
+              <div style={{display:'flex',flexWrap:'wrap',gap:'6px',marginBottom:'8px'}}>
+                {['تجارة عامة','استيراد وتصدير','صناعة وتصنيع','مقاولات وإنشاءات','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','طاقة وكهرباء','أخرى'].map(sec=>{
+                  const cur = (() => { try { return JSON.parse(editSub.sectors||'[]') } catch { return [] } })()
+                  const active = cur.includes(sec)
+                  return (
+                    <button key={sec} type="button" onClick={()=>{
+                      const arr = active ? cur.filter(x=>x!==sec) : [...cur, sec]
+                      setEditSub(p=>({...p, sectors: JSON.stringify(arr)}))
+                    }} style={{padding:'4px 10px',borderRadius:'16px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'600',
+                      background:active?'#2C3E6B':'#EEF2FF',color:active?'#fff':'#2C3E6B'}}>
+                      {active?'✓ ':''}{sec}
+                    </button>
+                  )
+                })}
+              </div>
+              <button type="button" onClick={()=>{
+                  const ALL_SEC = ['تجارة عامة','استيراد وتصدير','صناعة وتصنيع','مقاولات وإنشاءات','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','طاقة وكهرباء','أخرى']
+                  const cur2 = (() => { try { return JSON.parse(editSub.sectors||'[]') } catch { return [] } })()
+                  setEditSub(p=>({...p, sectors: JSON.stringify(cur2.length===ALL_SEC.length ? [] : ALL_SEC)}))
+                }}
+                style={{padding:'5px 12px',borderRadius:'8px',background:'#FFF8E7',color:'#B8860B',border:'1px solid #fde68a',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',marginTop:'6px'}}>
+                {(()=>{ try { return JSON.parse(editSub.sectors||'[]').length } catch { return 0 } })() === 15 ? '❌ إلغاء الكل' : '✅ اختر الكل'}
+              </button>
+            </div>
+
+            {/* طريقة التواصل */}
+            <div style={{marginBottom:'16px'}}>
+              <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'8px'}}>طريقة التواصل</label>
+              <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+                {[{k:'whatsapp',l:'واتساب 💬'},{k:'sms',l:'رسالة نصية 📱'},{k:'email',l:'بريد إلكتروني 📧'}].map(({k,l})=>{
+                  const cur = (() => { try { return JSON.parse(editSub.notifyBy||'[]') } catch { return [] } })()
+                  const active = cur.includes(k)
+                  return (
+                    <button key={k} type="button" onClick={()=>{
+                      const arr = active ? cur.filter(x=>x!==k) : [...cur, k]
+                      setEditSub(p=>({...p, notifyBy: JSON.stringify(arr)}))
+                    }} style={{padding:'8px 16px',borderRadius:'10px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700',
+                      background:active?'#059669':'#F0FDF4',color:active?'#fff':'#059669'}}>
+                      {active?'✓ ':''}{l}
+                    </button>
+                  )
+                })}
+                <button type="button" onClick={()=>setEditSub(p=>({...p,notifyBy:JSON.stringify(['whatsapp','sms','email'])}))}
+                  style={{padding:'8px 14px',borderRadius:'10px',background:'#FFF8E7',color:'#B8860B',border:'1px solid #fde68a',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700'}}>
+                  ✅ كل الطرق
+                </button>
+              </div>
+            </div>
+
             <div style={{display:'flex',gap:'8px',marginTop:'16px'}}>
-              <button onClick={async()=>{ await api.put(`${API}/subscribers/${editSub.id}`,editSub); setEditSub(null); load(page,search) }}
-                style={{flex:1,padding:'11px',borderRadius:'10px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'800'}}>💾 حفظ</button>
+              <button onClick={async()=>{
+                const sec = (() => { try { return JSON.parse(editSub.sectors||'[]') } catch { return [] } })()
+                if (sec.length === 0) { alert('⚠️ اختر قطاعاً واحداً على الأقل'); return }
+                const ntf = (() => { try { return JSON.parse(editSub.notifyBy||'[]') } catch { return [] } })()
+                if (ntf.length === 0) { alert('⚠️ اختر طريقة تواصل واحدة على الأقل'); return }
+                await api.put(`${API}/subscribers/${editSub.id}`,editSub); setEditSub(null); load(page,search)
+              }} style={{flex:1,padding:'11px',borderRadius:'10px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'800'}}>💾 حفظ</button>
               <button onClick={()=>setEditSub(null)}
                 style={{flex:1,padding:'11px',borderRadius:'10px',background:'#f5f7fa',color:'#666',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}>إلغاء</button>
             </div>
@@ -2613,10 +2702,12 @@ function SubscribersPanel() {
         </div>
       )}
 
-      {loading ? <div style={{textAlign:'center',padding:'40px',color:'#888'}}>⏳ جاري التحميل...</div> : (
+      {loading ? <div style={{textAlign:'center',padding:'40px',color:'#888'}}>⏳ جاري التحميل...</div> : (()=>{
+        const di = notifyFilter ? items.filter(s=>{try{return JSON.parse(s.notifyBy||'[]').includes(notifyFilter)}catch{return false}}) : items
+        return (
         <div>
           {/* Desktop: جدول */}
-          <div className="sub-table-wrap" style={{background:'#fff',borderRadius:'16px',overflow:'auto',boxShadow:'0 4px 16px rgba(44,62,107,0.08)'}}>
+          <div className="sub-table-wrap" style={{background:'#fff',borderRadius:'16px',overflow:'auto',boxShadow:'0 4px 16px rgba(44,62,107,0.08)',display:isMobile?'none':'block'}}>
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:'13px',minWidth:'700px'}}>
               <thead>
                 <tr style={{background:'#2C3E6B',color:'#fff'}}>
@@ -2630,7 +2721,7 @@ function SubscribersPanel() {
                 </tr>
               </thead>
               <tbody>
-                {items.map((s,i) => (
+                {di.map((s,i) => (
                   <tr key={s.id} style={{borderBottom:'1px solid #f0f2f7',background:s.isActive===false?'#fff5f5':i%2===0?'#fff':'#fafbff'}}>
                     <td style={{padding:'10px 16px',color:'#888'}}>{(page-1)*pageSize+i+1}</td>
                     <td style={{padding:'10px 16px'}}>
@@ -2649,19 +2740,18 @@ function SubscribersPanel() {
                     <td style={{padding:'10px 16px',textAlign:'center',whiteSpace:'nowrap'}}>
                       {btn(s.isActive!==false?'⏸️ إيقاف':'▶️ تفعيل',()=>toggleActive(s),s.isActive!==false?'#fff8e7':'#f0fdf4',s.isActive!==false?'#b45309':'#16a34a')}
                       {btn('✏️ تعديل',()=>setEditSub({...s}),'#EEF2FF','#4338ca')}
-                      {btn('📲 OTP',()=>resendOtp(s),'#f0fdf4','#16a34a')}
                       {btn('🗑️',()=>del(s.id),'#fee2e2','#dc2626')}
                     </td>
                   </tr>
                 ))}
-                {items.length===0 && <tr><td colSpan={7} style={{padding:'40px',textAlign:'center',color:'#aaa'}}>لا يوجد متابعون</td></tr>}
+                {di.length===0 && <tr><td colSpan={7} style={{padding:'40px',textAlign:'center',color:'#aaa'}}>لا يوجد متابعون</td></tr>}
               </tbody>
             </table>
           </div>
 
           {/* Mobile: بطاقات */}
-          <div style={{display:'none'}} className="sub-cards-wrap">
-            {items.map((s,i) => (
+          <div className="sub-cards-wrap" style={{display:isMobile?'block':'none'}}>
+            {di.map((s,i) => (
               <div key={s.id} style={{background:s.isActive===false?'#fff5f5':'#fff',borderRadius:'14px',padding:'16px',marginBottom:'10px',boxShadow:'0 2px 10px rgba(44,62,107,0.07)',border:'1px solid #eef0f7'}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'8px'}}>
                   <div>
@@ -2675,17 +2765,16 @@ function SubscribersPanel() {
                   </span>
                 </div>
                 <div style={{fontSize:'11px',color:'#666',marginBottom:'10px'}}>
-                  {notifyLabel(s.notifyBy)} | {sectorsLabel(s.sectors)||'—'}
+                  {notifyLabel(s.notifyBy)}
                 </div>
                 <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
                   {btn(s.isActive!==false?'⏸️ إيقاف':'▶️ تفعيل',()=>toggleActive(s),s.isActive!==false?'#fff8e7':'#f0fdf4',s.isActive!==false?'#b45309':'#16a34a')}
                   {btn('✏️ تعديل',()=>setEditSub({...s}),'#EEF2FF','#4338ca')}
-                  {btn('📲 OTP',()=>resendOtp(s),'#f0fdf4','#16a34a')}
                   {btn('🗑️ حذف',()=>del(s.id),'#fee2e2','#dc2626')}
                 </div>
               </div>
             ))}
-            {items.length===0 && <div style={{textAlign:'center',padding:'40px',color:'#aaa'}}>لا يوجد متابعون</div>}
+            {di.length===0 && <div style={{textAlign:'center',padding:'40px',color:'#aaa'}}>لا يوجد متابعون</div>}
           </div>
 
           {/* Pagination */}
@@ -2699,7 +2788,8 @@ function SubscribersPanel() {
             </div>
           )}
         </div>
-      )}
+        )
+      })()}
     </div>
   )
 }

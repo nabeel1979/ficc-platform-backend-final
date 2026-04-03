@@ -395,3 +395,42 @@ public class RateLimitBlock {
     public DateTime? BlockedUntil { get; set; }
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
+
+// قاعدة بيانات المعرفة
+public class KnowledgeBase {
+    public int Id { get; set; }
+    public string Title { get; set; } = "";           // العنوان
+    public string Keywords { get; set; } = "";        // المفاتيح (مفصولة بفاصلة)
+    public string Type { get; set; } = "text";        // text / file / link
+    public string? Answer { get; set; }               // الإجابة النصية
+    public string? FilePath { get; set; }             // مسار الملف
+    public string? LinkUrl { get; set; }              // الرابط
+    public string? Category { get; set; }             // التصنيف
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAt { get; set; }
+}
+
+// محادثات المتابعين
+public class SubscriberChat {
+    public int Id { get; set; }
+    public int SubscriberId { get; set; }
+    public string Subject { get; set; } = "استفسار";
+    public string Status { get; set; } = "open";     // open / answered / closed
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAt { get; set; }
+    public Subscriber? Subscriber { get; set; }
+    public List<SubscriberChatMessage>? Messages { get; set; }
+}
+
+// رسائل المحادثة
+public class SubscriberChatMessage {
+    public int Id { get; set; }
+    public int ChatId { get; set; }
+    public string Sender { get; set; } = "user";     // user / ai / admin
+    public string Body { get; set; } = "";
+    public string? AttachmentUrl { get; set; }
+    public int? KnowledgeBaseId { get; set; }        // مصدر الإجابة
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public SubscriberChat? Chat { get; set; }
+}

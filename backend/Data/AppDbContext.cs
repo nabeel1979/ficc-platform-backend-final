@@ -10,6 +10,9 @@ public class AppDbContext : DbContext {
     public DbSet<Member> Members => Set<Member>();
     public DbSet<Subscriber> Subscribers => Set<Subscriber>();
     public DbSet<RateLimitBlock> RateLimitBlocks => Set<RateLimitBlock>();
+    public DbSet<KnowledgeBase> KnowledgeBase => Set<KnowledgeBase>();
+    public DbSet<SubscriberChat> SubscriberChats => Set<SubscriberChat>();
+    public DbSet<SubscriberChatMessage> SubscriberChatMessages => Set<SubscriberChatMessage>();
     public DbSet<Setting> Settings => Set<Setting>();
     public DbSet<ShippingCompany> ShippingCompanies => Set<ShippingCompany>();
     public DbSet<OtpCode> OtpCodes => Set<OtpCode>();
