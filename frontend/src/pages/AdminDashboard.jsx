@@ -2164,6 +2164,7 @@ function SecurityPanel() {
   const [manualKeyType, setManualKeyType] = React.useState('phone')
   const [reasonPopup, setReasonPopup] = React.useState(null) // {key, keyType, id?}
   const [reasonText, setReasonText] = React.useState('')
+  const [refreshing, setRefreshing] = React.useState(false)
 
   const hdrs = () => ({ Authorization: `Bearer ${getToken()}` })
 
@@ -2321,7 +2322,11 @@ function SecurityPanel() {
                   background:showAllRate?'#EEF2FF':'#FFF8E7',color:showAllRate?'#4338ca':'#B8860B'}}>
                 {showAllRate?'المحجوبين فقط':'عرض الكل'}
               </button>
-              <button onClick={loadRateLimits} style={{padding:'6px 10px',borderRadius:'8px',background:'#f0f2f7',color:'#666',border:'none',cursor:'pointer'}}>🔄</button>
+              <button onClick={()=>{setRefreshing(true);loadRateLimits().finally(()=>setRefreshing(false))}}
+                style={{padding:'6px 12px',borderRadius:'8px',background:'#EEF2FF',color:'#4338ca',border:'none',cursor:'pointer',fontSize:'18px',
+                  display:'inline-flex',alignItems:'center',gap:'4px',fontWeight:'700'}}>
+                <span style={{display:'inline-block',animation:refreshing?'spin 0.8s linear infinite':'none',fontSize:'16px'}}>🔄</span>
+              </button>
             </div>
           </div>
 
@@ -2406,7 +2411,11 @@ function SecurityPanel() {
       {tab==='report' && (
         <div>
           <div style={{display:'flex',justifyContent:'flex-end',marginBottom:'10px'}}>
-            <button onClick={loadReport} style={{padding:'6px 14px',borderRadius:'8px',background:'#f0f2f7',color:'#666',border:'none',cursor:'pointer',fontSize:'12px'}}>🔄 تحديث</button>
+            <button onClick={()=>{setRefreshing(true);loadReport().finally(()=>setRefreshing(false))}}
+              style={{padding:'6px 14px',borderRadius:'8px',background:'#EEF2FF',color:'#4338ca',border:'none',cursor:'pointer',fontSize:'13px',fontWeight:'700',
+                display:'inline-flex',alignItems:'center',gap:'6px'}}>
+              <span style={{display:'inline-block',animation:refreshing?'spin 0.8s linear infinite':'none',fontSize:'16px'}}>🔄</span> تحديث
+            </button>
           </div>
           {!report ? <p style={{textAlign:'center',color:'#aaa',padding:'40px'}}>جاري التحميل...</p> : (<>
             {/* ملخص */}
