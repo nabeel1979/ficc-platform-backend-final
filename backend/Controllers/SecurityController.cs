@@ -100,7 +100,6 @@ public class SecurityController : ControllerBase {
             successLast24h   = await _db.OtpAttempts.CountAsync(a => a.Success && a.CreatedAt >= last24h),
         });
     }
-}
 
     // GET /api/security/ratelimits — محاولات المتابعين المحجوبة
     [HttpGet("ratelimits"), Authorize]
