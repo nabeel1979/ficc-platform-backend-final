@@ -2436,18 +2436,7 @@ function SecurityPanel() {
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px',flexWrap:'wrap',gap:'8px'}}>
           <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px'}}>🛡️ حظر المتابعين (OTP Rate Limit)</div>
           <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
-            {/* فلتر النوع */}
-            {[
-              {v:'',l:'الكل'},
-              {v:'phone-login',l:'🔑 دخول'},
-              {v:'phone',l:'📱 هاتف'},
-              {v:'whatsapp',l:'💬 واتساب'},
-              {v:'email',l:'📧 إيميل'},
-              {v:'sub-phone',l:'📋 استمارة'}
-            ].map(({v,l})=>{
-              const [rateTypeFilter, setRateTypeFilter] = React.useState ? null : null
-              return null
-            })}
+
             <select onChange={e=>{
               const val = e.target.value
               loadRateLimits(showAllRate, val)
