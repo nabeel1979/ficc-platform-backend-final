@@ -164,7 +164,7 @@ export default function Chambers() {
       if (search)      params.search      = search
       if (governorate) params.governorate = governorate
       const r = await api.get(`${API}/chambers`, { params })
-      setChambers(r.data)
+      setChambers(Array.isArray(r.data) ? r.data : (r.data?.items ?? r.data ?? []))
     } catch { setChambers([]) }
     setLoading(false)
   }

@@ -10,7 +10,7 @@ export default function Conferences() {
   const [sessions, setSessions] = useState([])
 
   useEffect(() => {
-    api.get(`${API}/conferences`).then(r => setConferences(r.data)).finally(() => setLoading(false))
+    api.get(`${API}/conferences`).then(r => setConferences(Array.isArray(r.data) ? r.data : (r.data?.items ?? []))).finally(() => setLoading(false))
   }, [])
 
   const openConference = async (conf) => {
