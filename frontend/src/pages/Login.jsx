@@ -234,7 +234,7 @@ export default function Login({ onLogin }) {
               <button
                 onClick={() => !channelStatus.smsDisabled && setChannel('sms')}
                 disabled={channelStatus.smsDisabled}
-                title={channelStatus.smsDisabled ? 'خدمة SMS معطّلة مؤقتاً' : ''}
+                title={channelStatus.smsDisabled ? 'خدمة الواتساب معطّلة مؤقتاً' : ''}
                 style={{flex:1,padding:'14px',borderRadius:'12px',
                   border:`2px solid ${channelStatus.smsDisabled ? '#e2e8f0' : channel==='sms'?'#2C3E6B':'#dde3ed'}`,
                   background: channelStatus.smsDisabled ? '#f5f5f5' : channel==='sms'?'#EEF2FF':'#fff',
@@ -242,7 +242,7 @@ export default function Login({ onLogin }) {
                   fontFamily:'Cairo,sans-serif',fontWeight:channel==='sms'?'700':'500',fontSize:'14px',
                   cursor: channelStatus.smsDisabled ? 'not-allowed' : 'pointer',
                   position:'relative'}}>
-                {channelStatus.smsDisabled ? '🚫' : '📱'} SMS
+                {channelStatus.smsDisabled ? '🚫' : '💬'} واتساب
                 {channelStatus.smsDisabled && <div style={{fontSize:'10px',color:'#bbb',marginTop:'2px'}}>معطّل مؤقتاً</div>}
               </button>
             )}
@@ -269,7 +269,7 @@ export default function Login({ onLogin }) {
         {/* STEP 3: Enter OTP */}
         {step==='otp' && <>
           <p style={{color:'#555',fontSize:'13px',textAlign:'center',marginBottom:'16px'}}>
-            تم إرسال رمز التحقق عبر {channel==='sms'?'SMS':'البريد الإلكتروني'}
+            تم إرسال رمز التحقق عبر {channel==='sms'?'الواتساب':'البريد الإلكتروني'}
           </p>
           {otpSent && otpTimer > 0 && (
             <div style={{textAlign:'center',marginBottom:'12px'}}>
@@ -307,7 +307,7 @@ export default function Login({ onLogin }) {
           <div style={{display:'flex',gap:'10px',marginBottom:'16px'}}>
             {['sms','email'].map(c=>(
               <button key={c} onClick={()=>setChannel(c)} style={{flex:1,padding:'12px',borderRadius:'12px',border:`2px solid ${channel===c?'#2C3E6B':'#dde3ed'}`,background:channel===c?'#EEF2FF':'#fff',color:channel===c?'#2C3E6B':'#888',fontFamily:'Cairo,sans-serif',fontWeight:channel===c?'700':'500',fontSize:'13px',cursor:'pointer'}}>
-                {c==='sms' ? '📱 SMS' : '📧 إيميل'}
+                {c==='sms' ? '💬 واتساب' : '📧 إيميل'}
               </button>
             ))}
           </div>
