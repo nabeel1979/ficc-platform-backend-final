@@ -2293,14 +2293,21 @@ function SecurityPanel() {
       )}
 
       {/* Tabs */}
-      <div style={{display:'flex',gap:'8px',marginBottom:'16px',borderBottom:'2px solid #e2e8f0',paddingBottom:'8px'}}>
-        {[['ratelimits','🛡️ حظر OTP'],['report','📊 التقارير']].map(([k,l])=>(
-          <button key={k} onClick={()=>setTab(k)}
-            style={{padding:'8px 18px',borderRadius:'10px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'13px',
-              background:tab===k?'#2C3E6B':'#f1f5f9',color:tab===k?'#fff':'#475569'}}>
-            {l}
-          </button>
-        ))}
+      <div style={{display:'flex',gap:'8px',marginBottom:'16px',borderBottom:'2px solid #e2e8f0',paddingBottom:'8px',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap'}}>
+        <div style={{display:'flex',gap:'8px'}}>
+          {[['ratelimits','🛡️ حظر OTP'],['report','📊 التقارير']].map(([k,l])=>(
+            <button key={k} onClick={()=>setTab(k)}
+              style={{padding:'8px 18px',borderRadius:'10px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'13px',
+                background:tab===k?'#2C3E6B':'#f1f5f9',color:tab===k?'#fff':'#475569'}}>
+              {l}
+            </button>
+          ))}
+        </div>
+        <button onClick={()=>{setRefreshing(true);(tab==='report'?loadReport():loadRateLimits()).finally(()=>setRefreshing(false))}}
+          style={{padding:'6px 14px',borderRadius:'8px',background:'#EEF2FF',color:'#4338ca',border:'none',cursor:'pointer',fontSize:'13px',fontWeight:'700',
+            display:'inline-flex',alignItems:'center',gap:'6px'}}>
+          <span style={{display:'inline-block',animation:refreshing?'spin 0.8s linear infinite':'none',fontSize:'16px'}}>🔄</span> تحديث
+        </button>
       </div>
 
       {/* ─── TAB 2: حظر OTP ─── */}
