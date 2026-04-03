@@ -2148,7 +2148,7 @@ function SystemConstantsPanel() {
 }
 
 function SecurityPanel() {
-  const [tab, setTab] = React.useState('blocks') // blocks | ratelimits | report
+  const [tab, setTab] = React.useState('ratelimits') // blocks | ratelimits | report
   const [blocks, setBlocks] = React.useState([])
   const [rateLimits, setRateLimits] = React.useState([])
   const [report, setReport] = React.useState(null)
@@ -2293,7 +2293,7 @@ function SecurityPanel() {
 
       {/* Tabs */}
       <div style={{display:'flex',gap:'8px',marginBottom:'16px',borderBottom:'2px solid #e2e8f0',paddingBottom:'8px'}}>
-        {[['blocks','🚫 الحجب اليدوي'],['ratelimits','🛡️ حظر OTP'],['report','📊 التقارير']].map(([k,l])=>(
+        {[['ratelimits','🛡️ حظر OTP'],['report','📊 التقارير']].map(([k,l])=>(
           <button key={k} onClick={()=>setTab(k)}
             style={{padding:'8px 18px',borderRadius:'10px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'13px',
               background:tab===k?'#2C3E6B':'#f1f5f9',color:tab===k?'#fff':'#475569'}}>
@@ -2301,77 +2301,6 @@ function SecurityPanel() {
           </button>
         ))}
       </div>
-
-      {/* ─── TAB 1: الحجب اليدوي ─── */}
-      {tab==='blocks' && (
-        <div>
-          {/* حجب جديد */}
-          <div style={{background:'#fff',borderRadius:'14px',padding:'16px',marginBottom:'14px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
-            <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px',marginBottom:'12px'}}>➕ حجب يدوي جديد</div>
-            <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-              <input value={manualKey} onChange={e=>{
-                  const v=e.target.value; setManualKey(v);
-                  if(v.includes('@')) setManualKeyType('email');
-                  else if(/^[0-9+]{5,}$/.test(v.replace(/\s/g,''))) setManualKeyType('phone');
-                }} placeholder="رقم الهاتف أو الإيميل"
-                style={{flex:1,minWidth:'180px',padding:'10px 12px',border:'1.5px solid #dde3ed',borderRadius:'10px',fontSize:'13px',fontFamily:'Cairo,sans-serif',outline:'none'}}/>
-              <select value={manualKeyType} onChange={e=>setManualKeyType(e.target.value)}
-                style={{padding:'10px 12px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',background:'#fff'}}>
-                <option value="phone">📱 هاتف</option>
-                <option value="whatsapp">💬 واتساب</option>
-                <option value="email">📧 إيميل</option>
-                <option value="phone-login">🔑 تسجيل دخول</option>
-              </select>
-              <button onClick={()=>setReasonPopup({key:manualKey.trim(),keyType:manualKeyType})} style={{padding:'10px 20px',background:'#dc2626',color:'#fff',border:'none',borderRadius:'10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'13px'}}>
-                🚫 حجب دائم
-              </button>
-            </div>
-            <p style={{fontSize:'11px',color:'#888',margin:'6px 0 0'}}>⚠️ الحجب اليدوي دائم ولا يُفك تلقائياً — يحتاج فك يدوي</p>
-          </div>
-
-          {/* قائمة المحجوبين */}
-          <div style={{background:'#fff',borderRadius:'14px',padding:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px',flexWrap:'wrap',gap:'8px'}}>
-              <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px'}}>📋 الجهات المحجوبة</div>
-              <div style={{display:'flex',gap:'6px'}}>
-                {['active','all'].map(f=>(
-                  <button key={f} onClick={()=>setFilter(f)}
-                    style={{padding:'6px 14px',borderRadius:'8px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'12px',
-                      background:filter===f?'#2C3E6B':'#f1f5f9',color:filter===f?'#fff':'#475569'}}>
-                    {f==='active'?'النشطة':'الكل'}
-                  </button>
-                ))}
-                <button onClick={loadBlocks} style={{padding:'6px 10px',borderRadius:'8px',background:'#f0f2f7',color:'#666',border:'none',cursor:'pointer'}}>🔄</button>
-              </div>
-            </div>
-            {blocks.length===0 ? <p style={{textAlign:'center',color:'#aaa',padding:'24px'}}>✅ لا توجد جهات محجوبة</p> : (
-              <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-                {blocks.map(b=>(
-                  <div key={b.id} style={{display:'flex',alignItems:'center',gap:'10px',padding:'12px',borderRadius:'10px',
-                    background:b.isActive?'#fff5f5':'#f8fafc',border:`1px solid ${b.isActive?'#fecaca':'#e2e8f0'}`}}>
-                    <div style={{flex:1}}>
-                      <div style={{display:'flex',gap:'6px',marginBottom:'4px',flexWrap:'wrap'}}>
-                        <span style={{background:'#EEF2FF',color:'#4338ca',padding:'2px 8px',borderRadius:'12px',fontSize:'11px',fontWeight:'700'}}>
-                          {b.channel==='email'?'📧 إيميل':'📱 هاتف'}
-                        </span>
-                        {b.isActive && <span style={{background:'#fee2e2',color:'#dc2626',padding:'2px 8px',borderRadius:'12px',fontSize:'11px',fontWeight:'700'}}>🚫 محجوب</span>}
-                        <span style={{background:'#f0f0f0',color:'#666',padding:'2px 8px',borderRadius:'12px',fontSize:'11px'}}>يدوي</span>
-                      </div>
-                      <div style={{fontWeight:'700',color:'#1e293b',fontSize:'14px',direction:'ltr',textAlign:'right'}}>{b.contact}</div>
-                      <div style={{fontSize:'11px',color:'#94a3b8',marginTop:'2px'}}>تاريخ الحجب: {fmtDate(b.blockedAt)}</div>
-                    </div>
-                    {b.isActive && (
-                      <button onClick={()=>unblock(b.id)} style={{padding:'8px 14px',background:'#dcfce7',color:'#16a34a',border:'none',borderRadius:'10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'12px',flexShrink:0}}>
-                        ✅ فك الحجب
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* ─── TAB 2: حظر OTP ─── */}
       {tab==='ratelimits' && (
