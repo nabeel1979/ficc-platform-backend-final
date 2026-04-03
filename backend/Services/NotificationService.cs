@@ -266,7 +266,6 @@ public class NotificationService {
     public string OtpEmailHtml(string otp, string purpose) {
         return $"<div dir='rtl' style='font-family:Cairo,Arial,sans-serif;max-width:500px;margin:auto;padding:24px;border:1px solid #dde3ed;border-radius:16px;'><h2 style='color:#2C3E6B;'>اتحاد الغرف التجارية العراقية</h2><p style='color:#444;font-size:16px;'>{purpose}</p><div style='background:#EEF2FF;border-radius:12px;padding:20px;text-align:center;'><p style='color:#888;font-size:13px;margin:0 0 8px;'>رمز التحقق</p><span style='font-size:36px;font-weight:800;color:#2C3E6B;letter-spacing:8px;'>{otp}</span><p style='color:#888;font-size:12px;margin:8px 0 0;'>صالح 10 دقائق</p></div></div>";
     }
-}
 
     // إشعار العميل عند الحجب
     public async Task NotifyClientBlock(string contact, string reason = "")
@@ -346,3 +345,4 @@ public class NotificationService {
             }));
         }
     }
+}
