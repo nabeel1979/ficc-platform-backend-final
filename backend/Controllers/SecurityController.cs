@@ -145,11 +145,12 @@ public class SecurityController : ControllerBase {
         if (existing != null) {
             existing.IsManual = true;
             existing.BlockedUntil = DateTime.MaxValue;
+            existing.BlockReason = dto.Reason;
             existing.UpdatedAt = DateTime.UtcNow;
         } else {
             _db.RateLimitBlocks.Add(new RateLimitBlock {
                 Key = dto.Key, KeyType = dto.KeyType ?? "phone",
-                IsManual = true, Attempts = 0,
+                IsManual = true, Attempts = 0, BlockReason = dto.Reason,
                 BlockedUntil = DateTime.MaxValue,
                 FirstAttemptAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
             });
@@ -195,4 +196,4 @@ public class SecurityController : ControllerBase {
 }
 
 public record BlockDto(string Contact, string Channel);
-public record ManualBlockDto(string Key, string? KeyType);
+public record ManualBlockDto(string Key, string? KeyType, string? Reason);

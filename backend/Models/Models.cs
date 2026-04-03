@@ -395,6 +395,7 @@ public class RateLimitBlock {
     public DateTime? BlockedUntil { get; set; }
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     public bool IsManual { get; set; } = false;  // حجب يدوي = لا يُفك تلقائياً
+    public string? BlockReason { get; set; }     // سبب الحجب
     public string? UnblockedAt { get; set; }     // وقت فك الحجب
     public string? UnblockedBy { get; set; }     // من فك الحجب
 }

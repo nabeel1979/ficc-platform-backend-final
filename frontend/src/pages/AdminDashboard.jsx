@@ -2162,6 +2162,8 @@ function SecurityPanel() {
   const [msg, setMsg] = React.useState('')
   const [manualKey, setManualKey] = React.useState('')
   const [manualKeyType, setManualKeyType] = React.useState('phone')
+  const [reasonPopup, setReasonPopup] = React.useState(null) // {key, keyType, id?}
+  const [reasonText, setReasonText] = React.useState('')
 
   const hdrs = () => ({ Authorization: `Bearer ${getToken()}` })
 
@@ -2250,6 +2252,32 @@ function SecurityPanel() {
 
       {msg && <div style={{background:'#f0fdf4',border:'1px solid #86efac',borderRadius:'10px',padding:'10px 14px',marginBottom:'12px',fontSize:'13px',color:'#16a34a',fontWeight:'700'}}>{msg}</div>}
 
+      {/* Reason Popup */}
+      {reasonPopup && (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',zIndex:2000,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px'}}>
+          <div style={{background:'#fff',borderRadius:'16px',padding:'24px',width:'100%',maxWidth:'420px',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
+            <h3 style={{color:'#dc2626',margin:'0 0 12px',fontWeight:'800'}}>🚫 حجب دائم</h3>
+            <p style={{fontSize:'13px',color:'#555',margin:'0 0 12px'}}>الجهة: <b style={{direction:'ltr',display:'inline-block'}}>{reasonPopup.key}</b></p>
+            <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'6px'}}>سبب الحجب *</label>
+            <textarea value={reasonText} onChange={e=>setReasonText(e.target.value)} rows={3} placeholder="مثال: محاولات متكررة مشبوهة، إساءة استخدام..."
+              style={{width:'100%',padding:'10px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',resize:'none',boxSizing:'border-box'}}/>
+            <div style={{display:'flex',gap:'8px',marginTop:'14px'}}>
+              <button onClick={async()=>{
+                if (!reasonText.trim()) { alert('أدخل سبب الحجب'); return }
+                await api.post('/security/ratelimits/block',{key:reasonPopup.key,keyType:reasonPopup.keyType,reason:reasonText.trim()},{headers:hdrs()})
+                setMsg('🚫 تم الحجب الدائم — السبب: ' + reasonText.trim())
+                setReasonPopup(null); setReasonText(''); loadRateLimits()
+              }} style={{flex:1,padding:'11px',background:'#dc2626',color:'#fff',border:'none',borderRadius:'10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'800'}}>
+                🚫 تأكيد الحجب
+              </button>
+              <button onClick={()=>{setReasonPopup(null);setReasonText('')}} style={{flex:1,padding:'11px',background:'#f5f7fa',color:'#666',border:'none',borderRadius:'10px',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}>
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Tabs */}
       <div style={{display:'flex',gap:'8px',marginBottom:'16px',borderBottom:'2px solid #e2e8f0',paddingBottom:'8px'}}>
         {[['blocks','🚫 الحجب اليدوي'],['ratelimits','🛡️ حظر OTP'],['report','📊 التقارير']].map(([k,l])=>(
@@ -2277,7 +2305,7 @@ function SecurityPanel() {
                 <option value="email">📧 إيميل</option>
                 <option value="phone-login">🔑 تسجيل دخول</option>
               </select>
-              <button onClick={blockManual} style={{padding:'10px 20px',background:'#dc2626',color:'#fff',border:'none',borderRadius:'10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'13px'}}>
+              <button onClick={()=>setReasonPopup({key:manualKey.trim(),keyType:manualKeyType})} style={{padding:'10px 20px',background:'#dc2626',color:'#fff',border:'none',borderRadius:'10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'13px'}}>
                 🚫 حجب دائم
               </button>
             </div>
@@ -2410,10 +2438,7 @@ function SecurityPanel() {
                             <button onClick={()=>unblockRate(r.id)} style={{background:'#dcfce7',color:'#16a34a',border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700'}}>✅ فك اليدوي</button>
                           )}
                           {!isManual && (
-                            <button onClick={async()=>{
-                              await api.post('/security/ratelimits/block',{key:r.key,keyType:r.keyType},{headers:hdrs()})
-                              setMsg('🚫 تم الحجب الدائم'); loadRateLimits()
-                            }} style={{background:'#fee2e2',color:'#dc2626',border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700'}}>🚫 حجب دائم</button>
+                            <button onClick={()=>{setReasonPopup({key:r.key,keyType:r.keyType});setReasonText('')}} style={{background:'#fee2e2',color:'#dc2626',border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700'}}>🚫 حجب دائم</button>
                           )}
                           <button onClick={()=>deleteRate(r.id)} style={{background:'#f1f5f9',color:'#666',border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700'}}>🗑️</button>
                         </td>
@@ -2480,6 +2505,7 @@ function SecurityPanel() {
                               : <span style={{background:'#fef3c7',color:'#b45309',padding:'2px 8px',borderRadius:'12px',fontSize:'10px',fontWeight:'700'}}>تلقائي (ساعة)</span>
                             }
                           </td>
+                          <td style={{padding:'7px 10px',fontSize:'11px',color:'#555',maxWidth:'150px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.blockReason||'—'}</td>
                           <td style={{padding:'7px 10px',fontSize:'11px',color:'#555'}}>{r.unblockedAt||'—'}</td>
                           <td style={{padding:'7px 10px',fontSize:'11px',color:'#555'}}>{r.unblockedBy||'—'}</td>
                         </tr>
