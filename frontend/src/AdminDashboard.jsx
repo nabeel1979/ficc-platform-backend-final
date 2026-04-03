@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
 import api from '../lib/api'
 
@@ -20,6 +20,8 @@ const NAV = [
   { to: '/admin/users',       label: 'المستخدمين',       icon: '🔑' },
   { to: '/admin/submissions', label: 'طلبات الإضافة',   icon: '📬' },
   { to: '/admin/subscribers', label: 'المتابعون',         icon: '🔔' },
+  { to: '/admin/knowledge',   label: 'قاعدة المعرفة',    icon: '🧠' },
+  { to: '/admin/chats',       label: 'المحادثات',         icon: '💬' },
   { to: '/admin/startups',   label: 'ريادة الأعمال',   icon: '🚀' },
   { to: '/admin/constants',  label: 'ثوابت النظام',    icon: '⚙️' },
   { to: '/admin/security',   label: 'إدارة الأمان',    icon: '🔒' },
@@ -40,6 +42,18 @@ function Modal({ title, onClose, children }) {
         <div style={{padding:'24px'}}>{children}</div>
       </div>
     </div>
+  )
+}
+
+/* ─── Refresh Button Component ─── */
+function RefreshBtn({ onClick, spinning }) {
+  return (
+    <button onClick={onClick} title="تحديث"
+      style={{padding:'10px',borderRadius:'50%',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',
+        width:'42px',height:'42px',display:'inline-flex',alignItems:'center',justifyContent:'center',
+        boxShadow:'0 2px 8px rgba(44,62,107,0.3)',flexShrink:0}}>
+      <span style={{display:'inline-block',animation:spinning?'spin 0.6s linear infinite':'none',fontSize:'22px',lineHeight:1}}>↻</span>
+    </button>
   )
 }
 
@@ -1218,6 +1232,8 @@ export default function AdminDashboard() {
           <Route path="submissions" element={<SubmissionsPanel />} />
           <Route path="contacts" element={<ContactsPanel />} />
           <Route path="subscribers" element={<SubscribersPanel />} />
+          <Route path="knowledge" element={<KnowledgePanel />} />
+          <Route path="chats" element={<AdminChatsPanel />} />
           <Route path="startups" element={<StartupsAdminPanel />} />
           <Route path="constants" element={<SystemConstantsPanel />} />
           <Route path="security" element={isSuperAdmin ? <SecurityPanel /> : <div style={{padding:'40px',textAlign:'center',color:'#dc2626',fontSize:'18px',fontWeight:'700'}}>⛔ غير مصرّح لك بالوصول</div>} />
@@ -1314,7 +1330,7 @@ function SubmissionsPanel() {
           <p style={{color:'rgba(255,255,255,0.6)',margin:0,fontSize:'13px'}}>مراجعة وإدارة طلبات الانضمام</p>
         </div>
         <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
-          <button onClick={load} style={{padding:'10px 16px',borderRadius:'10px',background:'rgba(255,255,255,0.15)',color:'white',border:'1px solid rgba(255,255,255,0.2)',cursor:'pointer',fontSize:'13px',fontWeight:'700',fontFamily:'Cairo,sans-serif'}}>🔄 تحديث</button>
+          <RefreshBtn onClick={load} spinning={false}/>
           <a href="/register" target="_blank" style={{padding:'10px 16px',borderRadius:'10px',background:'#10b981',color:'#fff',textDecoration:'none',fontSize:'13px',fontWeight:'700',fontFamily:'Cairo,sans-serif'}}>🔗 رابط التسجيل</a>
         </div>
       </div>
@@ -2144,268 +2160,349 @@ function SystemConstantsPanel() {
 }
 
 function SecurityPanel() {
-  const [blocked, setBlocked] = React.useState([])
+  const [tab, setTab] = React.useState('ratelimits') // blocks | ratelimits | report
+  const [blocks, setBlocks] = React.useState([])
+  const [rateLimits, setRateLimits] = React.useState([])
+  const [report, setReport] = React.useState(null)
   const [stats, setStats] = React.useState(null)
   const [channels, setChannels] = React.useState({ smsDisabled: false, emailDisabled: false })
-  const [loading, setLoading] = React.useState(true)
+  const [loading, setLoading] = React.useState(false)
   const [filter, setFilter] = React.useState('active')
-  const [blockForm, setBlockForm] = React.useState({ contact: '', channel: 'email' })
-  const [msg, setMsg] = React.useState('')
   const [search, setSearch] = React.useState('')
-  const [pageSize, setPageSize] = React.useState(10)
-  const [page, setPage] = React.useState(1)
+  const [rateTypeFilter, setRateTypeFilter] = React.useState('')
+  const [showAllRate, setShowAllRate] = React.useState(false)
+  const [msg, setMsg] = React.useState('')
+  const [manualKey, setManualKey] = React.useState('')
+  const [manualKeyType, setManualKeyType] = React.useState('phone')
+  const [reasonPopup, setReasonPopup] = React.useState(null) // {key, keyType, id?}
+  const [reasonText, setReasonText] = React.useState('')
+  const [refreshing, setRefreshing] = React.useState(false)
+  const [reportSearch, setReportSearch] = React.useState('')
+  const [reportFrom, setReportFrom] = React.useState(() => new Date().toISOString().slice(0,10))
+  const [reportTo, setReportTo] = React.useState(() => new Date().toISOString().slice(0,16))
 
-  const load = async () => {
+  const hdrs = () => ({ Authorization: `Bearer ${getToken()}` })
+
+  const loadBlocks = async () => {
     setLoading(true)
-    try {
-      const [bl, st, ch] = await Promise.all([
-        api.get(`${API}/security/blocked?activeOnly=${filter === 'active'}`, { headers: authHdrs() }),
-        api.get(`${API}/security/stats`, { headers: authHdrs() }),
-        api.get(`${API}/security/channels`, { headers: authHdrs() })
-      ])
-      setBlocked(bl.data)
-      setStats(st.data)
-      setChannels(ch.data)
-    } catch {}
+    try { const r = await api.get(`/security/blocked?activeOnly=${filter==='active'}`, { headers: hdrs() }); setBlocks(r.data || []) }
+    catch {}
     setLoading(false)
   }
 
-  const toggleChannel = async (channel, disable) => {
-    const action = disable ? 'disable' : 'enable'
-    const ch = channel === 'sms' ? 'SMS' : 'الإيميل'
-    if (!window.confirm(`${disable ? 'إيقاف' : 'تفعيل'} ${ch}؟`)) return
-    
-    // تحديث فوري للـ UI
-    setChannels(prev => ({
-      ...prev,
-      [channel === 'sms' ? 'smsDisabled' : 'emailDisabled']: disable
-    }))
-    setMsg(`${disable ? '🔴 جاري إيقاف' : '✅ جاري تفعيل'} ${ch}...`)
-    
+  const loadRateLimits = async () => {
     try {
-      await api.post(`${API}/security/channels/${channel}/${action}`, {}, { headers: authHdrs() })
-      setMsg(`${disable ? '🔴 تم إيقاف' : '✅ تم تفعيل'} ${ch}`)
-    } catch (e) {
-      setMsg('❌ حدث خطأ')
-      load()
-    }
+      const params = new URLSearchParams({ blockedOnly: showAllRate ? 'false' : 'true' })
+      if (rateTypeFilter) params.append('keyType', rateTypeFilter)
+      const r = await api.get(`/security/ratelimits?${params}`, { headers: hdrs() })
+      setRateLimits(r.data || [])
+    } catch {}
   }
 
-  React.useEffect(() => { load() }, [filter])
+  const loadReport = async () => {
+    try {
+      const params = new URLSearchParams()
+      if (reportFrom) params.append('from', new Date(reportFrom).toISOString())
+      params.append('to', reportTo ? new Date(reportTo).toISOString() : new Date().toISOString())
+      if (reportSearch) params.append('search', reportSearch)
+      const r = await api.get(`/security/ratelimits/report?${params}`, { headers: hdrs() })
+      setReport(r.data)
+    } catch {}
+  }
+
+  const loadStats = async () => {
+    try { const r = await api.get('/security/stats', { headers: hdrs() }); setStats(r.data) } catch {}
+    try { const r = await api.get('/security/channels', { headers: hdrs() }); setChannels(r.data) } catch {}
+  }
+
+  React.useEffect(() => { loadStats(); loadBlocks() }, [])
+  React.useEffect(() => { if (tab==='blocks') loadBlocks() }, [filter, tab])
+  React.useEffect(() => { if (tab==='ratelimits') loadRateLimits() }, [showAllRate, rateTypeFilter, tab])
+  React.useEffect(() => { if (tab==='report') loadReport() }, [tab])
 
   const unblock = async (id) => {
-    if (!window.confirm('فك الحجب؟')) return
-    await api.post(`${API}/security/unblock/${id}`, {}, { headers: authHdrs() })
-    setMsg('✅ تم فك الحجب')
-    load()
+    await api.post(`/security/unblock/${id}`, {}, { headers: hdrs() })
+    setMsg('✅ تم فك الحجب'); loadBlocks()
   }
 
   const blockManual = async () => {
-    if (!blockForm.contact) return
-    // تحديد النوع تلقائياً حسب المدخل
-    const isEmail = blockForm.contact.includes('@')
-    const detectedChannel = isEmail ? 'email' : 'sms'
+    if (!manualKey.trim()) return
     try {
-      await api.post(`${API}/security/block`, { contact: blockForm.contact, channel: detectedChannel }, { headers: authHdrs() })
-      setMsg(`✅ تم حجب ${isEmail ? 'الإيميل' : 'رقم الهاتف'} بنجاح`)
-      setBlockForm({ contact: '', channel: 'email' })
-      load()
-    } catch (e) {
-      setMsg('❌ ' + (e?.response?.data?.message || 'حدث خطأ'))
-    }
+      const r = await api.post('/security/ratelimits/block', { key: manualKey.trim(), keyType: manualKeyType }, { headers: hdrs() })
+      setMsg('🚫 ' + r.data.message); setManualKey(''); loadRateLimits()
+    } catch(e) { setMsg('❌ ' + (e?.response?.data?.message || 'فشل')) }
   }
 
-  const channelBg = { email: '#EEF2FF', sms: '#F0FDF4' }
-  const channelColor = { email: '#4f46e5', sms: '#16a34a' }
+  const unblockRate = async (id) => {
+    await api.post(`/security/ratelimits/unblock/${id}`, {}, { headers: hdrs() })
+    setMsg('✅ تم فك الحظر'); loadRateLimits()
+  }
+
+  const deleteRate = async (id) => {
+    await api.delete(`/security/ratelimits/${id}`, { headers: hdrs() })
+    loadRateLimits()
+  }
+
+  const toggleChannel = async (ch, disabled) => {
+    await api.post(`/security/channels/${ch}/${disabled?'disable':'enable'}`, {}, { headers: hdrs() })
+    setChannels(p => ({...p, [ch==='sms'?'smsDisabled':'emailDisabled']: disabled}))
+  }
+
+  const fmtDate = (d) => d ? new Date(d).toLocaleString('ar-IQ') : '—'
+  const isActBlocked = (r) => {
+    if (r.isManual) return true  // يدوي دائم
+    if (r.blockedUntil && new Date(r.blockedUntil) > new Date()) return true  // مؤقت لم ينته
+    if (r.attempts >= 5 && !r.unblockedAt) return true  // 5/5 ولم يُفك
+    return false
+  }
+  const getBlockedUntil = (r) => {
+    if (r.isManual) return '⛔ دائم — لا يُفك تلقائياً'
+    if (r.blockedUntil && new Date(r.blockedUntil) > new Date()) {
+      const diff = Math.max(0, Math.ceil((new Date(r.blockedUntil) - new Date()) / 60000))
+      return diff > 0 ? `⏳ مؤقت — يُفك خلال ${diff} دقيقة` : '⏳ مؤقت — ينتهي قريباً'
+    }
+    return '—'
+  }
 
   return (
-    <div style={{padding:'24px',fontFamily:'Cairo,sans-serif',direction:'rtl',background:'#F0F4F8',minHeight:'100%'}}>
+    <div style={{padding:'20px',fontFamily:'Cairo,sans-serif',direction:'rtl',maxWidth:'1000px'}}>
+      <h2 style={{color:'#2C3E6B',fontWeight:'900',fontSize:'20px',margin:'0 0 16px'}}>🔒 الأمان والحجب</h2>
 
-      {/* Header */}
-      <div style={{background:'linear-gradient(135deg,#dc2626,#991b1b)',borderRadius:'16px',padding:'20px 24px',marginBottom:'20px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-        <div>
-          <h2 style={{color:'white',fontWeight:'800',margin:'0 0 4px',fontSize:'20px'}}>🔒 إدارة الأمان</h2>
-          <p style={{color:'rgba(255,255,255,0.7)',margin:0,fontSize:'13px'}}>مراقبة محاولات OTP والجهات المحجوبة</p>
-        </div>
-        <button onClick={load} style={{padding:'10px 16px',borderRadius:'10px',background:'rgba(255,255,255,0.15)',color:'white',border:'1px solid rgba(255,255,255,0.2)',cursor:'pointer',fontSize:'13px',fontWeight:'700',fontFamily:'Cairo,sans-serif'}}>
-          🔄 تحديث
-        </button>
-      </div>
-
-      {/* Stats — compact row */}
+      {/* Stats */}
       {stats && (
-        <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
+        <div style={{display:'flex',gap:'8px',marginBottom:'14px',flexWrap:'wrap'}}>
           {[
-            ['🚫', 'محجوب حالياً', stats.totalBlocked, '#dc2626'],
-            ['⚠️', 'محجوب اليوم', stats.blockedToday, '#f59e0b'],
-            ['❌', 'فشل 24 ساعة', stats.failedLast24h, '#ef4444'],
-            ['⏱️', 'فشل آخر ساعة', stats.failedLastHour, '#f97316'],
-            ['✅', 'نجاح 24 ساعة', stats.successLast24h, '#10b981'],
-          ].map(([icon, label, val, color]) => (
-            <div key={label} style={{background:'white',borderRadius:'10px',padding:'8px 14px',display:'flex',alignItems:'center',gap:'6px',boxShadow:'0 1px 6px rgba(0,0,0,0.06)',border:'1px solid #e2e8f0',flexShrink:0}}>
-              <span style={{fontSize:'14px'}}>{icon}</span>
-              <span style={{fontSize:'18px',fontWeight:'800',color}}>{val}</span>
-              <span style={{fontSize:'11px',color:'#94a3b8'}}>{label}</span>
+            {l:'محجوب الآن',v:stats.totalBlocked,c:'#dc2626',bg:'#fee2e2'},
+            {l:'محجوب اليوم',v:stats.blockedToday,c:'#d97706',bg:'#fef3c7'},
+            {l:'فشل 24س',v:stats.failedLast24h,c:'#7c3aed',bg:'#ede9fe'},
+            {l:'نجح 24س',v:stats.successLast24h,c:'#059669',bg:'#d1fae5'},
+          ].map(s=>(
+            <div key={s.l} style={{background:s.bg,borderRadius:'10px',padding:'8px 12px',border:`1px solid ${s.c}33`,display:'flex',alignItems:'center',gap:'8px',flex:'1',minWidth:'100px'}}>
+              <div style={{fontSize:'20px',fontWeight:'900',color:s.c}}>{s.v}</div>
+              <div style={{fontSize:'11px',color:s.c,fontWeight:'700',lineHeight:'1.3'}}>{s.l}</div>
             </div>
           ))}
         </div>
       )}
 
-      {msg && <div style={{background:'#F0FDF4',border:'1px solid #bbf7d0',borderRadius:'10px',padding:'12px',marginBottom:'16px',color:'#16a34a',fontWeight:'700'}}>{msg}</div>}
+      {msg && <div style={{background:'#f0fdf4',border:'1px solid #86efac',borderRadius:'10px',padding:'10px 14px',marginBottom:'12px',fontSize:'13px',color:'#16a34a',fontWeight:'700'}}>{msg}</div>}
 
-      {/* مفاتيح الإيقاف الطارئ */}
-      <div style={{background:'white',borderRadius:'14px',padding:'16px',marginBottom:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
-        <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px',marginBottom:'12px'}}>⚡ إيقاف طارئ</div>
-        <div className="security-channels-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
-
-          {/* SMS */}
-          <div style={{padding:'16px',borderRadius:'12px',background: channels.smsDisabled ? '#FEF2F2' : '#F0FDF4',border:`1.5px solid ${channels.smsDisabled ? '#fecaca' : '#bbf7d0'}`,transition:'all 0.3s ease'}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
-              <span style={{fontWeight:'700',fontSize:'15px'}}>
-                {channels.smsDisabled ? '🔴' : '📱'} SMS
-              </span>
-              <span style={{padding:'6px 12px',borderRadius:'20px',fontSize:'12px',fontWeight:'700',
-                background: channels.smsDisabled ? '#dc2626' : '#16a34a', color:'white',transition:'all 0.3s ease'}}>
-                {channels.smsDisabled ? '🔴 متوقف' : '✅ يعمل'}
-              </span>
+      {/* Reason Popup */}
+      {reasonPopup && (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',zIndex:2000,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px'}}>
+          <div style={{background:'#fff',borderRadius:'16px',padding:'24px',width:'100%',maxWidth:'420px',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
+            <h3 style={{color:'#dc2626',margin:'0 0 12px',fontWeight:'800'}}>🚫 حجب دائم</h3>
+            <p style={{fontSize:'13px',color:'#555',margin:'0 0 12px'}}>الجهة: <b style={{direction:'ltr',display:'inline-block'}}>{reasonPopup.key}</b></p>
+            <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'6px'}}>سبب الحجب *</label>
+            <textarea value={reasonText} onChange={e=>setReasonText(e.target.value)} rows={3} placeholder="مثال: محاولات متكررة مشبوهة، إساءة استخدام..."
+              style={{width:'100%',padding:'10px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',resize:'none',boxSizing:'border-box'}}/>
+            <div style={{display:'flex',gap:'8px',marginTop:'14px'}}>
+              <button onClick={async()=>{
+                if (!reasonText.trim()) { alert('أدخل سبب الحجب'); return }
+                await api.post('/security/ratelimits/block',{key:reasonPopup.key,keyType:reasonPopup.keyType,reason:reasonText.trim()},{headers:hdrs()})
+                setMsg('🚫 تم الحجب الدائم — السبب: ' + reasonText.trim())
+                setReasonPopup(null); setReasonText(''); loadRateLimits()
+              }} style={{flex:1,padding:'11px',background:'#dc2626',color:'#fff',border:'none',borderRadius:'10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'800'}}>
+                🚫 تأكيد الحجب
+              </button>
+              <button onClick={()=>{setReasonPopup(null);setReasonText('')}} style={{flex:1,padding:'11px',background:'#f5f7fa',color:'#666',border:'none',borderRadius:'10px',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}>
+                إلغاء
+              </button>
             </div>
-            <button onClick={() => toggleChannel('sms', !channels.smsDisabled)}
-              style={{width:'100%',padding:'12px',borderRadius:'10px',border:'none',cursor:'pointer',
-                fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'13px',
-                background: channels.smsDisabled ? '#16a34a' : '#dc2626',
-                color:'white',transition:'all 0.3s ease',transform:'scale(1)',
-                '&:hover':{transform:'scale(1.02)'}}}>
-              {channels.smsDisabled ? '✅ تفعيل SMS' : '🔴 إيقاف SMS'}
-            </button>
           </div>
-
-          {/* Email */}
-          <div style={{padding:'16px',borderRadius:'12px',background: channels.emailDisabled ? '#FEF2F2' : '#F0FDF4',border:`1.5px solid ${channels.emailDisabled ? '#fecaca' : '#bbf7d0'}`,transition:'all 0.3s ease'}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
-              <span style={{fontWeight:'700',fontSize:'15px'}}>
-                {channels.emailDisabled ? '🔴' : '📧'} الإيميل
-              </span>
-              <span style={{padding:'6px 12px',borderRadius:'20px',fontSize:'12px',fontWeight:'700',
-                background: channels.emailDisabled ? '#dc2626' : '#16a34a', color:'white',transition:'all 0.3s ease'}}>
-                {channels.emailDisabled ? '🔴 متوقف' : '✅ يعمل'}
-              </span>
-            </div>
-            <button onClick={() => toggleChannel('email', !channels.emailDisabled)}
-              style={{width:'100%',padding:'12px',borderRadius:'10px',border:'none',cursor:'pointer',
-                fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'13px',
-                background: channels.emailDisabled ? '#16a34a' : '#dc2626',
-                color:'white',transition:'all 0.3s ease',transform:'scale(1)',
-                '&:hover':{transform:'scale(1.02)'}}}>
-              {channels.emailDisabled ? '✅ تفعيل الإيميل' : '🔴 إيقاف الإيميل'}
-            </button>
-          </div>
-
         </div>
+      )}
+
+      {/* Tabs */}
+      <div style={{display:'flex',gap:'8px',marginBottom:'16px',borderBottom:'2px solid #e2e8f0',paddingBottom:'8px',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap'}}>
+        <div style={{display:'flex',gap:'8px'}}>
+          {[['ratelimits','🛡️ حظر OTP'],['report','📊 التقارير']].map(([k,l])=>(
+            <button key={k} onClick={()=>setTab(k)}
+              style={{padding:'8px 18px',borderRadius:'10px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'13px',
+                background:tab===k?'#2C3E6B':'#f1f5f9',color:tab===k?'#fff':'#475569'}}>
+              {l}
+            </button>
+          ))}
+        </div>
+        <RefreshBtn onClick={()=>{setRefreshing(true);(tab==='report'?loadReport():loadRateLimits()).finally(()=>setRefreshing(false))}} spinning={refreshing}/>
       </div>
 
-      {/* حجب يدوي */}
-      <div style={{background:'white',borderRadius:'14px',padding:'16px',marginBottom:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
-        <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px',marginBottom:'12px'}}>➕ حجب يدوي</div>
-        {(() => {
-          const v = blockForm.contact.trim()
-          const isEmail = v.includes('@') && v.includes('.')
-          const isPhone = /^[\d\+\-\s\(\)]{7,}$/.test(v)
-          const isValid = isEmail || isPhone
-          const hint = !v ? '' : isEmail ? '📧 إيميل' : isPhone ? '📱 هاتف' : '❌ غير صحيح'
-          const hintColor = !v ? '' : isValid ? (isEmail ? '#4f46e5' : '#16a34a') : '#dc2626'
-          const borderColor = !v ? '#e2e8f0' : isValid ? hintColor : '#dc2626'
-          return (
-            <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-              <div style={{flex:1,minWidth:'200px',position:'relative'}}>
-                <input value={blockForm.contact} onChange={e=>setBlockForm(p=>({...p,contact:e.target.value}))}
-                  placeholder="إيميل أو رقم هاتف"
-                  style={{width:'100%',padding:'10px 12px',border:`1.5px solid ${borderColor}`,borderRadius:'10px',fontSize:'13px',fontFamily:'Cairo,sans-serif',outline:'none'}} />
-                {v && (
-                  <span style={{position:'absolute',left:'10px',top:'50%',transform:'translateY(-50%)',fontSize:'11px',fontWeight:'700',color:hintColor,background:'#fff',padding:'0 4px'}}>
-                    {hint}
-                  </span>
-                )}
-              </div>
-              <button onClick={blockManual} disabled={!isValid}
-                style={{padding:'10px 20px',background:isValid?'#dc2626':'#ccc',color:'white',border:'none',borderRadius:'10px',cursor:isValid?'pointer':'not-allowed',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'13px',transition:'background 0.2s'}}>
+      {/* ─── TAB 2: حظر OTP ─── */}
+      {tab==='ratelimits' && (
+        <div style={{background:'#fff',borderRadius:'14px',padding:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px',flexWrap:'wrap',gap:'8px'}}>
+            <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px'}}>🛡️ حظر المتابعين (OTP Rate Limit)</div>
+            <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
+              <select value={rateTypeFilter} onChange={e=>{setRateTypeFilter(e.target.value)}}
+                style={{padding:'6px 10px',borderRadius:'8px',border:'1px solid #dde3ed',fontSize:'12px',fontFamily:'Cairo,sans-serif',background:'#fff'}}>
+                <option value=''>كل الأنواع</option>
+                <option value='phone-login'>🔑 دخول</option>
+                <option value='phone'>📱 هاتف</option>
+                <option value='whatsapp'>💬 واتساب</option>
+                <option value='email'>📧 إيميل</option>
+              </select>
+              <button onClick={()=>setShowAllRate(!showAllRate)}
+                style={{padding:'6px 12px',borderRadius:'8px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700',
+                  background:showAllRate?'#EEF2FF':'#FFF8E7',color:showAllRate?'#4338ca':'#B8860B'}}>
+                {showAllRate?'المحجوبين فقط':'عرض الكل'}
+              </button>
+
+            </div>
+          </div>
+
+          {/* حجب يدوي OTP */}
+          <div style={{background:'#fafbff',borderRadius:'10px',padding:'12px',marginBottom:'12px',border:'1px solid #e2e8f0'}}>
+            <div style={{fontSize:'12px',fontWeight:'700',color:'#555',marginBottom:'8px'}}>➕ حجب يدوي دائم</div>
+            <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
+              <input value={manualKey} onChange={e=>{
+                  const v=e.target.value; setManualKey(v);
+                  if(v.includes('@')) setManualKeyType('email');
+                  else if(/^[0-9+]{5,}$/.test(v.replace(/\s/g,''))) setManualKeyType('phone');
+                }} placeholder="رقم الهاتف أو الإيميل"
+                style={{flex:1,minWidth:'160px',padding:'8px 12px',border:'1.5px solid #dde3ed',borderRadius:'9px',fontSize:'13px',fontFamily:'Cairo,sans-serif',outline:'none'}}/>
+              <select value={manualKeyType} onChange={e=>setManualKeyType(e.target.value)}
+                style={{padding:'8px 10px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',background:'#fff'}}>
+                <option value="phone">📱 هاتف</option>
+                <option value="whatsapp">💬 واتساب</option>
+                <option value="email">📧 إيميل</option>
+                <option value="phone-login">🔑 دخول</option>
+              </select>
+              <button onClick={blockManual} style={{padding:'8px 16px',background:'#dc2626',color:'#fff',border:'none',borderRadius:'9px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'12px'}}>
                 🚫 حجب
               </button>
             </div>
-          )
-        })()}
-      </div>
-
-      {/* قائمة المحجوبين */}
-      <div style={{background:'white',borderRadius:'14px',padding:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px',flexWrap:'wrap',gap:8}}>
-          <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px'}}>📋 الجهات المحجوبة</div>
-          <div style={{display:'flex',gap:'8px',flexWrap:'wrap',alignItems:'center'}}>
-            <input value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}} placeholder="🔍 بحث..."
-              style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',fontSize:'12px',fontFamily:'Cairo,sans-serif',outline:'none',minWidth:'150px'}} />
-            <select value={pageSize} onChange={e=>{setPageSize(+e.target.value);setPage(1)}}
-              style={{padding:'6px 10px',borderRadius:'8px',border:'1px solid #dde3ed',fontSize:'12px',fontFamily:'Cairo,sans-serif',background:'#fff',cursor:'pointer'}}>
-              {[10,50,100,1000].map(n=><option key={n} value={n}>{n}</option>)}
-            </select>
-            {['active','all'].map(f => (
-              <button key={f} onClick={()=>{setFilter(f);setPage(1)}}
-                style={{padding:'6px 14px',borderRadius:'8px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'12px',
-                  background:filter===f?'#2C3E6B':'#f1f5f9',color:filter===f?'white':'#475569'}}>
-                {f==='active'?'النشطة':'الكل'}
-              </button>
-            ))}
           </div>
-        </div>
 
-        {loading ? (
-          <div style={{textAlign:'center',padding:'40px'}}><div className="ficc-spinner"></div></div>
-        ) : blocked.length === 0 ? (
-          <div style={{textAlign:'center',padding:'40px',color:'#94a3b8',fontSize:'14px'}}>✅ لا توجد جهات محجوبة</div>
-        ) : (() => {
-          const filteredBlocked = search.trim() ? blocked.filter(b => b.contact?.includes(search)) : blocked
-          const totalPagesB = Math.ceil(filteredBlocked.length / pageSize)
-          const pagedBlocked = pageSize >= 1000 ? filteredBlocked : filteredBlocked.slice((page-1)*pageSize, page*pageSize)
-          return (<>
-          <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-            {pagedBlocked.length === 0 && <div style={{textAlign:'center',padding:'24px',color:'#94a3b8'}}>لا توجد نتائج</div>}
-            {pagedBlocked.map((b, idx) => (
-              <div key={b.id} style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px',borderRadius:'10px',background:b.isActive?'#FEF2F2':'#F8FAFC',border:`1px solid ${b.isActive?'#fecaca':'#e2e8f0'}`}}>
-                <span style={{color:'#aaa',fontSize:'11px',minWidth:'20px'}}>#{(page-1)*pageSize+idx+1}</span>
-                <div style={{flex:1}}>
-                  <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}}>
-                    <span style={{background:channelBg[b.channel],color:channelColor[b.channel],padding:'2px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}>
-                      {b.channel === 'email' ? '✉️ إيميل' : '📱 هاتف'}
-                    </span>
-                    {b.isActive && <span style={{background:'#FEF2F2',color:'#dc2626',padding:'2px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}>🚫 محجوب</span>}
-                  </div>
-                  <div style={{fontWeight:'700',color:'#1e293b',fontSize:'14px'}}>{b.contact}</div>
-                  <div style={{fontSize:'11px',color:'#94a3b8'}}>
-                    {new Date(b.blockedAt).toLocaleString('ar-IQ')} {b.ipAddress && `— IP: ${b.ipAddress}`}
-                  </div>
-                </div>
-                {b.isActive && (
-                  <button onClick={() => unblock(b.id)}
-                    style={{padding:'8px 16px',background:'#10b981',color:'white',border:'none',borderRadius:'10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'13px',flexShrink:0}}>
-                    ✅ فك الحجب
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-          {totalPagesB > 1 && (
-            <div style={{display:'flex',justifyContent:'center',gap:6,marginTop:10}}>
-              <button onClick={()=>setPage(1)} disabled={page===1} style={{padding:'4px 9px',borderRadius:7,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:12}}>««</button>
-              <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1} style={{padding:'4px 9px',borderRadius:7,border:'1px solid #dde3ed',background:page===1?'#f5f5f5':'#fff',cursor:page===1?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>← السابق</button>
-              <span style={{fontSize:12,color:'#555',padding:'0 6px',alignSelf:'center'}}>{page} / {totalPagesB}</span>
-              <button onClick={()=>setPage(p=>Math.min(totalPagesB,p+1))} disabled={page===totalPagesB} style={{padding:'4px 9px',borderRadius:7,border:'1px solid #dde3ed',background:page===totalPagesB?'#f5f5f5':'#fff',cursor:page===totalPagesB?'default':'pointer',fontSize:12,fontFamily:'Cairo,sans-serif'}}>التالي →</button>
-              <button onClick={()=>setPage(totalPagesB)} disabled={page===totalPagesB} style={{padding:'4px 9px',borderRadius:7,border:'1px solid #dde3ed',background:page===totalPagesB?'#f5f5f5':'#fff',cursor:page===totalPagesB?'default':'pointer',fontSize:12}}>»»</button>
+          {rateLimits.length===0 ? <p style={{textAlign:'center',color:'#aaa',padding:'20px',fontSize:'13px'}}>✅ لا يوجد حظر حالي</p> : (
+            <div style={{overflowX:'auto'}}>
+              <table style={{width:'100%',borderCollapse:'collapse',fontSize:'12px',minWidth:'500px'}}>
+                <thead>
+                  <tr style={{background:'#f5f7fa'}}>
+                    {['الرقم / الإيميل','النوع','المحاولات','الحالة','فك الحجب تلقائياً','إجراء'].map(h=>(
+                      <th key={h} style={{padding:'8px 10px',textAlign:'right',color:'#555',fontWeight:'700'}}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rateLimits.map((r,i)=>{
+                    const isBlocked = isActBlocked(r)
+                    const isManual = r.isManual
+                    const typeLabel = r.keyType==='phone-login'?'🔑 دخول':r.keyType==='whatsapp'?'💬 واتساب':r.keyType==='email'?'📧 إيميل':'📱 هاتف'
+                    const autoUnblock = getBlockedUntil(r)
+                    return (
+                      <tr key={r.id} style={{borderBottom:'1px solid #f0f2f7',background:isBlocked?(isManual?'#fff0f0':'#fff5f5'):i%2===0?'#fff':'#fafbff'}}>
+                        <td style={{padding:'8px 10px',fontWeight:'700',direction:'ltr',fontSize:'12px'}}>{r.key}</td>
+                        <td style={{padding:'8px 10px'}}>
+                          <span style={{padding:'2px 7px',borderRadius:'12px',background:'#EEF2FF',color:'#4338ca',fontSize:'11px',fontWeight:'700'}}>{typeLabel}</span>
+                          {isManual && <span style={{marginRight:'4px',padding:'2px 7px',borderRadius:'12px',background:'#fee2e2',color:'#dc2626',fontSize:'10px',fontWeight:'700'}}>يدوي</span>}
+                        </td>
+                        <td style={{padding:'8px 10px',textAlign:'center'}}>
+                          <span style={{padding:'2px 8px',borderRadius:'12px',fontWeight:'800',fontSize:'12px',
+                            background:r.attempts>=5?'#fee2e2':r.attempts>=3?'#fff8e7':'#f0fdf4',
+                            color:r.attempts>=5?'#dc2626':r.attempts>=3?'#b45309':'#16a34a'}}>{r.attempts}/5</span>
+                        </td>
+                        <td style={{padding:'8px 10px',fontSize:'11px',fontWeight:isBlocked?'700':'400',color:isBlocked?'#dc2626':'#16a34a'}}>
+                          {isBlocked ? (isManual ? '🔴 محجوب دائم' : '🟠 محجوب مؤقت') : '✅ غير محجوب'}
+                        </td>
+                        <td style={{padding:'8px 10px',fontSize:'11px',color:isManual?'#dc2626':'#555'}}>{autoUnblock}</td>
+                        <td style={{padding:'8px 10px',whiteSpace:'nowrap',display:'flex',gap:'4px',flexWrap:'wrap'}}>
+                          {isBlocked && !isManual && (
+                            <button onClick={()=>unblockRate(r.id)} style={{background:'#dcfce7',color:'#16a34a',border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700'}}>✅ فك</button>
+                          )}
+                          {isBlocked && isManual && (
+                            <button onClick={()=>unblockRate(r.id)} style={{background:'#dcfce7',color:'#16a34a',border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700'}}>✅ فك اليدوي</button>
+                          )}
+                          {!isManual && (
+                            <button onClick={()=>{setReasonPopup({key:r.key,keyType:r.keyType});setReasonText('')}} style={{background:'#fee2e2',color:'#dc2626',border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700'}}>🚫 حجب دائم</button>
+                          )}
+                          <button onClick={()=>deleteRate(r.id)} style={{background:'#f1f5f9',color:'#666',border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700'}}>🗑️</button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
-          </>)
-        })()}
-      </div>
+        </div>
+      )}
+
+      {/* ─── TAB 3: التقارير ─── */}
+      {tab==='report' && (
+        <div>
+
+          {!report ? <p style={{textAlign:'center',color:'#aaa',padding:'40px'}}>جاري التحميل...</p> : (<>
+            {/* ملخص التقرير */}
+            <div style={{display:'flex',gap:'8px',marginBottom:'14px',flexWrap:'wrap'}}>
+              {[
+                {l:'إجمالي',v:report.total,c:'#2C3E6B',bg:'#EEF2FF'},
+                {l:'محجوب',v:report.activeBlocked,c:'#dc2626',bg:'#fee2e2'},
+                {l:'يدوي',v:report.manualBlocked,c:'#7c3aed',bg:'#ede9fe'},
+                {l:'تلقائي',v:report.autoBlocked,c:'#d97706',bg:'#fef3c7'},
+                {l:'فُك حجبه',v:report.unblocked,c:'#059669',bg:'#d1fae5'},
+              ].map(s=>(
+                <div key={s.l} style={{background:s.bg,borderRadius:'10px',padding:'8px 12px',border:`1px solid ${s.c}33`,display:'flex',alignItems:'center',gap:'8px',flex:'1',minWidth:'80px'}}>
+                  <div style={{fontSize:'18px',fontWeight:'900',color:s.c}}>{s.v}</div>
+                  <div style={{fontSize:'11px',color:s.c,fontWeight:'700'}}>{s.l}</div>
+                </div>
+              ))}
+            </div>
+            {/* جدول التقرير الكامل */}
+            <div style={{background:'#fff',borderRadius:'14px',padding:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
+                <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px'}}>📋 السجل الكامل ({report.total})</div>
+                <button onClick={()=>window.print()} title="طباعة التقرير"
+                  style={{padding:'7px 14px',borderRadius:'8px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',
+                    display:'inline-flex',alignItems:'center',gap:'6px',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700'}}>
+                  🖨️ طباعة
+                </button>
+              </div>
+              <div style={{overflowX:'auto'}}>
+                <table style={{width:'100%',borderCollapse:'collapse',fontSize:'12px',minWidth:'600px'}}>
+                  <thead>
+                    <tr style={{background:'#f5f7fa'}}>
+                      {['الرقم / الإيميل','النوع','المحاولات','الحالة','نوع الحجب','فك الحجب','فك بواسطة'].map(h=>(
+                        <th key={h} style={{padding:'8px 10px',textAlign:'right',color:'#555',fontWeight:'700'}}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(report.items||[]).map((r,i)=>{
+                      const isBlocked = isActBlocked(r)
+                      return (
+                        <tr key={r.id} style={{borderBottom:'1px solid #f0f2f7',background:i%2===0?'#fff':'#fafbff'}}>
+                          <td style={{padding:'7px 10px',fontWeight:'700',direction:'ltr',fontSize:'12px'}}>{r.key}</td>
+                          <td style={{padding:'7px 10px',fontSize:'11px'}}>
+                            {r.keyType==='phone-login'?'🔑 دخول':r.keyType==='whatsapp'?'💬 واتساب':r.keyType==='email'?'📧 إيميل':'📱 هاتف'}
+                          </td>
+                          <td style={{padding:'7px 10px',textAlign:'center',fontWeight:'700'}}>{r.attempts}</td>
+                          <td style={{padding:'7px 10px',fontSize:'11px',color:isBlocked?'#dc2626':'#16a34a',fontWeight:'700'}}>
+                            {isBlocked ? (r.isManual ? '🔴 دائم' : '🟠 مؤقت') : '✅ مفتوح'}
+                          </td>
+                          <td style={{padding:'7px 10px'}}>
+                            {r.isManual
+                              ? <span style={{background:'#fee2e2',color:'#dc2626',padding:'2px 8px',borderRadius:'12px',fontSize:'10px',fontWeight:'700'}}>يدوي دائم</span>
+                              : <span style={{background:'#fef3c7',color:'#b45309',padding:'2px 8px',borderRadius:'12px',fontSize:'10px',fontWeight:'700'}}>تلقائي (ساعة)</span>
+                            }
+                          </td>
+                          <td style={{padding:'7px 10px',fontSize:'11px',color:'#555',maxWidth:'150px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.blockReason||'—'}</td>
+                          <td style={{padding:'7px 10px',fontSize:'11px',color:'#555'}}>{r.unblockedAt||'—'}</td>
+                          <td style={{padding:'7px 10px',fontSize:'11px',color:'#555'}}>{r.unblockedBy||'—'}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>)}
+        </div>
+      )}
+
     </div>
   )
 }
+
 
 // ─── Startups Admin Panel ───
 function StartupsAdminPanel() {
@@ -2790,6 +2887,371 @@ function SubscribersPanel() {
         </div>
         )
       })()}
+    </div>
+  )
+}
+
+/* ─── Knowledge Base Panel ─── */
+const KB_CATS = ['الكمارك','المصارف','الغرف التجارية','الاستثمار','تجارة عامة','استيراد وتصدير','صناعة وتصنيع','مقاولات وإنشاءات','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','طاقة وكهرباء','أخرى']
+
+function KBFormModal({ form: initForm, editItem, onSave, setShowAdd, setEditItem }) {
+  const [form, setForm] = React.useState(initForm || { title:'', keywords:'', type:'text', answer:'', linkUrl:'', filePath:'', category:'' })
+  const [msg, setMsg] = React.useState('')
+
+  const save = async () => {
+    if (!form.title) { setMsg('❌ العنوان مطلوب'); return }
+    try {
+      if (editItem) await api.put(`/knowledge/${editItem.id}`, form, { headers: authHdrs() })
+      else await api.post('/knowledge', form, { headers: authHdrs() })
+      setMsg('✅ تم الحفظ'); onSave()
+      setTimeout(() => { setShowAdd(false); setEditItem(null) }, 800)
+    } catch { setMsg('❌ فشل الحفظ') }
+  }
+
+  return (
+    <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.55)',zIndex:1000,display:'flex',alignItems:'flex-start',justifyContent:'center',padding:'16px',overflowY:'auto'}}>
+      <div style={{background:'#fff',borderRadius:'16px',padding:'20px',width:'100%',maxWidth:'520px',direction:'rtl',fontFamily:'Cairo,sans-serif',marginTop:'16px',marginBottom:'16px'}}>
+        <h3 style={{color:'#2C3E6B',margin:'0 0 16px',fontWeight:'800'}}>{editItem?'✏️ تعديل':'➕ إضافة'} معرفة</h3>
+
+        {[['العنوان *','title'],['المفاتيح (مفصولة بفاصلة)','keywords']].map(([lbl,k])=>(
+          <div key={k} style={{marginBottom:'12px'}}>
+            <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>{lbl}</label>
+            <input value={form[k]||''} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))}
+              style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',boxSizing:'border-box'}}/>
+          </div>
+        ))}
+
+        <div style={{marginBottom:'12px'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'6px'}}>
+            <label style={{fontSize:'12px',fontWeight:'700',color:'#555'}}>القطاعات</label>
+            <button type="button" onClick={()=>setForm(p=>({...p,category: p.category==='__all__' ? '' : '__all__'}))}
+              style={{padding:'3px 10px',borderRadius:'10px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',
+                background:form.category==='__all__'?'#2C3E6B':'#FFF8E7',color:form.category==='__all__'?'#fff':'#B8860B'}}>
+              {form.category==='__all__'?'❌ إلغاء الكل':'✅ اختر الكل'}
+            </button>
+          </div>
+          <div style={{maxHeight:'120px',overflowY:'auto',border:'1.5px solid #dde3ed',borderRadius:'10px',padding:'8px',display:'flex',flexWrap:'wrap',gap:'6px'}}>
+            {KB_CATS.map(cat=>{
+              const selected = form.category==='__all__' || form.category===cat
+              return (
+                <button key={cat} type="button" onClick={()=>setForm(p=>({...p,category:p.category===cat&&p.category!=='__all__'?'':cat}))}
+                  style={{padding:'4px 10px',borderRadius:'16px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'600',
+                    background:selected?'#2C3E6B':'#EEF2FF',color:selected?'#fff':'#2C3E6B',whiteSpace:'nowrap'}}>
+                  {selected?'✓ ':''}{cat}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div style={{marginBottom:'12px'}}>
+          <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>النوع</label>
+          <select value={form.type||'text'} onChange={e=>setForm(p=>({...p,type:e.target.value}))}
+            style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif'}}>
+            <option value="text">📝 نص</option>
+            <option value="link">🔗 رابط</option>
+            <option value="file">📎 ملف</option>
+          </select>
+        </div>
+
+        {form.type === 'link' && (
+          <div style={{marginBottom:'12px'}}>
+            <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>الرابط</label>
+            <input value={form.linkUrl||''} onChange={e=>setForm(p=>({...p,linkUrl:e.target.value}))} placeholder="https://"
+              style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',direction:'ltr',boxSizing:'border-box'}}/>
+          </div>
+        )}
+
+        {form.type === 'file' && (
+          <div style={{marginBottom:'12px'}}>
+            <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>رفع ملف (PDF / Word / Excel)</label>
+            <div style={{border:'2px dashed #c7d2fe',borderRadius:'10px',padding:'14px',textAlign:'center',background:'#fafbff'}}>
+              {form.filePath ? (
+                <div style={{display:'flex',alignItems:'center',gap:'8px',justifyContent:'center'}}>
+                  <span>📎</span>
+                  <span style={{fontSize:'13px',color:'#4338ca',fontWeight:'700'}}>{form.filePath.split('/').pop()}</span>
+                  <button type="button" onClick={()=>setForm(p=>({...p,filePath:''}))} style={{background:'#fee2e2',color:'#dc2626',border:'none',borderRadius:'6px',padding:'3px 8px',cursor:'pointer',fontSize:'11px'}}>✕</button>
+                </div>
+              ) : (
+                <label style={{cursor:'pointer',display:'block'}}>
+                  <span style={{fontSize:'28px'}}>📂</span>
+                  <p style={{color:'#888',fontSize:'12px',margin:'4px 0 0'}}>اضغط لاختيار ملف</p>
+                  <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={async e=>{
+                    const file = e.target.files[0]; if (!file) return
+                    const fd = new FormData(); fd.append('file', file)
+                    try {
+                      const r = await api.post(`/knowledge/upload-file`, fd, { headers: { ...authHdrs(), 'Content-Type': 'multipart/form-data' } })
+                      setForm(p=>({...p, filePath: r.data.path}))
+                    } catch { alert('فشل رفع الملف') }
+                  }} style={{display:'none'}}/>
+                </label>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div style={{marginBottom:'14px'}}>
+          <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'6px'}}>الإجابة / المحتوى</label>
+          <div style={{display:'flex',gap:'4px',marginBottom:'6px',flexWrap:'wrap'}}>
+            {[{l:'ع',b:'**',a:'**'},{l:'م',b:'_',a:'_'},{l:'• قائمة',b:'\n• ',a:''},{l:'1. ترقيم',b:'\n1. ',a:''}].map(({l,b,a})=>(
+              <button key={l} type="button" onClick={()=>{
+                const ta = document.getElementById('kb-ta')
+                if (!ta) return
+                const s=ta.selectionStart, e2=ta.selectionEnd, sel=form.answer?.substring(s,e2)||''
+                const nv=(form.answer||'').substring(0,s)+b+sel+a+(form.answer||'').substring(e2)
+                setForm(p=>({...p,answer:nv}))
+                setTimeout(()=>{ta.focus();ta.setSelectionRange(s+b.length,s+b.length+sel.length)},10)
+              }} style={{padding:'3px 8px',borderRadius:'6px',background:'#f0f2f7',color:'#444',border:'1px solid #dde3ed',cursor:'pointer',fontSize:'11px',fontFamily:'Cairo,sans-serif'}}>
+                {l}
+              </button>
+            ))}
+          </div>
+          <textarea id="kb-ta" rows={6} defaultValue={form.answer||''}
+            onChange={e=>{const v=e.target.value;setForm(p=>({...p,answer:v}))}}
+            style={{width:'100%',padding:'10px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',resize:'vertical',boxSizing:'border-box',direction:'rtl'}}/>
+        </div>
+
+        {msg && <div style={{color:msg.startsWith('✅')?'#16a34a':'#dc2626',fontSize:'13px',marginBottom:'8px',padding:'8px',borderRadius:'8px',background:msg.startsWith('✅')?'#f0fdf4':'#fee2e2'}}>{msg}</div>}
+        <div style={{display:'flex',gap:'8px'}}>
+          <button onClick={save} style={{flex:1,padding:'11px',borderRadius:'10px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'800'}}>💾 حفظ</button>
+          <button onClick={()=>{setShowAdd(false);setEditItem(null);setMsg('')}} style={{flex:1,padding:'11px',borderRadius:'10px',background:'#f5f7fa',color:'#666',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}>إلغاء</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function KnowledgePanel() {
+  const [items, setItems] = useState([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [editItem, setEditItem] = useState(null)
+  const [showAdd, setShowAdd] = useState(false)
+  const [form, setForm] = useState({ title:'', keywords:'', type:'text', answer:'', linkUrl:'', category:'' })
+  const [msg, setMsg] = useState('')
+  const [importFile, setImportFile] = useState(null)
+  const pageSize = 20
+
+  const load = async (p=1, q='') => {
+    setLoading(true)
+    try {
+      const r = await api.get(`${API}/knowledge`, { params: { page: p, pageSize, search: q }, headers: authHdrs() })
+      setItems(r.data.items || [])
+      setTotal(r.data.total || 0)
+    } catch {}
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [])
+
+  const save = async () => {
+    if (!form.title) { setMsg('⚠️ العنوان مطلوب'); return }
+    try {
+      if (editItem) {
+        await api.put(`${API}/knowledge/${editItem.id}`, form, { headers: authHdrs() })
+      } else {
+        await api.post(`${API}/knowledge`, form, { headers: authHdrs() })
+      }
+      setMsg('✅ تم الحفظ'); setEditItem(null); setShowAdd(false)
+      setForm({ title:'', keywords:'', type:'text', answer:'', linkUrl:'', category:'' })
+      load(page, search)
+    } catch { setMsg('❌ حدث خطأ') }
+  }
+
+  const del = async (id) => {
+    if (!window.confirm('حذف؟')) return
+    await api.delete(`${API}/knowledge/${id}`, { headers: authHdrs() })
+    load(page, search)
+  }
+
+  const importExcel = async () => {
+    if (!importFile) return
+    const fd = new FormData(); fd.append('file', importFile)
+    try {
+      const r = await api.post(`${API}/knowledge/import-excel`, fd, { headers: { ...authHdrs(), 'Content-Type': 'multipart/form-data' } })
+      setMsg('✅ ' + r.data.message); setImportFile(null); load()
+    } catch { setMsg('❌ فشل الاستيراد') }
+  }
+
+  const openEdit = (item) => { setEditItem(item); setForm({...item}); setShowAdd(true) }
+
+  const typeLabel = (t) => t === 'link' ? '🔗 رابط' : t === 'file' ? '📎 ملف' : '📝 نص'
+
+  return (
+    <div style={{padding:'24px',fontFamily:'Cairo,sans-serif',direction:'rtl'}}>
+      {showAdd && <KBFormModal form={editItem||{}} editItem={editItem} onSave={()=>load(page,search)} setShowAdd={setShowAdd} setEditItem={setEditItem}/>}
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px',flexWrap:'wrap',gap:'10px'}}>
+        <h2 style={{color:'#2C3E6B',fontWeight:'900',fontSize:'20px',margin:0}}>🧠 قاعدة المعرفة ({total})</h2>
+        <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+          <input value={search} onChange={e=>{setSearch(e.target.value);load(1,e.target.value)}} placeholder="بحث..."
+            style={{padding:'9px 12px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',width:'160px',outline:'none'}}/>
+          <label style={{padding:'9px 14px',borderRadius:'10px',background:'#f0fdf4',color:'#16a34a',border:'1px solid #86efac',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'13px',fontWeight:'700'}}>
+            📥 استيراد CSV
+            <input type="file" accept=".csv,.xlsx" onChange={e=>setImportFile(e.target.files[0])} style={{display:'none'}}/>
+          </label>
+          {importFile && <button onClick={importExcel} style={{padding:'9px 14px',borderRadius:'10px',background:'#059669',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'13px',fontWeight:'700'}}>✅ رفع</button>}
+          <button onClick={()=>{setShowAdd(true);setEditItem(null);setForm({title:'',keywords:'',type:'text',answer:'',linkUrl:'',category:''})}}
+            style={{padding:'9px 16px',borderRadius:'10px',background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'13px',fontWeight:'700'}}>
+            + إضافة
+          </button>
+        </div>
+      </div>
+      {msg && !showAdd && <div style={{background:'#f0fdf4',color:'#16a34a',padding:'10px 14px',borderRadius:'10px',marginBottom:'12px',fontWeight:'700'}}>{msg}</div>}
+      <div style={{background:'#fff',borderRadius:'16px',overflow:'auto',boxShadow:'0 4px 16px rgba(44,62,107,0.08)'}}>
+        <table style={{width:'100%',borderCollapse:'collapse',fontSize:'13px',minWidth:'600px'}}>
+          <thead>
+            <tr style={{background:'#2C3E6B',color:'#fff'}}>
+              <th style={{padding:'12px 16px',textAlign:'right'}}>#</th>
+              <th style={{padding:'12px 16px',textAlign:'right'}}>العنوان</th>
+              <th style={{padding:'12px 16px',textAlign:'right'}}>المفاتيح</th>
+              <th style={{padding:'12px 16px',textAlign:'right'}}>النوع</th>
+              <th style={{padding:'12px 16px',textAlign:'right'}}>التصنيف</th>
+              <th style={{padding:'12px 16px',textAlign:'center'}}>إجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((k,i) => (
+              <tr key={k.id} style={{borderBottom:'1px solid #f0f2f7',background:i%2===0?'#fff':'#fafbff'}}>
+                <td style={{padding:'10px 16px',color:'#888'}}>{(page-1)*pageSize+i+1}</td>
+                <td style={{padding:'10px 16px',fontWeight:'700',color:'#2C3E6B',maxWidth:'200px'}}>
+                  <div>{k.title}</div>
+                  {k.answer && <div style={{fontSize:'11px',color:'#888',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{k.answer.slice(0,60)}...</div>}
+                </td>
+                <td style={{padding:'10px 16px',fontSize:'12px',color:'#666',maxWidth:'150px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{k.keywords}</td>
+                <td style={{padding:'10px 16px'}}><span style={{padding:'3px 8px',borderRadius:'12px',fontSize:'11px',fontWeight:'700',background:'#EEF2FF',color:'#4338ca'}}>{typeLabel(k.type)}</span></td>
+                <td style={{padding:'10px 16px',fontSize:'12px',color:'#666'}}>{k.category||'—'}</td>
+                <td style={{padding:'10px 16px',textAlign:'center',whiteSpace:'nowrap'}}>
+                  <button onClick={()=>openEdit(k)} style={{background:'#EEF2FF',color:'#4338ca',border:'none',borderRadius:'7px',padding:'4px 10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',margin:'1px'}}>✏️ تعديل</button>
+                  <button onClick={()=>del(k.id)} style={{background:'#fee2e2',color:'#dc2626',border:'none',borderRadius:'7px',padding:'4px 10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',margin:'1px'}}>🗑️</button>
+                </td>
+              </tr>
+            ))}
+            {items.length===0 && <tr><td colSpan={6} style={{padding:'40px',textAlign:'center',color:'#aaa'}}>لا توجد بيانات</td></tr>}
+          </tbody>
+        </table>
+        {total > pageSize && (
+          <div style={{padding:'12px',display:'flex',gap:'8px',justifyContent:'center',alignItems:'center'}}>
+            <button onClick={()=>{setPage(1);load(1,search)}} disabled={page===1} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:page===1?'default':'pointer',fontFamily:'Cairo,sans-serif'}}>««</button>
+            <button onClick={()=>{const p=page-1;setPage(p);load(p,search)}} disabled={page===1} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:page===1?'default':'pointer',fontFamily:'Cairo,sans-serif'}}>‹</button>
+            <span style={{fontSize:'13px',color:'#666'}}>صفحة {page} من {Math.ceil(total/pageSize)}</span>
+            <button onClick={()=>{const p=page+1;setPage(p);load(p,search)}} disabled={page>=Math.ceil(total/pageSize)} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}>›</button>
+            <button onClick={()=>{const last=Math.ceil(total/pageSize);setPage(last);load(last,search)}} disabled={page>=Math.ceil(total/pageSize)} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid #dde3ed',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}>»»</button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* ─── Admin Chats Panel ─── */
+function AdminChatsPanel() {
+  const [chats, setChats] = useState([])
+  const [total, setTotal] = useState(0)
+  const [activeChat, setActiveChat] = useState(null)
+  const [messages, setMessages] = useState([])
+  const [reply, setReply] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [msg, setMsg] = useState('')
+  const bottomRef = useRef(null)
+
+  const load = async () => {
+    try {
+      const r = await api.get(`${API}/chat/all`, { params: { status: statusFilter }, headers: authHdrs() })
+      setChats(r.data.items || [])
+      setTotal(r.data.total || 0)
+    } catch {}
+  }
+
+  const loadMessages = async (chatId, subscriberId) => {
+    try {
+      const r = await api.get(`${API}/chat/${chatId}/messages?subscriberId=${subscriberId}`)
+      setMessages(r.data.messages || [])
+      setActiveChat(r.data.chat)
+    } catch {}
+  }
+
+  useEffect(() => { load() }, [statusFilter])
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
+
+  const sendReply = async () => {
+    if (!reply.trim() || !activeChat) return
+    try {
+      await api.post(`${API}/chat/${activeChat.id}/admin-reply`, { body: reply }, { headers: authHdrs() })
+      setReply('')
+      loadMessages(activeChat.id, activeChat.subscriberId)
+      setMsg('✅ تم الإرسال'); setTimeout(()=>setMsg(''), 2000)
+    } catch { setMsg('❌ حدث خطأ') }
+  }
+
+  if (activeChat) return (
+    <div style={{height:'calc(100vh - 60px)',display:'flex',flexDirection:'column',fontFamily:'Cairo,sans-serif',direction:'rtl'}}>
+      <div style={{background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',padding:'14px 20px',display:'flex',alignItems:'center',gap:'10px'}}>
+        <button onClick={()=>{setActiveChat(null);setMessages([]);load()}} style={{background:'none',border:'none',color:'#fff',cursor:'pointer',fontSize:'18px'}}>←</button>
+        <div style={{flex:1}}>
+          <div style={{color:'#fff',fontWeight:'800',fontSize:'14px'}}>{activeChat.subject}</div>
+          <div style={{color:'rgba(255,255,255,0.6)',fontSize:'11px'}}>المتابع #{activeChat.subscriberId}</div>
+        </div>
+        {msg && <span style={{color:'#FFC72C',fontSize:'12px',fontWeight:'700'}}>{msg}</span>}
+      </div>
+      <div style={{flex:1,overflow:'auto',padding:'16px',display:'flex',flexDirection:'column',gap:'10px'}}>
+        {messages.map(m=>(
+          <div key={m.id} style={{display:'flex',justifyContent:m.sender==='user'?'flex-start':'flex-end'}}>
+            <div style={{maxWidth:'75%',padding:'10px 14px',borderRadius:m.sender==='user'?'18px 18px 18px 4px':'18px 18px 4px 18px',
+              background:m.sender==='user'?'#f0f2f7':m.sender==='admin'?'linear-gradient(135deg,#059669,#047857)':'linear-gradient(135deg,#2C3E6B,#4A6FA5)',
+              color:m.sender==='user'?'#333':'#fff',fontSize:'13px',lineHeight:'1.6',whiteSpace:'pre-wrap'}}>
+              <div style={{fontSize:'10px',color:m.sender==='user'?'#888':'rgba(255,255,255,0.6)',marginBottom:'3px'}}>
+                {m.sender==='user'?'👤 المتابع':m.sender==='admin'?'👨‍💼 الأدمن':'🤖 المساعد'}
+              </div>
+              {m.body}
+            </div>
+          </div>
+        ))}
+        <div ref={bottomRef}/>
+      </div>
+      <div style={{padding:'12px 16px',background:'#fff',borderTop:'1px solid #eef0f7',display:'flex',gap:'8px'}}>
+        <input value={reply} onChange={e=>setReply(e.target.value)} onKeyDown={e=>e.key==='Enter'&&sendReply()}
+          placeholder="اكتب ردك..."
+          style={{flex:1,padding:'10px 14px',borderRadius:'24px',border:'1.5px solid #dde3ed',fontSize:'14px',fontFamily:'Cairo,sans-serif',outline:'none'}}/>
+        <button onClick={sendReply} disabled={!reply.trim()}
+          style={{padding:'10px 18px',borderRadius:'24px',background:reply.trim()?'#2C3E6B':'#f0f2f7',color:reply.trim()?'#fff':'#aaa',border:'none',cursor:reply.trim()?'pointer':'default',fontFamily:'Cairo,sans-serif',fontWeight:'800'}}>
+          إرسال ←
+        </button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div style={{padding:'24px',fontFamily:'Cairo,sans-serif',direction:'rtl'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px',flexWrap:'wrap',gap:'10px'}}>
+        <h2 style={{color:'#2C3E6B',fontWeight:'900',fontSize:'20px',margin:0}}>💬 المحادثات ({total})</h2>
+        <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}
+          style={{padding:'9px 12px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',background:'#fff'}}>
+          <option value=''>كل الحالات</option>
+          <option value='open'>🟡 مفتوح</option>
+          <option value='answered'>✅ مُجاب</option>
+          <option value='closed'>⬛ مغلق</option>
+        </select>
+      </div>
+      {chats.length===0 ? (
+        <div style={{background:'#fff',borderRadius:'14px',padding:'40px',textAlign:'center',color:'#aaa'}}>💬 لا توجد محادثات</div>
+      ) : chats.map(c=>(
+        <div key={c.id} onClick={()=>loadMessages(c.id, c.subscriberId)}
+          style={{background:'#fff',borderRadius:'14px',padding:'16px',marginBottom:'10px',cursor:'pointer',boxShadow:'0 2px 8px rgba(44,62,107,0.06)',display:'flex',justifyContent:'space-between',alignItems:'center',border:'1px solid #eef0f7'}}>
+          <div>
+            <div style={{fontWeight:'800',color:'#2C3E6B',fontSize:'14px'}}>{c.subject}</div>
+            <div style={{fontSize:'12px',color:'#888',marginTop:'2px'}}>
+              {c.subscriber?.fullName} — {new Date(c.updatedAt||c.createdAt).toLocaleString('ar-IQ')}
+            </div>
+          </div>
+          <span style={{padding:'3px 10px',borderRadius:'20px',fontSize:'11px',fontWeight:'700',
+            background:c.status==='answered'?'#dcfce7':c.status==='closed'?'#f1f5f9':'#fff8e7',
+            color:c.status==='answered'?'#16a34a':c.status==='closed'?'#6b7280':'#b45309'}}>
+            {c.status==='answered'?'✅ مُجاب':c.status==='closed'?'مغلق':'🟡 مفتوح'}
+          </span>
+        </div>
+      ))}
     </div>
   )
 }
