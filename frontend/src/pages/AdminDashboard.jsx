@@ -2261,16 +2261,16 @@ function SecurityPanel() {
 
       {/* Stats */}
       {stats && (
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:'10px',marginBottom:'16px'}}>
+        <div style={{display:'flex',gap:'8px',marginBottom:'14px',flexWrap:'wrap'}}>
           {[
             {l:'محجوب الآن',v:stats.totalBlocked,c:'#dc2626',bg:'#fee2e2'},
             {l:'محجوب اليوم',v:stats.blockedToday,c:'#d97706',bg:'#fef3c7'},
-            {l:'فشل آخر 24س',v:stats.failedLast24h,c:'#7c3aed',bg:'#ede9fe'},
-            {l:'نجح آخر 24س',v:stats.successLast24h,c:'#059669',bg:'#d1fae5'},
+            {l:'فشل 24س',v:stats.failedLast24h,c:'#7c3aed',bg:'#ede9fe'},
+            {l:'نجح 24س',v:stats.successLast24h,c:'#059669',bg:'#d1fae5'},
           ].map(s=>(
-            <div key={s.l} style={{background:s.bg,borderRadius:'12px',padding:'12px 14px',border:`1px solid ${s.c}22`}}>
-              <div style={{fontSize:'22px',fontWeight:'900',color:s.c}}>{s.v}</div>
-              <div style={{fontSize:'11px',color:s.c,fontWeight:'700'}}>{s.l}</div>
+            <div key={s.l} style={{background:s.bg,borderRadius:'10px',padding:'8px 12px',border:`1px solid ${s.c}33`,display:'flex',alignItems:'center',gap:'8px',flex:'1',minWidth:'100px'}}>
+              <div style={{fontSize:'20px',fontWeight:'900',color:s.c}}>{s.v}</div>
+              <div style={{fontSize:'11px',color:s.c,fontWeight:'700',lineHeight:'1.3'}}>{s.l}</div>
             </div>
           ))}
         </div>
@@ -2423,17 +2423,17 @@ function SecurityPanel() {
         <div>
 
           {!report ? <p style={{textAlign:'center',color:'#aaa',padding:'40px'}}>جاري التحميل...</p> : (<>
-            {/* ملخص */}
-            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(130px,1fr))',gap:'10px',marginBottom:'16px'}}>
+            {/* ملخص التقرير */}
+            <div style={{display:'flex',gap:'8px',marginBottom:'14px',flexWrap:'wrap'}}>
               {[
-                {l:'إجمالي السجلات',v:report.total,c:'#2C3E6B',bg:'#EEF2FF'},
-                {l:'محجوب الآن',v:report.activeBlocked,c:'#dc2626',bg:'#fee2e2'},
-                {l:'حجب يدوي',v:report.manualBlocked,c:'#7c3aed',bg:'#ede9fe'},
-                {l:'حجب تلقائي',v:report.autoBlocked,c:'#d97706',bg:'#fef3c7'},
-                {l:'تم فك حجبهم',v:report.unblocked,c:'#059669',bg:'#d1fae5'},
+                {l:'إجمالي',v:report.total,c:'#2C3E6B',bg:'#EEF2FF'},
+                {l:'محجوب',v:report.activeBlocked,c:'#dc2626',bg:'#fee2e2'},
+                {l:'يدوي',v:report.manualBlocked,c:'#7c3aed',bg:'#ede9fe'},
+                {l:'تلقائي',v:report.autoBlocked,c:'#d97706',bg:'#fef3c7'},
+                {l:'فُك حجبه',v:report.unblocked,c:'#059669',bg:'#d1fae5'},
               ].map(s=>(
-                <div key={s.l} style={{background:s.bg,borderRadius:'12px',padding:'12px 14px'}}>
-                  <div style={{fontSize:'24px',fontWeight:'900',color:s.c}}>{s.v}</div>
+                <div key={s.l} style={{background:s.bg,borderRadius:'10px',padding:'8px 12px',border:`1px solid ${s.c}33`,display:'flex',alignItems:'center',gap:'8px',flex:'1',minWidth:'80px'}}>
+                  <div style={{fontSize:'18px',fontWeight:'900',color:s.c}}>{s.v}</div>
                   <div style={{fontSize:'11px',color:s.c,fontWeight:'700'}}>{s.l}</div>
                 </div>
               ))}
