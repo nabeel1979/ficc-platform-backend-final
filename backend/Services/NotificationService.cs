@@ -299,8 +299,15 @@ public class NotificationService {
 
         if (isEmail)
             await SendEmail(contact, "⚠️ تم تعليق وصولك مؤقتاً | اتحاد الغرف التجارية العراقية", htmlMsg);
-        else
-            await SendWhatsAppOtp(NormalizeIraqiPhone(contact), waMsg.Replace(waMsg.Split('\n')[0] + "\n\n", "").Split('\n')[0]); // simplified
+        else {
+            var phone = NormalizeIraqiPhone(contact);
+            var url = $"https://api.ultramsg.com/{(_cfg["UltraMsg:Instance"] ?? "instance167281")}/messages/chat";
+            using var http2 = new HttpClient();
+            await http2.PostAsync(url, new FormUrlEncodedContent(new Dictionary<string,string>{
+                ["token"] = _cfg["UltraMsg:Token"] ?? "ilgqrh6v728bosrh",
+                ["to"] = phone, ["body"] = waMsg
+            }));
+        }
     }
 
     // إشعار العميل عند فك الحجب
