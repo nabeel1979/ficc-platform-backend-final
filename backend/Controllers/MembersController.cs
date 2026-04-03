@@ -60,26 +60,7 @@ public class MembersController : ControllerBase {
         if (item == null) return NotFound();
         if (photo == null || photo.Length == 0) return BadRequest("No file");
         var name = $"member_{id}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}.jpg";
-        var fullPath = Path.Combine(_storage.GetFolder("members"), name);
-        // Save original locally then upload to R2
-        await using (var fs = System.IO.File.Create(fullPath)) { await photo.CopyToAsync(fs); }
-        var uploadedUrl = await _storage.SaveFileAsync(photo, "members", name);
-        if (uploadedUrl.StartsWith("http")) item.PhotoUrl = uploadedUrl;
-        // Resize to max 500x500 for OG compatibility (WhatsApp/Telegram require <300KB)
-        try {
-            var resized = Path.Combine(dir, $"member_{id}_{ts}_r.jpg");
-            var proc = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo {
-                FileName = "convert",
-                Arguments = $"\"{fullPath}\" -resize 500x500^ -gravity center -extent 500x500 -quality 82 \"{resized}\"",
-                RedirectStandardError = true, UseShellExecute = false
-            });
-            proc?.WaitForExit(5000);
-            if (System.IO.File.Exists(resized) && new System.IO.FileInfo(resized).Length > 0) {
-                System.IO.File.Delete(fullPath);
-                System.IO.File.Move(resized, fullPath);
-            }
-        } catch { /* keep original if resize fails */ }
-        item.PhotoUrl = $"/uploads/members/{name}";
+        item.PhotoUrl = await _storage.SaveFileAsync(photo, "members", name);
         await _db.SaveChangesAsync();
         return Ok(new { photoUrl = item.PhotoUrl });
     }
