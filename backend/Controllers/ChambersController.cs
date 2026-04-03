@@ -104,14 +104,9 @@ public class ChambersController : ControllerBase {
     public async Task<IActionResult> UploadLogo(int id, [FromForm] IFormFile logo) {
         var item = await _db.Chambers.FindAsync(id);
         if (item == null) return NotFound();
-        var uploadsDir = _storage.GetFolder("chambers");
-        Directory.CreateDirectory(uploadsDir);
-        var ext  = Path.GetExtension(logo.FileName).ToLower();
+        var ext = Path.GetExtension(logo.FileName).ToLower();
         var name = $"chamber_{id}{ext}";
-        var path = Path.Combine(uploadsDir, name);
-        using var stream = System.IO.File.Create(path);
-        await logo.CopyToAsync(stream);
-        item.LogoUrl = $"/uploads/chambers/{name}";
+        item.LogoUrl = await _storage.SaveFileAsync(logo, "chambers", name);
         await _db.SaveChangesAsync();
         return Ok(new { logoUrl = item.LogoUrl });
     }

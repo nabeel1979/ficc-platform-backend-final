@@ -59,15 +59,12 @@ public class MembersController : ControllerBase {
         var item = await _db.Members.FindAsync(id);
         if (item == null) return NotFound();
         if (photo == null || photo.Length == 0) return BadRequest("No file");
-        var dir = _storage.GetFolder("members");
-        Directory.CreateDirectory(dir);
-        var ts   = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        var name = $"member_{id}_{ts}.jpg";
-        var fullPath = Path.Combine(dir, name);
-        // Save original then resize using ImageMagick if available
-        await using (var stream = System.IO.File.Create(fullPath)) {
-            await photo.CopyToAsync(stream);
-        }
+        var name = $"member_{id}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}.jpg";
+        var fullPath = Path.Combine(_storage.GetFolder("members"), name);
+        // Save original locally then upload to R2
+        await using (var fs = System.IO.File.Create(fullPath)) { await photo.CopyToAsync(fs); }
+        var uploadedUrl = await _storage.SaveFileAsync(photo, "members", name);
+        if (uploadedUrl.StartsWith("http")) item.PhotoUrl = uploadedUrl;
         // Resize to max 500x500 for OG compatibility (WhatsApp/Telegram require <300KB)
         try {
             var resized = Path.Combine(dir, $"member_{id}_{ts}_r.jpg");

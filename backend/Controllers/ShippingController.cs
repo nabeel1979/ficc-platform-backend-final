@@ -64,14 +64,9 @@ public class ShippingController : ControllerBase {
         var item = await _db.ShippingCompanies.FindAsync(id);
         if (item == null) return NotFound();
         if (logo == null || logo.Length == 0) return BadRequest("No file");
-        var dir = _storage.GetFolder("shipping");
-        Directory.CreateDirectory(dir);
-        var ext  = Path.GetExtension(logo.FileName).ToLowerInvariant();
-        var ts   = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        var name = $"shipping_{id}_{ts}{ext}";
-        await using var stream = System.IO.File.Create(Path.Combine(dir, name));
-        await logo.CopyToAsync(stream);
-        item.LogoUrl = $"/uploads/shipping/{name}";
+        var ext = Path.GetExtension(logo.FileName).ToLowerInvariant();
+        var name = $"shipping_{id}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}{ext}";
+        item.LogoUrl = await _storage.SaveFileAsync(logo, "shipping", name);
         await _db.SaveChangesAsync();
         return Ok(new { logoUrl = item.LogoUrl });
     }
