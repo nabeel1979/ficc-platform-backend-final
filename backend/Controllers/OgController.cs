@@ -241,6 +241,19 @@ public class OgController : ControllerBase {
         ), "text/html; charset=utf-8");
     }
 
+    // OG for chat page
+    [HttpGet("chat")]
+    public IActionResult ChatOg() {
+        var host = Request.Host.ToString();
+        var pageUrl = $"https://{host}/chat";
+        var img = $"https://{host}/uploads/ficc-logo.jpg";
+        return Content(BuildHtml(
+            "راسلنا | اتحاد الغرف التجارية العراقية",
+            "تواصل مع اتحاد الغرف التجارية العراقية — احصل على إجابات فورية لاستفساراتك التجارية والجمركية",
+            img, pageUrl, Request.Scheme, host
+        ), "text/html; charset=utf-8");
+    }
+
     // OG for subscribe page
     [HttpGet("subscribe")]
     public IActionResult SubscribeOg() {
