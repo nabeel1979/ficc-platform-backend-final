@@ -72,7 +72,7 @@ public class NewsController : ControllerBase {
                     try { notifyBy = System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.List<string>>(sub.NotifyBy ?? "[]") ?? new(); } catch {}
 
                     if (notifyBy.Contains("sms") && !string.IsNullOrEmpty(sub.Phone))
-                        await _notify.SendSmsText(sub.Phone, smsMsg);
+                        await _notify.SendWhatsAppImage(sub.Phone, imageUrl != "" ? imageUrl : null!, waCaption); // واتساب بدل SMS
                     if (notifyBy.Contains("whatsapp") && !string.IsNullOrEmpty(sub.WhatsApp)) {
                         if (!string.IsNullOrEmpty(imageUrl))
                             await _notify.SendWhatsAppImage(sub.WhatsApp, imageUrl, waCaption);

@@ -107,7 +107,7 @@ public class SubscribersController : ControllerBase {
         else if (dto.Field == "whatsapp")
             await _notify.SendWhatsAppOtp(dto.Value, otp); // واتساب فقط
         else
-            await _notify.SendTwilioSms(dto.Value, otp);   // SMS فقط للهاتف
+            await _notify.SendWhatsAppOtp(dto.Value, otp);  // واتساب بدل SMS (توفير تكلفة Twilio)
         return Ok(new { message = "تم إرسال رمز التأكيد", attemptsInfo });
     }
 
@@ -162,7 +162,7 @@ public class SubscribersController : ControllerBase {
         await _db.SaveChangesAsync();
 
         var msg = $"اتحاد الغرف التجارية العراقية\nرمز تأكيد الدخول: {otp}\nصالح 10 دقائق";
-        await _notify.SendTwilioSms(dto.Phone, otp);
+        await _notify.SendWhatsAppOtp(dto.Phone, otp);  // واتساب بدل SMS
         return Ok(new { message = "تم إرسال رمز التأكيد" });
     }
 
