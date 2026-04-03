@@ -107,3 +107,10 @@ img { display: block; }
   .sub-table-wrap { display: none !important; }
   .sub-cards-wrap { display: block !important; }
 }
+
+/* Security Panel Responsive */
+@media (max-width: 480px) {
+  .security-channels-grid { grid-template-columns: 1fr !important; }
+  .security-stats-row { flex-direction: column; }
+  .security-stats-row > div { width: 100%; }
+}

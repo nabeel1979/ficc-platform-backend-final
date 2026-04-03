@@ -2256,7 +2256,7 @@ function SecurityPanel() {
       {/* مفاتيح الإيقاف الطارئ */}
       <div style={{background:'white',borderRadius:'14px',padding:'16px',marginBottom:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
         <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px',marginBottom:'12px'}}>⚡ إيقاف طارئ</div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
+        <div className="security-channels-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
 
           {/* SMS */}
           <div style={{padding:'16px',borderRadius:'12px',background: channels.smsDisabled ? '#FEF2F2' : '#F0FDF4',border:`1.5px solid ${channels.smsDisabled ? '#fecaca' : '#bbf7d0'}`,transition:'all 0.3s ease'}}>
