@@ -226,14 +226,14 @@ function AboutSection() {
 
   return (
     <section style={{background:'#fff',padding:'48px 20px'}}>
-      <div style={{maxWidth:'1100px',margin:'0 auto',display:'grid',gridTemplateColumns:'1fr 1fr',gap:'48px',alignItems:'center'}}>
+      <div style={{maxWidth:'1100px',margin:'0 auto',display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(300px,1fr))',gap:'40px',alignItems:'center'}}>
         <div>
           <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'18px'}}>
             <div style={{width:'5px',height:'40px',background:'#FFC72C',borderRadius:'4px'}}></div>
             <h2 style={{color:'#2C3E6B',fontSize:'24px',fontWeight:'800',margin:0}}>{g('about_title','نبذة عن الاتحاد')}</h2>
           </div>
-          <p style={{color:'#444',fontSize:'15px',lineHeight:'2',marginBottom:'14px',textAlign:'right'}}>{g('about_text1')}</p>
-          <p style={{color:'#666',fontSize:'14px',lineHeight:'1.9',marginBottom:'24px',textAlign:'right'}}>{g('about_text2')}</p>
+          <p style={{color:'#444',fontSize:'15px',lineHeight:'2',marginBottom:'14px',textAlign:'right',wordBreak:'keep-all',overflowWrap:'break-word'}}>{g('about_text1')}</p>
+          <p style={{color:'#666',fontSize:'14px',lineHeight:'1.9',marginBottom:'24px',textAlign:'right',wordBreak:'keep-all',overflowWrap:'break-word'}}>{g('about_text2')}</p>
           <div style={{display:'flex',flexWrap:'wrap',gap:'10px'}}>
             {[g('about_badge1'),g('about_badge2'),g('about_badge3'),g('about_badge4')].filter(Boolean).map(t => (
               <span key={t} style={{background:'#EEF2FF',color:'#2C3E6B',padding:'6px 14px',borderRadius:'20px',fontSize:'13px',fontWeight:'600',border:'1px solid #c7d2fe'}}>{t}</span>
@@ -250,7 +250,7 @@ function AboutSection() {
             <div key={c.tk} style={{background:'#F8F9FA',borderRadius:'14px',padding:'16px',border:'1px solid #eef0f5'}}>
               <div style={{fontSize:'28px',marginBottom:'8px'}}>{c.icon}</div>
               <h4 style={{color:'#2C3E6B',fontWeight:'800',fontSize:'14px',margin:'0 0 6px'}}>{g(c.tk)}</h4>
-              <p style={{color:'#777',fontSize:'12px',lineHeight:'1.6',margin:0}}>{g(c.dk)}</p>
+              <p style={{color:'#777',fontSize:'12px',lineHeight:'1.6',margin:0,wordBreak:'keep-all'}}>{g(c.dk)}</p>
             </div>
           ))}
         </div>
