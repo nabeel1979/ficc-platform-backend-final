@@ -51,6 +51,7 @@ builder.Services.AddCors(opt => {
 builder.Services.AddScoped<FICCPlatform.Services.NotificationService>();
 builder.Services.AddScoped<FICCPlatform.Services.OtpSecurityService>();
 builder.Services.AddSingleton<FICCPlatform.Services.StorageService>();
+builder.Services.AddSingleton<FICCPlatform.Services.R2StorageService>();
 var app = builder.Build();
 
 // Swagger with Basic Auth protection
