@@ -2402,11 +2402,20 @@ function SecurityPanel() {
                           {isBlocked?'⛔ محجوب':'✅ غير محجوب'}
                         </td>
                         <td style={{padding:'8px 10px',fontSize:'11px',color:isManual?'#dc2626':'#555'}}>{autoUnblock}</td>
-                        <td style={{padding:'8px 10px',whiteSpace:'nowrap'}}>
-                          {isBlocked && (
-                            <button onClick={()=>unblockRate(r.id)} style={{background:'#dcfce7',color:'#16a34a',border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',marginLeft:'4px'}}>✅ فك</button>
+                        <td style={{padding:'8px 10px',whiteSpace:'nowrap',display:'flex',gap:'4px',flexWrap:'wrap'}}>
+                          {isBlocked && !isManual && (
+                            <button onClick={()=>unblockRate(r.id)} style={{background:'#dcfce7',color:'#16a34a',border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700'}}>✅ فك</button>
                           )}
-                          <button onClick={()=>deleteRate(r.id)} style={{background:'#fee2e2',color:'#dc2626',border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700'}}>🗑️</button>
+                          {isBlocked && isManual && (
+                            <button onClick={()=>unblockRate(r.id)} style={{background:'#dcfce7',color:'#16a34a',border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700'}}>✅ فك اليدوي</button>
+                          )}
+                          {!isManual && (
+                            <button onClick={async()=>{
+                              await api.post('/security/ratelimits/block',{key:r.key,keyType:r.keyType},{headers:hdrs()})
+                              setMsg('🚫 تم الحجب الدائم'); loadRateLimits()
+                            }} style={{background:'#fee2e2',color:'#dc2626',border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700'}}>🚫 حجب دائم</button>
+                          )}
+                          <button onClick={()=>deleteRate(r.id)} style={{background:'#f1f5f9',color:'#666',border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700'}}>🗑️</button>
                         </td>
                       </tr>
                     )
