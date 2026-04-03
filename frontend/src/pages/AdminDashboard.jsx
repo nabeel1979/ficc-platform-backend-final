@@ -2956,13 +2956,26 @@ function KnowledgePanel() {
     <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px'}}>
       <div style={{background:'#fff',borderRadius:'16px',padding:'24px',width:'100%',maxWidth:'520px',direction:'rtl',fontFamily:'Cairo,sans-serif',maxHeight:'90vh',overflow:'auto'}}>
         <h3 style={{color:'#2C3E6B',margin:'0 0 16px',fontWeight:'800'}}>{editItem?'✏️ تعديل':'➕ إضافة'} معرفة</h3>
-        {[['العنوان *','title'],['المفاتيح (كلمات مفتاحية مفصولة بفاصلة)','keywords'],['التصنيف','category']].map(([lbl,k])=>(
+        {[['العنوان *','title'],['المفاتيح (كلمات مفتاحية مفصولة بفاصلة)','keywords']].map(([lbl,k])=>(
           <div key={k} style={{marginBottom:'12px'}}>
             <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>{lbl}</label>
             <input value={form[k]||''} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))}
               style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',boxSizing:'border-box'}}/>
           </div>
         ))}
+        {/* التصنيف — قائمة ثابتة */}
+        <div style={{marginBottom:'12px'}}>
+          <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>التصنيف</label>
+          <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
+            {['الكمارك','المصارف','الغرف التجارية','الاستثمار','تجارة عامة','استيراد وتصدير','صناعة وتصنيع','مقاولات وإنشاءات','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','طاقة وكهرباء','أخرى'].map(cat=>(
+              <button key={cat} type="button" onClick={()=>setForm(p=>({...p,category:p.category===cat?'':cat}))}
+                style={{padding:'4px 10px',borderRadius:'16px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'600',
+                  background:form.category===cat?'#2C3E6B':'#EEF2FF',color:form.category===cat?'#fff':'#2C3E6B'}}>
+                {form.category===cat?'✓ ':''}{cat}
+              </button>
+            ))}
+          </div>
+        </div>
         <div style={{marginBottom:'12px'}}>
           <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>النوع</label>
           <select value={form.type} onChange={e=>setForm(p=>({...p,type:e.target.value}))}
