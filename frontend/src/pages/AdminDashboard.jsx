@@ -2227,7 +2227,20 @@ function SecurityPanel() {
   }
 
   const fmtDate = (d) => d ? new Date(d).toLocaleString('ar-IQ') : '—'
-  const isActBlocked = (r) => r.blockedUntil && (new Date(r.blockedUntil) > new Date() || r.isManual)
+  const isActBlocked = (r) => {
+    if (r.isManual) return true  // يدوي دائم
+    if (r.blockedUntil && new Date(r.blockedUntil) > new Date()) return true  // مؤقت لم ينته
+    if (r.attempts >= 5 && !r.unblockedAt) return true  // 5/5 ولم يُفك
+    return false
+  }
+  const getBlockedUntil = (r) => {
+    if (r.isManual) return '⛔ دائم — لا يُفك تلقائياً'
+    if (r.blockedUntil && new Date(r.blockedUntil) > new Date()) {
+      const diff = Math.max(0, Math.ceil((new Date(r.blockedUntil) - new Date()) / 60000))
+      return diff > 0 ? `⏳ مؤقت — يُفك خلال ${diff} دقيقة` : '⏳ مؤقت — ينتهي قريباً'
+    }
+    return '—'
+  }
 
   return (
     <div style={{padding:'20px',fontFamily:'Cairo,sans-serif',direction:'rtl',maxWidth:'1000px'}}>
@@ -2421,7 +2434,7 @@ function SecurityPanel() {
                     const isBlocked = isActBlocked(r)
                     const isManual = r.isManual
                     const typeLabel = r.keyType==='phone-login'?'🔑 دخول':r.keyType==='whatsapp'?'💬 واتساب':r.keyType==='email'?'📧 إيميل':'📱 هاتف'
-                    const autoUnblock = !isManual && r.blockedUntil ? fmtDate(r.blockedUntil) : isManual ? '⛔ يدوي — لا يُفك تلقائياً' : '—'
+                    const autoUnblock = getBlockedUntil(r)
                     return (
                       <tr key={r.id} style={{borderBottom:'1px solid #f0f2f7',background:isBlocked?(isManual?'#fff0f0':'#fff5f5'):i%2===0?'#fff':'#fafbff'}}>
                         <td style={{padding:'8px 10px',fontWeight:'700',direction:'ltr',fontSize:'12px'}}>{r.key}</td>
@@ -2435,7 +2448,7 @@ function SecurityPanel() {
                             color:r.attempts>=5?'#dc2626':r.attempts>=3?'#b45309':'#16a34a'}}>{r.attempts}/5</span>
                         </td>
                         <td style={{padding:'8px 10px',fontSize:'11px',fontWeight:isBlocked?'700':'400',color:isBlocked?'#dc2626':'#16a34a'}}>
-                          {isBlocked?'⛔ محجوب':'✅ غير محجوب'}
+                          {isBlocked ? (isManual ? '🔴 محجوب دائم' : '🟠 محجوب مؤقت') : '✅ غير محجوب'}
                         </td>
                         <td style={{padding:'8px 10px',fontSize:'11px',color:isManual?'#dc2626':'#555'}}>{autoUnblock}</td>
                         <td style={{padding:'8px 10px',whiteSpace:'nowrap',display:'flex',gap:'4px',flexWrap:'wrap'}}>
@@ -2505,7 +2518,7 @@ function SecurityPanel() {
                           </td>
                           <td style={{padding:'7px 10px',textAlign:'center',fontWeight:'700'}}>{r.attempts}</td>
                           <td style={{padding:'7px 10px',fontSize:'11px',color:isBlocked?'#dc2626':'#16a34a',fontWeight:'700'}}>
-                            {isBlocked?'⛔ محجوب':'✅ مفتوح'}
+                            {isBlocked ? (r.isManual ? '🔴 دائم' : '🟠 مؤقت') : '✅ مفتوح'}
                           </td>
                           <td style={{padding:'7px 10px'}}>
                             {r.isManual
