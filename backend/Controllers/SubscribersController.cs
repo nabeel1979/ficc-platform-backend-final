@@ -86,6 +86,13 @@ public class SubscribersController : ControllerBase {
     public async Task<IActionResult> SendFieldOtp([FromBody] FieldOtpDto dto) {
         if (string.IsNullOrEmpty(dto.Value)) return BadRequest(new { message = "القيمة مطلوبة" });
 
+        // التحقق من أن الرقم غير مسجل مسبقاً (فقط لحقل phone)
+        if (dto.Field == "phone") {
+            var phone07 = dto.Value.StartsWith("+964") ? "0" + dto.Value[4..] : dto.Value;
+            var existing = await _db.Subscribers.FirstOrDefaultAsync(s => s.Phone == phone07 || s.Phone == dto.Value);
+            if (existing != null) return BadRequest(new { message = "⚠️ هذا الرقم مسجّل مسبقاً — يمكنك تسجيل الدخول مباشرة" });
+        }
+
         // التحقق من Rate Limit
         var (blocked, blockMsg) = await CheckRateLimit(dto.Value, dto.Field);
         if (blocked) return StatusCode(429, new { message = blockMsg });

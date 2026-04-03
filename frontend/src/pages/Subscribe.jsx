@@ -5,7 +5,6 @@ const API = ''
 const SECTORS = ['الكمارك','المصارف','الغرف التجارية','الاستثمار','تجارة عامة','استيراد وتصدير','صناعة وتصنيع','مقاولات وإنشاءات','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','طاقة وكهرباء','أخرى']
 const NOTIFY_OPTIONS = [
   { key: 'whatsapp', label: 'واتساب 💬' },
-  { key: 'sms',      label: 'رسالة نصية 📱' },
   { key: 'email',    label: 'بريد إلكتروني 📧' },
 ]
 
@@ -265,17 +264,28 @@ export default function Subscribe() {
               <div>
                 <label style={{display:'block',fontSize:'13px',fontWeight:'700',color:'#2C3E6B',marginBottom:'8px'}}>طريقة الإشعار *</label>
                 <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'8px'}}>
-                  {NOTIFY_OPTIONS.map(o=>(
-                    <button key={o.key} type="button" onClick={()=>toggleNotify(o.key)}
-                      style={{padding:'8px 16px',borderRadius:'10px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'13px',fontWeight:'700',
-                        background:form.notifyBy.includes(o.key)?'#059669':'#F0FDF4',color:form.notifyBy.includes(o.key)?'#fff':'#059669'}}>
-                      {form.notifyBy.includes(o.key)?'✓ ':''}{o.label}
-                    </button>
-                  ))}
+                  {NOTIFY_OPTIONS.map(o=>{
+                    const disabled = (o.key==='whatsapp' && !form.whatsApp) || (o.key==='email' && !form.email)
+                    return (
+                      <button key={o.key} type="button"
+                        onClick={()=>!disabled && toggleNotify(o.key)}
+                        title={disabled ? (o.key==='whatsapp' ? 'أضف رقم الواتساب أولاً' : 'أضف البريد الإلكتروني أولاً') : ''}
+                        style={{padding:'8px 16px',borderRadius:'10px',border:'none',cursor:disabled?'not-allowed':'pointer',fontFamily:'Cairo,sans-serif',fontSize:'13px',fontWeight:'700',opacity:disabled?0.4:1,
+                          background:form.notifyBy.includes(o.key)?'#059669':'#F0FDF4',color:form.notifyBy.includes(o.key)?'#fff':'#059669'}}>
+                        {form.notifyBy.includes(o.key)?'✓ ':''}{o.label}
+                        {disabled && <span style={{fontSize:'10px',display:'block',marginTop:'2px'}}>يتطلب إضافة</span>}
+                      </button>
+                    )
+                  })}
                   <button onClick={selectAll} type="button" style={{padding:'8px 14px',borderRadius:'10px',background:'#FFF8E7',color:'#B8860B',border:'1px solid #fde68a',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700'}}>
                     ✅ كل الطرق
                   </button>
                 </div>
+                {(!form.whatsApp && !form.email) && (
+                  <div style={{background:'#fff7ed',border:'1px solid #fed7aa',borderRadius:'10px',padding:'10px 14px',fontSize:'12px',color:'#c2410c',marginBottom:'8px'}}>
+                    ⚠️ يجب إضافة رقم الواتساب أو البريد الإلكتروني للاستفادة من خدمة التبليغات
+                  </div>
+                )}
               </div>
               {err && <div style={{background:'#fee2e2',color:'#dc2626',padding:'10px 14px',borderRadius:'10px',fontSize:'13px'}}>{err}</div>}
               <button onClick={register} disabled={loading} style={btnPrimary}>{loading?'⏳ جاري التسجيل...':'🎉 أكمل التسجيل'}</button>
