@@ -2894,6 +2894,112 @@ function SubscribersPanel() {
 }
 
 /* ─── Knowledge Base Panel ─── */
+const KB_CATS = ['الكمارك','المصارف','الغرف التجارية','الاستثمار','تجارة عامة','استيراد وتصدير','صناعة وتصنيع','مقاولات وإنشاءات','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','طاقة وكهرباء','أخرى']
+
+function KBFormModal({ form, setForm, editItem, save, setShowAdd, setEditItem, msg, setMsg }) {
+  return (
+    <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.55)',zIndex:1000,display:'flex',alignItems:'flex-start',justifyContent:'center',padding:'16px',overflowY:'auto'}}>
+      <div style={{background:'#fff',borderRadius:'16px',padding:'20px',width:'100%',maxWidth:'520px',direction:'rtl',fontFamily:'Cairo,sans-serif',marginTop:'16px',marginBottom:'16px'}}>
+        <h3 style={{color:'#2C3E6B',margin:'0 0 16px',fontWeight:'800'}}>{editItem?'✏️ تعديل':'➕ إضافة'} معرفة</h3>
+
+        {[['العنوان *','title'],['المفاتيح (مفصولة بفاصلة)','keywords']].map(([lbl,k])=>(
+          <div key={k} style={{marginBottom:'12px'}}>
+            <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>{lbl}</label>
+            <input value={form[k]||''} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))}
+              style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',boxSizing:'border-box'}}/>
+          </div>
+        ))}
+
+        <div style={{marginBottom:'12px'}}>
+          <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'6px'}}>التصنيف</label>
+          <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
+            {KB_CATS.map(cat=>(
+              <button key={cat} type="button" onClick={()=>setForm(p=>({...p,category:p.category===cat?'':cat}))}
+                style={{padding:'4px 10px',borderRadius:'16px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'600',
+                  background:form.category===cat?'#2C3E6B':'#EEF2FF',color:form.category===cat?'#fff':'#2C3E6B'}}>
+                {form.category===cat?'✓ ':''}{cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{marginBottom:'12px'}}>
+          <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>النوع</label>
+          <select value={form.type||'text'} onChange={e=>setForm(p=>({...p,type:e.target.value}))}
+            style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif'}}>
+            <option value="text">📝 نص</option>
+            <option value="link">🔗 رابط</option>
+            <option value="file">📎 ملف</option>
+          </select>
+        </div>
+
+        {form.type === 'link' && (
+          <div style={{marginBottom:'12px'}}>
+            <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>الرابط</label>
+            <input value={form.linkUrl||''} onChange={e=>setForm(p=>({...p,linkUrl:e.target.value}))} placeholder="https://"
+              style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',direction:'ltr',boxSizing:'border-box'}}/>
+          </div>
+        )}
+
+        {form.type === 'file' && (
+          <div style={{marginBottom:'12px'}}>
+            <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>رفع ملف (PDF / Word / Excel)</label>
+            <div style={{border:'2px dashed #c7d2fe',borderRadius:'10px',padding:'14px',textAlign:'center',background:'#fafbff'}}>
+              {form.filePath ? (
+                <div style={{display:'flex',alignItems:'center',gap:'8px',justifyContent:'center'}}>
+                  <span>📎</span>
+                  <span style={{fontSize:'13px',color:'#4338ca',fontWeight:'700'}}>{form.filePath.split('/').pop()}</span>
+                  <button type="button" onClick={()=>setForm(p=>({...p,filePath:''}))} style={{background:'#fee2e2',color:'#dc2626',border:'none',borderRadius:'6px',padding:'3px 8px',cursor:'pointer',fontSize:'11px'}}>✕</button>
+                </div>
+              ) : (
+                <label style={{cursor:'pointer',display:'block'}}>
+                  <span style={{fontSize:'28px'}}>📂</span>
+                  <p style={{color:'#888',fontSize:'12px',margin:'4px 0 0'}}>اضغط لاختيار ملف</p>
+                  <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={async e=>{
+                    const file = e.target.files[0]; if (!file) return
+                    const fd = new FormData(); fd.append('file', file)
+                    try {
+                      const r = await api.post(`${''}/knowledge/upload-file`, fd, { headers: { ...authHdrs(), 'Content-Type': 'multipart/form-data' } })
+                      setForm(p=>({...p, filePath: r.data.path}))
+                    } catch { alert('فشل رفع الملف') }
+                  }} style={{display:'none'}}/>
+                </label>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div style={{marginBottom:'14px'}}>
+          <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'6px'}}>الإجابة / المحتوى</label>
+          <div style={{display:'flex',gap:'4px',marginBottom:'6px',flexWrap:'wrap'}}>
+            {[{l:'ع',b:'**',a:'**'},{l:'م',b:'_',a:'_'},{l:'• قائمة',b:'\n• ',a:''},{l:'1. ترقيم',b:'\n1. ',a:''}].map(({l,b,a})=>(
+              <button key={l} type="button" onClick={()=>{
+                const ta = document.getElementById('kb-ta')
+                if (!ta) return
+                const s=ta.selectionStart, e2=ta.selectionEnd, sel=form.answer?.substring(s,e2)||''
+                const nv=(form.answer||'').substring(0,s)+b+sel+a+(form.answer||'').substring(e2)
+                setForm(p=>({...p,answer:nv}))
+                setTimeout(()=>{ta.focus();ta.setSelectionRange(s+b.length,s+b.length+sel.length)},10)
+              }} style={{padding:'3px 8px',borderRadius:'6px',background:'#f0f2f7',color:'#444',border:'1px solid #dde3ed',cursor:'pointer',fontSize:'11px',fontFamily:'Cairo,sans-serif'}}>
+                {l}
+              </button>
+            ))}
+          </div>
+          <textarea id="kb-ta" rows={6} defaultValue={form.answer||''}
+            onChange={e=>{const v=e.target.value;setForm(p=>({...p,answer:v}))}}
+            style={{width:'100%',padding:'10px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',resize:'vertical',boxSizing:'border-box',direction:'rtl'}}/>
+        </div>
+
+        {msg && <div style={{color:msg.startsWith('✅')?'#16a34a':'#dc2626',fontSize:'13px',marginBottom:'8px',padding:'8px',borderRadius:'8px',background:msg.startsWith('✅')?'#f0fdf4':'#fee2e2'}}>{msg}</div>}
+        <div style={{display:'flex',gap:'8px'}}>
+          <button onClick={save} style={{flex:1,padding:'11px',borderRadius:'10px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'800'}}>💾 حفظ</button>
+          <button onClick={()=>{setShowAdd(false);setEditItem(null);setMsg('')}} style={{flex:1,padding:'11px',borderRadius:'10px',background:'#f5f7fa',color:'#666',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}>إلغاء</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function KnowledgePanel() {
   const [items, setItems] = useState([])
   const [total, setTotal] = useState(0)
@@ -2952,117 +3058,9 @@ function KnowledgePanel() {
 
   const typeLabel = (t) => t === 'link' ? '🔗 رابط' : t === 'file' ? '📎 ملف' : '📝 نص'
 
-  const FormModal = () => (
-    <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px'}}>
-      <div style={{background:'#fff',borderRadius:'16px',padding:'24px',width:'100%',maxWidth:'520px',direction:'rtl',fontFamily:'Cairo,sans-serif',maxHeight:'90vh',overflow:'auto'}}>
-        <h3 style={{color:'#2C3E6B',margin:'0 0 16px',fontWeight:'800'}}>{editItem?'✏️ تعديل':'➕ إضافة'} معرفة</h3>
-        {[['العنوان *','title'],['المفاتيح (كلمات مفتاحية مفصولة بفاصلة)','keywords']].map(([lbl,k])=>(
-          <div key={k} style={{marginBottom:'12px'}}>
-            <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>{lbl}</label>
-            <input value={form[k]||''} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))}
-              style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',boxSizing:'border-box'}}/>
-          </div>
-        ))}
-        {/* التصنيف — قائمة ثابتة */}
-        <div style={{marginBottom:'12px'}}>
-          <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>التصنيف</label>
-          <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
-            {['الكمارك','المصارف','الغرف التجارية','الاستثمار','تجارة عامة','استيراد وتصدير','صناعة وتصنيع','مقاولات وإنشاءات','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','طاقة وكهرباء','أخرى'].map(cat=>(
-              <button key={cat} type="button" onClick={()=>setForm(p=>({...p,category:p.category===cat?'':cat}))}
-                style={{padding:'4px 10px',borderRadius:'16px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'600',
-                  background:form.category===cat?'#2C3E6B':'#EEF2FF',color:form.category===cat?'#fff':'#2C3E6B'}}>
-                {form.category===cat?'✓ ':''}{cat}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div style={{marginBottom:'12px'}}>
-          <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>النوع</label>
-          <select value={form.type} onChange={e=>setForm(p=>({...p,type:e.target.value}))}
-            style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif'}}>
-            <option value="text">📝 نص</option>
-            <option value="link">🔗 رابط</option>
-            <option value="file">📎 ملف</option>
-          </select>
-        </div>
-        {form.type === 'link' && (
-          <div style={{marginBottom:'12px'}}>
-            <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>الرابط</label>
-            <input value={form.linkUrl||''} onChange={e=>setForm(p=>({...p,linkUrl:e.target.value}))} placeholder="https://"
-              style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',direction:'ltr',boxSizing:'border-box'}}/>
-          </div>
-        )}
-        {form.type === 'file' && (
-          <div style={{marginBottom:'12px'}}>
-            <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>رفع ملف (PDF / Word / Excel)</label>
-            <div style={{border:'2px dashed #c7d2fe',borderRadius:'10px',padding:'16px',textAlign:'center',background:'#fafbff'}}>
-              {form.filePath ? (
-                <div style={{display:'flex',alignItems:'center',gap:'8px',justifyContent:'center'}}>
-                  <span style={{fontSize:'24px'}}>📎</span>
-                  <span style={{fontSize:'13px',color:'#4338ca',fontWeight:'700'}}>{form.filePath.split('/').pop()}</span>
-                  <button type="button" onClick={()=>setForm(p=>({...p,filePath:''}))}
-                    style={{background:'#fee2e2',color:'#dc2626',border:'none',borderRadius:'6px',padding:'3px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px'}}>✕ حذف</button>
-                </div>
-              ) : (
-                <label style={{cursor:'pointer'}}>
-                  <span style={{fontSize:'32px'}}>📂</span>
-                  <p style={{color:'#888',fontSize:'13px',margin:'6px 0 0'}}>اضغط لاختيار ملف</p>
-                  <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" onChange={async e=>{
-                    const file = e.target.files[0]; if (!file) return
-                    const fd = new FormData(); fd.append('file', file)
-                    try {
-                      const r = await api.post(`${API}/knowledge/upload-file`, fd, { headers: { ...authHdrs(), 'Content-Type': 'multipart/form-data' } })
-                      setForm(p=>({...p, filePath: r.data.path}))
-                      setMsg('✅ تم رفع الملف: ' + file.name)
-                    } catch { setMsg('❌ فشل رفع الملف') }
-                  }} style={{display:'none'}}/>
-                </label>
-              )}
-            </div>
-          </div>
-        )}
-        <div style={{marginBottom:'16px'}}>
-          <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'6px'}}>الإجابة / المحتوى</label>
-          {/* شريط أدوات التنسيق */}
-          <div style={{display:'flex',gap:'4px',marginBottom:'6px',flexWrap:'wrap'}}>
-            {[
-              {label:'ع', title:'عريض', before:'**', after:'**'},
-              {label:'م', title:'مائل', before:'_', after:'_'},
-              {label:'—', title:'خط أفقي', before:'\n---\n', after:''},
-              {label:'• قائمة', title:'قائمة نقطية', before:'\n• ', after:''},
-              {label:'1. ترقيم', title:'قائمة مرقمة', before:'\n1. ', after:''},
-              {label:'🔗 رابط', title:'رابط', before:'[النص](', after:')'},
-            ].map(({label,title,before,after})=>(
-              <button key={label} type="button" title={title} onClick={()=>{
-                const ta = document.getElementById('kb-answer-ta')
-                if (!ta) return
-                const start = ta.selectionStart, end = ta.selectionEnd
-                const sel = form.answer?.substring(start,end) || ''
-                const newVal = (form.answer||'').substring(0,start) + before + sel + after + (form.answer||'').substring(end)
-                setForm(p=>({...p,answer:newVal}))
-                setTimeout(()=>{ ta.focus(); ta.setSelectionRange(start+before.length, start+before.length+sel.length) }, 10)
-              }} style={{padding:'4px 10px',borderRadius:'6px',background:'#f0f2f7',color:'#444',border:'1px solid #dde3ed',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'600'}}>
-                {label}
-              </button>
-            ))}
-          </div>
-          <textarea id="kb-answer-ta" rows={7}
-            ref={el => { if (el && document.activeElement !== el) el.value = form.answer || '' }}
-            onChange={e => { const v = e.target.value; setForm(p => ({...p, answer: v})) }}
-            style={{width:'100%',padding:'10px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',resize:'vertical',boxSizing:'border-box',lineHeight:'1.8',direction:'rtl'}}/>
-        </div>
-        {msg && <div style={{color:msg.startsWith('✅')?'#16a34a':'#dc2626',fontSize:'13px',marginBottom:'8px'}}>{msg}</div>}
-        <div style={{display:'flex',gap:'8px'}}>
-          <button onClick={save} style={{flex:1,padding:'11px',borderRadius:'10px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'800'}}>💾 حفظ</button>
-          <button onClick={()=>{setShowAdd(false);setEditItem(null);setMsg('')}} style={{flex:1,padding:'11px',borderRadius:'10px',background:'#f5f7fa',color:'#666',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif'}}>إلغاء</button>
-        </div>
-      </div>
-    </div>
-  )
-
   return (
     <div style={{padding:'24px',fontFamily:'Cairo,sans-serif',direction:'rtl'}}>
-      {showAdd && <FormModal/>}
+      {showAdd && <KBFormModal form={form} setForm={setForm} editItem={editItem} save={save} setShowAdd={setShowAdd} setEditItem={setEditItem} msg={msg} setMsg={setMsg}/>}
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px',flexWrap:'wrap',gap:'10px'}}>
         <h2 style={{color:'#2C3E6B',fontWeight:'900',fontSize:'20px',margin:0}}>🧠 قاعدة المعرفة ({total})</h2>
         <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
