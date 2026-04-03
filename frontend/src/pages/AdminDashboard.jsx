@@ -2430,7 +2430,43 @@ function SecurityPanel() {
       {/* ─── TAB 3: التقارير ─── */}
       {tab==='report' && (
         <div>
-
+          {/* فلاتر التقرير */}
+          <div style={{background:'#fff',borderRadius:'12px',padding:'14px',marginBottom:'14px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
+            <div style={{display:'flex',gap:'8px',flexWrap:'wrap',alignItems:'flex-end'}}>
+              <div style={{flex:'1',minWidth:'140px'}}>
+                <label style={{fontSize:'11px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>من تاريخ</label>
+                <input type="datetime-local" value={reportFrom} onChange={e=>setReportFrom(e.target.value)}
+                  style={{width:'100%',padding:'7px 10px',borderRadius:'8px',border:'1px solid #dde3ed',fontSize:'12px',boxSizing:'border-box'}}/>
+              </div>
+              <div style={{flex:'1',minWidth:'140px'}}>
+                <label style={{fontSize:'11px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>إلى تاريخ</label>
+                <input type="datetime-local" value={reportTo} onChange={e=>setReportTo(e.target.value)}
+                  style={{width:'100%',padding:'7px 10px',borderRadius:'8px',border:'1px solid #dde3ed',fontSize:'12px',boxSizing:'border-box'}}/>
+              </div>
+              <div style={{flex:'2',minWidth:'160px'}}>
+                <label style={{fontSize:'11px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>بحث برقم أو إيميل</label>
+                <input value={reportSearch} onChange={e=>setReportSearch(e.target.value)} placeholder="07xxxxxxxxx أو email@..."
+                  style={{width:'100%',padding:'7px 10px',borderRadius:'8px',border:'1px solid #dde3ed',fontSize:'12px',direction:'ltr',boxSizing:'border-box'}}
+                  onKeyDown={e=>e.key==='Enter'&&loadReport()}/>
+              </div>
+              <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
+                {[['اليوم',0],['أسبوع',7],['شهر',30],['الكل',365*5]].map(([l,d])=>(
+                  <button key={l} onClick={()=>{
+                    const to=new Date(); const from=new Date(); from.setDate(from.getDate()-d);
+                    setReportTo(to.toISOString().slice(0,16));
+                    setReportFrom(d===0?to.toISOString().slice(0,10):from.toISOString().slice(0,16));
+                    setTimeout(loadReport,50)
+                  }} style={{padding:'7px 10px',borderRadius:'8px',background:'#f1f5f9',color:'#475569',border:'none',cursor:'pointer',fontSize:'11px',fontFamily:'Cairo,sans-serif',fontWeight:'700',whiteSpace:'nowrap'}}>
+                    {l}
+                  </button>
+                ))}
+                <button onClick={()=>{setRefreshing(true);loadReport().finally(()=>setRefreshing(false))}}
+                  style={{padding:'7px 14px',borderRadius:'8px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',fontSize:'12px',fontFamily:'Cairo,sans-serif',fontWeight:'700',whiteSpace:'nowrap'}}>
+                  🔍 بحث
+                </button>
+              </div>
+            </div>
+          </div>
           {!report ? <p style={{textAlign:'center',color:'#aaa',padding:'40px'}}>جاري التحميل...</p> : (<>
             {/* ملخص التقرير */}
             <div style={{display:'flex',gap:'8px',marginBottom:'14px',flexWrap:'wrap'}}>
