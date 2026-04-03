@@ -2,6 +2,13 @@ import { useState } from 'react'
 import api from '../lib/api'
 
 const API = ''
+
+const maskPhone = (p='') => {
+  if (!p) return ''
+  const s = p.replace(/\s/g,'')
+  if (s.length <= 7) return s
+  return s.slice(0,3) + '****' + s.slice(-3)
+}
 const SECTORS = ['الكمارك','المصارف','الغرف التجارية','الاستثمار','تجارة عامة','استيراد وتصدير','صناعة وتصنيع','مقاولات وإنشاءات','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','طاقة وكهرباء','أخرى']
 const NOTIFY_OPTIONS = [
   { key: 'whatsapp', label: 'واتساب 💬' },
@@ -59,7 +66,7 @@ function VerifiedField({ label, value, onChange, placeholder, isLtr, required, f
       </div>
       {showOtp && !verified && (
         <div style={{marginTop:'10px',padding:'14px',background:'#EEF2FF',borderRadius:'10px',border:'1px solid #c7d2fe'}}>
-          <p style={{margin:'0 0 8px',fontSize:'12px',color:'#4338ca',fontWeight:'600'}}>💬 سيصل الرمز عبر الواتساب — أدخله هنا</p>
+          <p style={{margin:'0 0 8px',fontSize:'12px',color:'#4338ca',fontWeight:'600'}}>💬 سيصل الرمز عبر الواتساب على {maskPhone(value)} — أدخله هنا</p>
           <div style={{display:'flex',gap:'8px'}}>
             <input value={otp}
               onChange={e=>setOtp(e.target.value.replace(/\D/g,'').slice(0,6))}
@@ -128,7 +135,7 @@ export default function Subscribe() {
     setLoading(true); setErr('')
     try {
       await api.post(`${API}/subscribers/send-otp`, { phone: loginPhone })
-      setStep(2); setLoginOtp(''); setMsg('سيصل الرمز عبر الواتساب 💬')
+      setStep(2); setLoginOtp(''); setMsg('💬 سيصل الرمز عبر الواتساب على رقم ' + maskPhone(loginPhone))
     } catch(e) { setErr(e?.response?.data?.message || 'الرقم غير مسجّل') }
     setLoading(false)
   }
@@ -310,7 +317,7 @@ export default function Subscribe() {
         {mode === 'existing' && step === 2 && (
           <div style={{background:'#fff',borderRadius:'16px',padding:'28px',boxShadow:'0 4px 16px rgba(44,62,107,0.08)'}}>
             <h2 style={{color:'#2C3E6B',fontWeight:'800',margin:'0 0 8px',fontSize:'18px'}}>📲 رمز التأكيد</h2>
-            <p style={{color:'#059669',fontSize:'13px',margin:'0 0 12px',background:'#f0fdf4',padding:'10px',borderRadius:'8px',fontWeight:'700'}}>💬 سيصل الرمز عبر الواتساب</p>
+            <p style={{color:'#059669',fontSize:'13px',margin:'0 0 12px',background:'#f0fdf4',padding:'10px',borderRadius:'8px',fontWeight:'700'}}>💬 سيصل الرمز عبر الواتساب على رقم {maskPhone(loginPhone)}</p>
             {msg && <p style={{color:'#059669',fontSize:'13px',margin:'0 0 12px',background:'#f0fdf4',padding:'10px',borderRadius:'8px'}}>{msg}</p>}
             <input value={loginOtp}
               onChange={e=>setLoginOtp(e.target.value.replace(/\D/g,'').slice(0,6))}
