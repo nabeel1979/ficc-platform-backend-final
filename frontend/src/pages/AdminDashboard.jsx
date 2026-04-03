@@ -2979,6 +2979,35 @@ function KnowledgePanel() {
               style={{width:'100%',padding:'9px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',direction:'ltr',boxSizing:'border-box'}}/>
           </div>
         )}
+        {form.type === 'file' && (
+          <div style={{marginBottom:'12px'}}>
+            <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'4px'}}>رفع ملف (PDF / Word / Excel)</label>
+            <div style={{border:'2px dashed #c7d2fe',borderRadius:'10px',padding:'16px',textAlign:'center',background:'#fafbff'}}>
+              {form.filePath ? (
+                <div style={{display:'flex',alignItems:'center',gap:'8px',justifyContent:'center'}}>
+                  <span style={{fontSize:'24px'}}>📎</span>
+                  <span style={{fontSize:'13px',color:'#4338ca',fontWeight:'700'}}>{form.filePath.split('/').pop()}</span>
+                  <button type="button" onClick={()=>setForm(p=>({...p,filePath:''}))}
+                    style={{background:'#fee2e2',color:'#dc2626',border:'none',borderRadius:'6px',padding:'3px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px'}}>✕ حذف</button>
+                </div>
+              ) : (
+                <label style={{cursor:'pointer'}}>
+                  <span style={{fontSize:'32px'}}>📂</span>
+                  <p style={{color:'#888',fontSize:'13px',margin:'6px 0 0'}}>اضغط لاختيار ملف</p>
+                  <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" onChange={async e=>{
+                    const file = e.target.files[0]; if (!file) return
+                    const fd = new FormData(); fd.append('file', file)
+                    try {
+                      const r = await api.post(`${API}/knowledge/upload-file`, fd, { headers: { ...authHdrs(), 'Content-Type': 'multipart/form-data' } })
+                      setForm(p=>({...p, filePath: r.data.path}))
+                      setMsg('✅ تم رفع الملف: ' + file.name)
+                    } catch { setMsg('❌ فشل رفع الملف') }
+                  }} style={{display:'none'}}/>
+                </label>
+              )}
+            </div>
+          </div>
+        )}
         <div style={{marginBottom:'16px'}}>
           <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'6px'}}>الإجابة / المحتوى</label>
           {/* شريط أدوات التنسيق */}

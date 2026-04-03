@@ -62,6 +62,23 @@ public class KnowledgeBaseController : ControllerBase {
         return Ok(new { message = "تم الحذف" });
     }
 
+    // POST /api/knowledge/upload-file — رفع ملف
+    [HttpPost("upload-file"), Authorize]
+    public async Task<IActionResult> UploadFile(IFormFile file) {
+        if (file == null || file.Length == 0) return BadRequest(new { message = "الملف مطلوب" });
+        var ext = Path.GetExtension(file.FileName).ToLower();
+        var allowed = new[] { ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx" };
+        if (!allowed.Contains(ext)) return BadRequest(new { message = "نوع الملف غير مدعوم" });
+        var folder = _storage.GetUploadsPath("knowledge");
+        Directory.CreateDirectory(folder);
+        var fileName = $"{Guid.NewGuid()}{ext}";
+        var fullPath = Path.Combine(folder, fileName);
+        using var stream = System.IO.File.Create(fullPath);
+        await file.CopyToAsync(stream);
+        var relativePath = $"/uploads/knowledge/{fileName}";
+        return Ok(new { path = relativePath, name = file.FileName });
+    }
+
     // POST /api/knowledge/import-excel — استيراد Excel
     [HttpPost("import-excel"), Authorize]
     public async Task<IActionResult> ImportExcel(IFormFile file) {
