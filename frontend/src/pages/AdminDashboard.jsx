@@ -2304,9 +2304,11 @@ function SecurityPanel() {
           ))}
         </div>
         <button onClick={()=>{setRefreshing(true);(tab==='report'?loadReport():loadRateLimits()).finally(()=>setRefreshing(false))}}
-          style={{padding:'6px 14px',borderRadius:'8px',background:'#EEF2FF',color:'#4338ca',border:'none',cursor:'pointer',fontSize:'13px',fontWeight:'700',
-            display:'inline-flex',alignItems:'center',gap:'6px'}}>
-          <span style={{display:'inline-block',animation:refreshing?'spin 0.8s linear infinite':'none',fontSize:'16px'}}>🔄</span> تحديث
+          title="تحديث"
+          style={{padding:'10px',borderRadius:'50%',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',
+            width:'42px',height:'42px',display:'inline-flex',alignItems:'center',justifyContent:'center',
+            boxShadow:'0 2px 8px rgba(44,62,107,0.3)'}}>
+          <span style={{display:'inline-block',animation:refreshing?'spin 0.6s linear infinite':'none',fontSize:'22px',lineHeight:1}}>↻</span>
         </button>
       </div>
 
@@ -2417,13 +2419,7 @@ function SecurityPanel() {
       {/* ─── TAB 3: التقارير ─── */}
       {tab==='report' && (
         <div>
-          <div style={{display:'flex',justifyContent:'flex-end',marginBottom:'10px'}}>
-            <button onClick={()=>{setRefreshing(true);loadReport().finally(()=>setRefreshing(false))}}
-              style={{padding:'6px 14px',borderRadius:'8px',background:'#EEF2FF',color:'#4338ca',border:'none',cursor:'pointer',fontSize:'13px',fontWeight:'700',
-                display:'inline-flex',alignItems:'center',gap:'6px'}}>
-              <span style={{display:'inline-block',animation:refreshing?'spin 0.8s linear infinite':'none',fontSize:'16px'}}>🔄</span> تحديث
-            </button>
-          </div>
+
           {!report ? <p style={{textAlign:'center',color:'#aaa',padding:'40px'}}>جاري التحميل...</p> : (<>
             {/* ملخص */}
             <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(130px,1fr))',gap:'10px',marginBottom:'16px'}}>
