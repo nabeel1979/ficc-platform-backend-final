@@ -153,7 +153,7 @@ public class NotificationService {
             var token    = _cfg["UltraMsg:Token"] ?? "ilgqrh6v728bosrh";
             var url = $"https://api.ultramsg.com/{instance}/messages/chat";
             using var http = new HttpClient();
-            var body = $"🏛️ *اتحاد الغرف التجارية العراقية*\n\nرمز التحقق:\n\n*{otp}*\n\nصالح 10 دقائق — لا تشاركه مع أحد ✅";
+            var body = $"🏛️ *اتحاد الغرف التجارية العراقية*\n\nرمز التحقق:\n\n```{otp}```\n\nصالح 10 دقائق — لا تشاركه مع أحد ✅";
             var resp = await http.PostAsync(url, new FormUrlEncodedContent(new Dictionary<string,string>{
                 ["token"] = token,
                 ["to"]    = NormalizeIraqiPhone(phone),
