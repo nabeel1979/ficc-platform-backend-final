@@ -228,15 +228,15 @@ export default function Subscribe() {
               </div>
 
               <VerifiedField label="رقم الهاتف" value={form.phone} onChange={v=>set('phone',v)}
-                placeholder="07xxxxxxxxx" isLtr field="phone" required
+                placeholder="07xxxxxxxxx — لغاية تسجيل الحساب" isLtr field="phone" required
                 verified={verified.phone} onVerified={v=>setV('phone',v)}/>
 
               <VerifiedField label="رقم الواتساب" value={form.whatsApp} onChange={v=>set('whatsApp',v)}
-                placeholder="07xxxxxxxxx (اختياري)" isLtr field="whatsapp"
+                placeholder="07xxxxxxxxx — لغاية إرسال التبليغات" isLtr field="whatsapp"
                 verified={verified.whatsApp} onVerified={v=>setV('whatsApp',v)}/>
 
               <VerifiedField label="البريد الإلكتروني" value={form.email} onChange={v=>set('email',v)}
-                placeholder="email@example.com (اختياري)" isLtr field="email"
+                placeholder="email@example.com — لغاية إرسال التبليغات" isLtr field="email"
                 verified={verified.email} onVerified={v=>setV('email',v)}/>
 
               {err && <div style={{background:'#fee2e2',color:'#dc2626',padding:'10px 14px',borderRadius:'10px',fontSize:'13px'}}>{err}</div>}
@@ -355,10 +355,10 @@ export default function Subscribe() {
                     style={{width:'100%',padding:'11px 14px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'14px',fontFamily:'Cairo,sans-serif',outline:'none',boxSizing:'border-box',background:'#fafbff'}}/>
                 </div>
                 <VerifiedField label="رقم الواتساب" value={form.whatsApp} onChange={v=>set('whatsApp',v)}
-                  placeholder="07xxxxxxxxx" isLtr field="whatsapp"
+                  placeholder="07xxxxxxxxx — لغاية إرسال التبليغات" isLtr field="whatsapp"
                   verified={verified.whatsApp} onVerified={v=>setV('whatsApp',v)}/>
                 <VerifiedField label="البريد الإلكتروني" value={form.email} onChange={v=>set('email',v)}
-                  placeholder="email@example.com" isLtr field="email"
+                  placeholder="email@example.com — لغاية إرسال التبليغات" isLtr field="email"
                   verified={verified.email} onVerified={v=>setV('email',v)}/>
               </div>
             </div>
