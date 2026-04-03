@@ -155,10 +155,10 @@ public class NotificationService {
             var normalizedPhone = NormalizeIraqiPhone(phone);
             using var http = new HttpClient();
 
-            // رسالة 1: الإشعار
+            // رسالة 1: الإشعار — بدون ذكر المرسل
             await http.PostAsync(url, new FormUrlEncodedContent(new Dictionary<string,string>{
                 ["token"] = token, ["to"] = normalizedPhone,
-                ["body"]  = "🏛️ اتحاد الغرف التجارية العراقية\n\nرمز التحقق الخاص بك (صالح 10 دقائق):"
+                ["body"]  = "رمز التحقق الخاص بك (صالح 10 دقائق):"
             }));
             await Task.Delay(800);
 
