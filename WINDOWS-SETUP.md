@@ -99,3 +99,26 @@ docker compose up -d
 - تأكد من فتح Port 1433 في الـ Firewall
 - ملف الـ uploads يُخزن في: `backend/wwwroot/uploads/`
 - أي مشكلة: راجع `docker logs ficc-backend`
+
+---
+
+## النسخ الاحتياطي التلقائي (Automated Backup)
+
+### الجدول الزمني
+- كل **6 ساعات** تلقائياً
+- يُحتفظ بـ **آخر 7 نسخ** فقط
+- الملفات: `/backups/ficc/FICCPlatform_YYYY-MM-DD_HH-MM.bak`
+- السجل: `/backups/ficc/backup.log`
+
+### تشغيل يدوي
+```bash
+/root/backup-db.sh
+```
+
+### على ويندوز — مجدول عبر Task Scheduler
+```powershell
+# إنشاء مهمة مجدولة
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-File C:\ficc\backup-db.ps1"
+$trigger = New-ScheduledTaskTrigger -RepetitionInterval (New-TimeSpan -Hours 6) -Once -At (Get-Date)
+Register-ScheduledTask -TaskName "FICC DB Backup" -Action $action -Trigger $trigger -RunLevel Highest
+```
