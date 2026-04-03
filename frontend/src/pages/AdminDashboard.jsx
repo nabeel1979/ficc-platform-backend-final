@@ -2331,11 +2331,7 @@ function SecurityPanel() {
                   background:showAllRate?'#EEF2FF':'#FFF8E7',color:showAllRate?'#4338ca':'#B8860B'}}>
                 {showAllRate?'المحجوبين فقط':'عرض الكل'}
               </button>
-              <button onClick={()=>{setRefreshing(true);loadRateLimits().finally(()=>setRefreshing(false))}}
-                style={{padding:'6px 12px',borderRadius:'8px',background:'#EEF2FF',color:'#4338ca',border:'none',cursor:'pointer',fontSize:'18px',
-                  display:'inline-flex',alignItems:'center',gap:'4px',fontWeight:'700'}}>
-                <span style={{display:'inline-block',animation:refreshing?'spin 0.8s linear infinite':'none',fontSize:'16px'}}>🔄</span>
-              </button>
+
             </div>
           </div>
 
