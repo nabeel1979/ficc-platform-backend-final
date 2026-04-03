@@ -3033,7 +3033,9 @@ function KnowledgePanel() {
               </button>
             ))}
           </div>
-          <textarea id="kb-answer-ta" defaultValue={form.answer||''} onBlur={e=>setForm(p=>({...p,answer:e.target.value}))} onChange={e=>{form.answer=e.target.value}} rows={7}
+          <textarea id="kb-answer-ta" rows={7}
+            ref={el => { if (el && document.activeElement !== el) el.value = form.answer || '' }}
+            onChange={e => { const v = e.target.value; setForm(p => ({...p, answer: v})) }}
             style={{width:'100%',padding:'10px 12px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',resize:'vertical',boxSizing:'border-box',lineHeight:'1.8',direction:'rtl'}}/>
         </div>
         {msg && <div style={{color:msg.startsWith('✅')?'#16a34a':'#dc2626',fontSize:'13px',marginBottom:'8px'}}>{msg}</div>}
