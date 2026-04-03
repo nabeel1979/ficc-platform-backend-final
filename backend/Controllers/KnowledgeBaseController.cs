@@ -69,7 +69,7 @@ public class KnowledgeBaseController : ControllerBase {
         var ext = Path.GetExtension(file.FileName).ToLower();
         var allowed = new[] { ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx" };
         if (!allowed.Contains(ext)) return BadRequest(new { message = "نوع الملف غير مدعوم" });
-        var folder = _storage.GetUploadsPath("knowledge");
+        var folder = _storage.GetFolder("knowledge");
         Directory.CreateDirectory(folder);
         var fileName = $"{Guid.NewGuid()}{ext}";
         var fullPath = Path.Combine(folder, fileName);
