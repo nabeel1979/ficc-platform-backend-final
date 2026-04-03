@@ -271,7 +271,7 @@ public class NotificationService {
     public async Task NotifyClientBlock(string contact, string reason = "")
     {
         var isEmail = contact.Contains('@');
-        var waMsg = "عزيزنا المتابع،\n\nنأسف لإبلاغك أنه تم تعليق وصولك مؤقتاً إلى منصة اتحاد الغرف التجارية العراقية.\n\nالسبب: تجاوز عدد المحاولات المسموح بها.\n\nللاستفسار وإلغاء التعليق:\n📞 5366\n✉️ info@ficc.iq\n\nاتحاد الغرف التجارية العراقية 🏛️";
+        var waMsg = "🏛️ *اتحاد الغرف التجارية العراقية*\n━━━━━━━━━━━━━━━━━\n\n🔴 *تم تعليق وصولك مؤقتاً*\n\nعزيزنا المتابع،\n\nنأسف لإبلاغك أنه تم تعليق وصولك إلى المنصة بسبب تجاوز عدد المحاولات المسموح بها.\n\nسيُفك التعليق تلقائياً خلال *ساعة واحدة*.\n\nإذا كنت تعتقد أن هذا خطأ:\n📞 الرقم المختصر: *5366*\n✉️ info@ficc.iq\n\n━━━━━━━━━━━━━━━━━\n🔗 ficc.iq";
 
         var htmlMsg = $@"<div dir='rtl' style='font-family:Cairo,Arial,sans-serif;max-width:600px;margin:auto;'>
   <div style='background:linear-gradient(135deg,#2C3E6B,#4A6FA5);padding:28px;text-align:center;border-radius:16px 16px 0 0;'>
@@ -314,7 +314,7 @@ public class NotificationService {
     public async Task NotifyClientUnblock(string contact)
     {
         var isEmail = contact.Contains('@');
-        var waMsg = "عزيزنا المتابع،\n\nيسعدنا إبلاغك أنه تم رفع التعليق عن حسابك على منصة اتحاد الغرف التجارية العراقية.\n\nيمكنك الآن الوصول إلى المنصة بشكل طبيعي.\n\n🔗 ficc.iq\n\nاتحاد الغرف التجارية العراقية 🏛️";
+        var waMsg = "🏛️ *اتحاد الغرف التجارية العراقية*\n━━━━━━━━━━━━━━━━━\n\n✅ *تم رفع التعليق عن حسابك*\n\nعزيزنا المتابع،\n\nيسعدنا إبلاغك أنه تم رفع التعليق عن حسابك، ويمكنك الآن استخدام خدمات المنصة بشكل طبيعي.\n\n🔗 *ficc.iq/subscribe*\n\n━━━━━━━━━━━━━━━━━\n📞 *5366* | ✉️ info@ficc.iq";
 
         var htmlMsg = $@"<div dir='rtl' style='font-family:Cairo,Arial,sans-serif;max-width:600px;margin:auto;'>
   <div style='background:linear-gradient(135deg,#2C3E6B,#4A6FA5);padding:28px;text-align:center;border-radius:16px 16px 0 0;'>
