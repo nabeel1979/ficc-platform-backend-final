@@ -75,7 +75,7 @@ public class StorageService {
                 CannedACL   = S3CannedACL.PublicRead
             };
             await _s3.PutObjectAsync(request);
-            return $"{_r2Endpoint}/{_bucket}/{key}";
+            return $"https://media.ficc.iq/{key}";
         } else {
             // حفظ محلي
             var folder = GetFolder(subFolder);
