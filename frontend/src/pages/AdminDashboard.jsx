@@ -2924,15 +2924,25 @@ function KBFormModal({ form: initForm, editItem, onSave, setShowAdd, setEditItem
         ))}
 
         <div style={{marginBottom:'12px'}}>
-          <label style={{fontSize:'12px',fontWeight:'700',color:'#555',display:'block',marginBottom:'6px'}}>التصنيف</label>
-          <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
-            {KB_CATS.map(cat=>(
-              <button key={cat} type="button" onClick={()=>setForm(p=>({...p,category:p.category===cat?'':cat}))}
-                style={{padding:'4px 10px',borderRadius:'16px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'600',
-                  background:form.category===cat?'#2C3E6B':'#EEF2FF',color:form.category===cat?'#fff':'#2C3E6B'}}>
-                {form.category===cat?'✓ ':''}{cat}
-              </button>
-            ))}
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'6px'}}>
+            <label style={{fontSize:'12px',fontWeight:'700',color:'#555'}}>القطاعات</label>
+            <button type="button" onClick={()=>setForm(p=>({...p,category: p.category==='__all__' ? '' : '__all__'}))}
+              style={{padding:'3px 10px',borderRadius:'10px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',
+                background:form.category==='__all__'?'#2C3E6B':'#FFF8E7',color:form.category==='__all__'?'#fff':'#B8860B'}}>
+              {form.category==='__all__'?'❌ إلغاء الكل':'✅ اختر الكل'}
+            </button>
+          </div>
+          <div style={{maxHeight:'120px',overflowY:'auto',border:'1.5px solid #dde3ed',borderRadius:'10px',padding:'8px',display:'flex',flexWrap:'wrap',gap:'6px'}}>
+            {KB_CATS.map(cat=>{
+              const selected = form.category==='__all__' || form.category===cat
+              return (
+                <button key={cat} type="button" onClick={()=>setForm(p=>({...p,category:p.category===cat&&p.category!=='__all__'?'':cat}))}
+                  style={{padding:'4px 10px',borderRadius:'16px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'600',
+                    background:selected?'#2C3E6B':'#EEF2FF',color:selected?'#fff':'#2C3E6B',whiteSpace:'nowrap'}}>
+                  {selected?'✓ ':''}{cat}
+                </button>
+              )
+            })}
           </div>
         </div>
 
