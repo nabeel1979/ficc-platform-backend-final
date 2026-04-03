@@ -102,4 +102,34 @@ public class SecurityController : ControllerBase {
     }
 }
 
+    // GET /api/security/ratelimits — محاولات المتابعين المحجوبة
+    [HttpGet("ratelimits"), Authorize]
+    public async Task<IActionResult> GetRateLimits([FromQuery] bool blockedOnly = true) {
+        var q = _db.RateLimitBlocks.AsQueryable();
+        if (blockedOnly) q = q.Where(r => r.BlockedUntil != null && r.BlockedUntil > DateTime.UtcNow);
+        var items = await q.OrderByDescending(r => r.UpdatedAt).Take(100).ToListAsync();
+        return Ok(items);
+    }
+
+    // POST /api/security/ratelimits/unblock/{id}
+    [HttpPost("ratelimits/unblock/{id}"), Authorize]
+    public async Task<IActionResult> UnblockRateLimit(int id) {
+        var r = await _db.RateLimitBlocks.FindAsync(id);
+        if (r == null) return NotFound();
+        r.Attempts = 0; r.BlockedUntil = null; r.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        return Ok(new { message = "تم فك الحظر" });
+    }
+
+    // DELETE /api/security/ratelimits/{id}
+    [HttpDelete("ratelimits/{id}"), Authorize]
+    public async Task<IActionResult> DeleteRateLimit(int id) {
+        var r = await _db.RateLimitBlocks.FindAsync(id);
+        if (r == null) return NotFound();
+        _db.RateLimitBlocks.Remove(r);
+        await _db.SaveChangesAsync();
+        return Ok(new { message = "تم الحذف" });
+    }
+}
+
 public record BlockDto(string Contact, string Channel);

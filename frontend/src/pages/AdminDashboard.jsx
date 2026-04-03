@@ -2158,6 +2158,26 @@ function SecurityPanel() {
   const [search, setSearch] = React.useState('')
   const [pageSize, setPageSize] = React.useState(10)
   const [page, setPage] = React.useState(1)
+  const [rateLimits, setRateLimits] = React.useState([])
+  const [showAllRate, setShowAllRate] = React.useState(false)
+
+  const loadRateLimits = async (all=false) => {
+    try {
+      const r = await api.get(`${API}/security/ratelimits?blockedOnly=${!all}`, { headers: authHdrs() })
+      setRateLimits(r.data || [])
+    } catch {}
+  }
+
+  const unblockRate = async (id) => {
+    await api.post(`${API}/security/ratelimits/unblock/${id}`, {}, { headers: authHdrs() })
+    setMsg('✅ تم فك الحظر')
+    loadRateLimits(showAllRate)
+  }
+
+  const deleteRate = async (id) => {
+    await api.delete(`${API}/security/ratelimits/${id}`, { headers: authHdrs() })
+    loadRateLimits(showAllRate)
+  }
 
   const load = async () => {
     setLoading(true)
@@ -2196,6 +2216,7 @@ function SecurityPanel() {
   }
 
   React.useEffect(() => { load() }, [filter])
+  React.useEffect(() => { loadRateLimits(showAllRate) }, [showAllRate])
 
   const unblock = async (id) => {
     if (!window.confirm('فك الحجب؟')) return
@@ -2407,6 +2428,58 @@ function SecurityPanel() {
           </>)
         })()}
       </div>
+
+      {/* ─── حظر المتابعين (RateLimit) ─── */}
+      <div style={{background:'white',borderRadius:'14px',padding:'16px',marginTop:'16px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
+          <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px'}}>🛡️ حظر المتابعين (OTP Rate Limit)</div>
+          <div style={{display:'flex',gap:'6px'}}>
+            <button onClick={()=>setShowAllRate(!showAllRate)}
+              style={{padding:'5px 12px',borderRadius:'8px',background:showAllRate?'#EEF2FF':'#FFF8E7',color:showAllRate?'#4338ca':'#B8860B',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700'}}>
+              {showAllRate?'المحجوبين فقط':'عرض الكل'}
+            </button>
+            <button onClick={()=>loadRateLimits(showAllRate)} style={{padding:'5px 10px',borderRadius:'8px',background:'#f0f2f7',color:'#666',border:'none',cursor:'pointer',fontSize:'12px'}}>🔄</button>
+          </div>
+        </div>
+        {rateLimits.length === 0 ? (
+          <p style={{color:'#aaa',textAlign:'center',padding:'20px',fontSize:'13px'}}>لا يوجد حظر حالي ✅</p>
+        ) : (
+          <div style={{overflow:'auto'}}>
+            <table style={{width:'100%',borderCollapse:'collapse',fontSize:'12px',minWidth:'400px'}}>
+              <thead>
+                <tr style={{background:'#f5f7fa'}}>
+                  <th style={{padding:'8px 12px',textAlign:'right',color:'#555'}}>الرقم / الإيميل</th>
+                  <th style={{padding:'8px 12px',textAlign:'right',color:'#555'}}>النوع</th>
+                  <th style={{padding:'8px 12px',textAlign:'right',color:'#555'}}>المحاولات</th>
+                  <th style={{padding:'8px 12px',textAlign:'right',color:'#555'}}>محجوب حتى</th>
+                  <th style={{padding:'8px 12px',textAlign:'center',color:'#555'}}>إجراء</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rateLimits.map((r,i)=>(
+                  <tr key={r.id} style={{borderBottom:'1px solid #f0f2f7',background:r.blockedUntil&&new Date(r.blockedUntil)>new Date()?'#fff5f5':'#fff'}}>
+                    <td style={{padding:'8px 12px',fontWeight:'700',direction:'ltr'}}>{r.key}</td>
+                    <td style={{padding:'8px 12px'}}>{r.keyType==='phone-login'?'🔑 دخول':r.keyType==='whatsapp'?'💬 واتساب':r.keyType==='email'?'📧 إيميل':'📱 هاتف'}</td>
+                    <td style={{padding:'8px 12px',textAlign:'center'}}>
+                      <span style={{padding:'2px 8px',borderRadius:'12px',background:r.attempts>=5?'#fee2e2':'#fff8e7',color:r.attempts>=5?'#dc2626':'#b45309',fontWeight:'700'}}>{r.attempts}</span>
+                    </td>
+                    <td style={{padding:'8px 12px',fontSize:'11px',color:r.blockedUntil&&new Date(r.blockedUntil)>new Date()?'#dc2626':'#888'}}>
+                      {r.blockedUntil ? new Date(r.blockedUntil).toLocaleTimeString('ar-IQ') : '—'}
+                    </td>
+                    <td style={{padding:'8px 12px',textAlign:'center',whiteSpace:'nowrap'}}>
+                      {r.blockedUntil && new Date(r.blockedUntil) > new Date() && (
+                        <button onClick={()=>unblockRate(r.id)} style={{background:'#dcfce7',color:'#16a34a',border:'none',borderRadius:'7px',padding:'4px 10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',margin:'1px'}}>✅ فك الحظر</button>
+                      )}
+                      <button onClick={()=>deleteRate(r.id)} style={{background:'#fee2e2',color:'#dc2626',border:'none',borderRadius:'7px',padding:'4px 8px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700',margin:'1px'}}>🗑️</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
     </div>
   )
 }
