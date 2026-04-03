@@ -130,6 +130,7 @@ public class SecurityController : ControllerBase {
             var notify = HttpContext.RequestServices.GetRequiredService<NotificationService>();
             var html2 = $"<div dir='rtl' style='font-family:Cairo,sans-serif;padding:20px;'><h2 style='color:#16a34a;'>✅ تم فك الحظر</h2><p><b>الجهة:</b> {key}</p><p><b>بواسطة:</b> {admin}</p><p><b>الوقت:</b> {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC</p></div>";
             await notify.SendEmail("engnabeelalmulla@gmail.com", "✅ فك حظر — FICC Platform", html2);
+            await notify.NotifyClientUnblock(key);
         });
 
         return Ok(new { message = "تم فك الحظر" });
@@ -164,6 +165,7 @@ public class SecurityController : ControllerBase {
         _ = Task.Run(async () => {
             var notify = HttpContext.RequestServices.GetRequiredService<NotificationService>();
             await notify.SendEmail("engnabeelalmulla@gmail.com", subject, html);
+            await notify.NotifyClientBlock(dto.Key);
         });
 
         return Ok(new { message = "تم الحجب اليدوي بنجاح" });

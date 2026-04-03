@@ -267,3 +267,82 @@ public class NotificationService {
         return $"<div dir='rtl' style='font-family:Cairo,Arial,sans-serif;max-width:500px;margin:auto;padding:24px;border:1px solid #dde3ed;border-radius:16px;'><h2 style='color:#2C3E6B;'>اتحاد الغرف التجارية العراقية</h2><p style='color:#444;font-size:16px;'>{purpose}</p><div style='background:#EEF2FF;border-radius:12px;padding:20px;text-align:center;'><p style='color:#888;font-size:13px;margin:0 0 8px;'>رمز التحقق</p><span style='font-size:36px;font-weight:800;color:#2C3E6B;letter-spacing:8px;'>{otp}</span><p style='color:#888;font-size:12px;margin:8px 0 0;'>صالح 10 دقائق</p></div></div>";
     }
 }
+
+    // إشعار العميل عند الحجب
+    public async Task NotifyClientBlock(string contact, string reason = "")
+    {
+        var isEmail = contact.Contains('@');
+        var waMsg = "عزيزنا المتابع،\n\nنأسف لإبلاغك أنه تم تعليق وصولك مؤقتاً إلى منصة اتحاد الغرف التجارية العراقية.\n\nالسبب: تجاوز عدد المحاولات المسموح بها.\n\nللاستفسار وإلغاء التعليق:\n📞 5366\n✉️ info@ficc.iq\n\nاتحاد الغرف التجارية العراقية 🏛️";
+
+        var htmlMsg = $@"<div dir='rtl' style='font-family:Cairo,Arial,sans-serif;max-width:600px;margin:auto;'>
+  <div style='background:linear-gradient(135deg,#2C3E6B,#4A6FA5);padding:28px;text-align:center;border-radius:16px 16px 0 0;'>
+    <img src='https://ficc.iq/logo.png' height='50' style='margin-bottom:10px;' onerror='this.style.display=&quot;none&quot;'/>
+    <h2 style='color:#FFC72C;margin:0;font-size:20px;'>اتحاد الغرف التجارية العراقية</h2>
+    <p style='color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:13px;'>Federation of Iraqi Chambers of Commerce</p>
+  </div>
+  <div style='background:#fff;padding:28px;border:1px solid #e2e8f0;'>
+    <div style='background:#FEF2F2;border-right:4px solid #dc2626;padding:16px;border-radius:8px;margin-bottom:20px;'>
+      <h3 style='color:#dc2626;margin:0 0 8px;font-size:16px;'>⚠️ تم تعليق وصولك مؤقتاً</h3>
+      <p style='color:#7f1d1d;margin:0;font-size:13px;'>تجاوز عدد المحاولات المسموح بها</p>
+    </div>
+    <p style='color:#444;font-size:14px;line-height:1.8;'>عزيزنا المتابع،</p>
+    <p style='color:#444;font-size:14px;line-height:1.8;'>نأسف لإبلاغك أنه تم تعليق وصولك إلى المنصة مؤقتاً بسبب تجاوز عدد المحاولات المسموح بها.</p>
+    <p style='color:#444;font-size:14px;line-height:1.8;'>سيُفك التعليق تلقائياً خلال <b>ساعة واحدة</b>. إذا كنت تعتقد أن هذا خطأ، يرجى التواصل معنا:</p>
+    <div style='background:#F8F9FA;border-radius:10px;padding:16px;margin:16px 0;text-align:center;'>
+      <p style='margin:0 0 6px;font-size:14px;'>📞 الرقم المختصر: <b style='color:#2C3E6B;font-size:18px;'>5366</b></p>
+      <p style='margin:0;font-size:13px;color:#666;'>✉️ info@ficc.iq</p>
+    </div>
+  </div>
+  <div style='background:#F5F7FA;padding:14px;text-align:center;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;border-top:none;'>
+    <p style='color:#888;font-size:11px;margin:0;'>© 2026 اتحاد الغرف التجارية العراقية | ficc.iq</p>
+  </div>
+</div>";
+
+        if (isEmail)
+            await SendEmail(contact, "⚠️ تم تعليق وصولك مؤقتاً | اتحاد الغرف التجارية العراقية", htmlMsg);
+        else
+            await SendWhatsAppOtp(NormalizeIraqiPhone(contact), waMsg.Replace(waMsg.Split('\n')[0] + "\n\n", "").Split('\n')[0]); // simplified
+    }
+
+    // إشعار العميل عند فك الحجب
+    public async Task NotifyClientUnblock(string contact)
+    {
+        var isEmail = contact.Contains('@');
+        var waMsg = "عزيزنا المتابع،\n\nيسعدنا إبلاغك أنه تم رفع التعليق عن حسابك على منصة اتحاد الغرف التجارية العراقية.\n\nيمكنك الآن الوصول إلى المنصة بشكل طبيعي.\n\n🔗 ficc.iq\n\nاتحاد الغرف التجارية العراقية 🏛️";
+
+        var htmlMsg = $@"<div dir='rtl' style='font-family:Cairo,Arial,sans-serif;max-width:600px;margin:auto;'>
+  <div style='background:linear-gradient(135deg,#2C3E6B,#4A6FA5);padding:28px;text-align:center;border-radius:16px 16px 0 0;'>
+    <img src='https://ficc.iq/logo.png' height='50' style='margin-bottom:10px;' onerror='this.style.display=&quot;none&quot;'/>
+    <h2 style='color:#FFC72C;margin:0;font-size:20px;'>اتحاد الغرف التجارية العراقية</h2>
+    <p style='color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:13px;'>Federation of Iraqi Chambers of Commerce</p>
+  </div>
+  <div style='background:#fff;padding:28px;border:1px solid #e2e8f0;'>
+    <div style='background:#F0FDF4;border-right:4px solid #16a34a;padding:16px;border-radius:8px;margin-bottom:20px;'>
+      <h3 style='color:#16a34a;margin:0 0 8px;font-size:16px;'>✅ تم رفع التعليق عن حسابك</h3>
+      <p style='color:#14532d;margin:0;font-size:13px;'>يمكنك الوصول إلى المنصة بشكل طبيعي الآن</p>
+    </div>
+    <p style='color:#444;font-size:14px;line-height:1.8;'>عزيزنا المتابع،</p>
+    <p style='color:#444;font-size:14px;line-height:1.8;'>يسعدنا إبلاغك أنه تم رفع التعليق عن حسابك، ويمكنك الآن استخدام خدمات منصة اتحاد الغرف التجارية العراقية بشكل طبيعي.</p>
+    <div style='text-align:center;margin:20px 0;'>
+      <a href='https://ficc.iq/subscribe' style='background:#2C3E6B;color:white;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;display:inline-block;'>
+        🔗 الدخول إلى المنصة
+      </a>
+    </div>
+  </div>
+  <div style='background:#F5F7FA;padding:14px;text-align:center;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;border-top:none;'>
+    <p style='color:#888;font-size:11px;margin:0;'>© 2026 اتحاد الغرف التجارية العراقية | ficc.iq</p>
+  </div>
+</div>";
+
+        if (isEmail)
+            await SendEmail(contact, "✅ تم رفع التعليق عن حسابك | اتحاد الغرف التجارية العراقية", htmlMsg);
+        else {
+            var phone = NormalizeIraqiPhone(contact);
+            var url = $"https://api.ultramsg.com/{(_cfg["UltraMsg:Instance"] ?? "instance167281")}/messages/chat";
+            using var http = new HttpClient();
+            await http.PostAsync(url, new FormUrlEncodedContent(new Dictionary<string,string>{
+                ["token"] = _cfg["UltraMsg:Token"] ?? "ilgqrh6v728bosrh",
+                ["to"] = phone, ["body"] = waMsg
+            }));
+        }
+    }
