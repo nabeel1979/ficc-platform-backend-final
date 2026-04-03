@@ -123,6 +123,15 @@ public class SecurityController : ControllerBase {
         r.UnblockedBy = admin;
         r.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+
+        // إشعار الأدمن بالإيميل
+        var key = r.Key;
+        _ = Task.Run(async () => {
+            var notify = HttpContext.RequestServices.GetRequiredService<NotificationService>();
+            var html2 = $"<div dir='rtl' style='font-family:Cairo,sans-serif;padding:20px;'><h2 style='color:#16a34a;'>✅ تم فك الحظر</h2><p><b>الجهة:</b> {key}</p><p><b>بواسطة:</b> {admin}</p><p><b>الوقت:</b> {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC</p></div>";
+            await notify.SendEmail("engnabeelalmulla@gmail.com", "✅ فك حظر — FICC Platform", html2);
+        });
+
         return Ok(new { message = "تم فك الحظر" });
     }
 
@@ -131,6 +140,7 @@ public class SecurityController : ControllerBase {
     public async Task<IActionResult> ManualBlockRateLimit([FromBody] ManualBlockDto dto) {
         if (string.IsNullOrWhiteSpace(dto.Key))
             return BadRequest(new { message = "الرقم أو الإيميل مطلوب" });
+        var admin = User.FindFirst(ClaimTypes.Name)?.Value ?? "admin";
         var existing = await _db.RateLimitBlocks.FirstOrDefaultAsync(r => r.Key == dto.Key);
         if (existing != null) {
             existing.IsManual = true;
@@ -145,6 +155,16 @@ public class SecurityController : ControllerBase {
             });
         }
         await _db.SaveChangesAsync();
+
+        // إشعار الأدمن بالإيميل
+        var subject = "🚫 حجب يدوي — FICC Platform";
+        var html = $"<div dir='rtl' style='font-family:Cairo,sans-serif;padding:20px;'><h2 style='color:#dc2626;'>🚫 تم الحجب اليدوي</h2><p><b>الجهة:</b> {dto.Key}</p><p><b>النوع:</b> {dto.KeyType}</p><p><b>بواسطة:</b> {admin}</p><p><b>الوقت:</b> {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC</p><p style='color:#dc2626;font-weight:700;'>هذا الحجب دائم ولا يُفك تلقائياً</p><a href='https://ficc.iq/admin/security' style='background:#2C3E6B;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;'>فك الحجب من لوحة التحكم</a></div>";
+        await _db.SaveChangesAsync();
+        _ = Task.Run(async () => {
+            var notify = HttpContext.RequestServices.GetRequiredService<NotificationService>();
+            await notify.SendEmail("engnabeelalmulla@gmail.com", subject, html);
+        });
+
         return Ok(new { message = "تم الحجب اليدوي بنجاح" });
     }
 
