@@ -2296,7 +2296,11 @@ function SecurityPanel() {
           <div style={{background:'#fff',borderRadius:'14px',padding:'16px',marginBottom:'14px',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',border:'1px solid #e2e8f0'}}>
             <div style={{fontWeight:'700',color:'#2C3E6B',fontSize:'14px',marginBottom:'12px'}}>➕ حجب يدوي جديد</div>
             <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-              <input value={manualKey} onChange={e=>setManualKey(e.target.value)} placeholder="رقم الهاتف أو الإيميل"
+              <input value={manualKey} onChange={e=>{
+                  const v=e.target.value; setManualKey(v);
+                  if(v.includes('@')) setManualKeyType('email');
+                  else if(/^[0-9+]{5,}$/.test(v.replace(/\s/g,''))) setManualKeyType('phone');
+                }} placeholder="رقم الهاتف أو الإيميل"
                 style={{flex:1,minWidth:'180px',padding:'10px 12px',border:'1.5px solid #dde3ed',borderRadius:'10px',fontSize:'13px',fontFamily:'Cairo,sans-serif',outline:'none'}}/>
               <select value={manualKeyType} onChange={e=>setManualKeyType(e.target.value)}
                 style={{padding:'10px 12px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',background:'#fff'}}>
@@ -2383,7 +2387,11 @@ function SecurityPanel() {
           <div style={{background:'#fafbff',borderRadius:'10px',padding:'12px',marginBottom:'12px',border:'1px solid #e2e8f0'}}>
             <div style={{fontSize:'12px',fontWeight:'700',color:'#555',marginBottom:'8px'}}>➕ حجب يدوي دائم</div>
             <div style={{display:'flex',gap:'6px',flexWrap:'wrap'}}>
-              <input value={manualKey} onChange={e=>setManualKey(e.target.value)} placeholder="رقم الهاتف أو الإيميل"
+              <input value={manualKey} onChange={e=>{
+                  const v=e.target.value; setManualKey(v);
+                  if(v.includes('@')) setManualKeyType('email');
+                  else if(/^[0-9+]{5,}$/.test(v.replace(/\s/g,''))) setManualKeyType('phone');
+                }} placeholder="رقم الهاتف أو الإيميل"
                 style={{flex:1,minWidth:'160px',padding:'8px 12px',border:'1.5px solid #dde3ed',borderRadius:'9px',fontSize:'13px',fontFamily:'Cairo,sans-serif',outline:'none'}}/>
               <select value={manualKeyType} onChange={e=>setManualKeyType(e.target.value)}
                 style={{padding:'8px 10px',borderRadius:'9px',border:'1.5px solid #dde3ed',fontSize:'13px',fontFamily:'Cairo,sans-serif',background:'#fff'}}>
