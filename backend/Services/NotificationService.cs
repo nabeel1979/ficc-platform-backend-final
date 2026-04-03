@@ -152,15 +152,22 @@ public class NotificationService {
             var instance = _cfg["UltraMsg:Instance"] ?? "instance167281";
             var token    = _cfg["UltraMsg:Token"] ?? "ilgqrh6v728bosrh";
             var url = $"https://api.ultramsg.com/{instance}/messages/chat";
+            var normalizedPhone = NormalizeIraqiPhone(phone);
             using var http = new HttpClient();
-            var body = $"🏛️ اتحاد الغرف التجارية العراقية\n\nرمز التحقق:\n{otp}\n\nصالح 10 دقائق - لا تشاركه مع أحد";
-            var resp = await http.PostAsync(url, new FormUrlEncodedContent(new Dictionary<string,string>{
-                ["token"] = token,
-                ["to"]    = NormalizeIraqiPhone(phone),
-                ["body"]  = body
+
+            // رسالة 1: الإشعار
+            await http.PostAsync(url, new FormUrlEncodedContent(new Dictionary<string,string>{
+                ["token"] = token, ["to"] = normalizedPhone,
+                ["body"]  = "🏛️ اتحاد الغرف التجارية العراقية\n\nرمز التحقق الخاص بك (صالح 10 دقائق):"
             }));
-            var respBody = await resp.Content.ReadAsStringAsync();
-            _log.LogInformation("UltraMsg WhatsApp OTP to {Phone}: {Status} {Body}", phone, resp.StatusCode, respBody);
+            await Task.Delay(800);
+
+            // رسالة 2: الرمز فقط - قابل للنسخ
+            var resp = await http.PostAsync(url, new FormUrlEncodedContent(new Dictionary<string,string>{
+                ["token"] = token, ["to"] = normalizedPhone,
+                ["body"]  = otp
+            }));
+            _log.LogInformation("UltraMsg WhatsApp OTP to {Phone}: {Status}", phone, resp.StatusCode);
             return resp.IsSuccessStatusCode;
         } catch (Exception ex) {
             _log.LogError(ex, "UltraMsg WhatsApp OTP send failed");
