@@ -174,9 +174,27 @@ public class SubscribersController : ControllerBase {
         });
         await _db.SaveChangesAsync();
 
-        var msg = $"اتحاد الغرف التجارية العراقية\nرمز تأكيد الدخول: {otp}\nصالح 10 دقائق";
-        await _notify.SendWhatsAppOtp(dto.Phone, otp);  // واتساب بدل SMS
-        return Ok(new { message = "تم إرسال رمز التأكيد" });
+        // أرسل على القنوات المفضّلة للمتابع
+        var notifyBy = new List<string>();
+        try { notifyBy = System.Text.Json.JsonSerializer.Deserialize<List<string>>(sub.NotifyBy ?? "[]") ?? new(); } catch {}
+        
+        var sent = false;
+        if (notifyBy.Contains("email") && !string.IsNullOrEmpty(sub.Email)) {
+            await _notify.SendEmail(sub.Email, "رمز الدخول | اتحاد الغرف التجارية العراقية",
+                $"<div dir='rtl' style='font-family:Cairo,sans-serif'><p>رمز تأكيد الدخول:</p><h1 style='letter-spacing:8px;color:#2C3E6B'>{otp}</h1><p>صالح 10 دقائق</p></div>");
+            sent = true;
+        }
+        if (!notifyBy.Contains("email") || notifyBy.Contains("whatsapp")) {
+            var waNum = sub.WhatsApp ?? sub.Phone;
+            if (!string.IsNullOrEmpty(waNum)) {
+                await _notify.SendWhatsAppOtp(waNum, otp);
+                sent = true;
+            }
+        }
+        if (!sent) await _notify.SendWhatsAppOtp(dto.Phone, otp); // fallback
+        
+        var channel = notifyBy.Contains("email") && !notifyBy.Contains("whatsapp") ? "البريد الإلكتروني" : "الواتساب";
+        return Ok(new { message = $"تم إرسال رمز التأكيد عبر {channel}" });
     }
 
     // POST /api/subscribers/verify-otp — تحقق OTP وإرجاع بيانات المتابع

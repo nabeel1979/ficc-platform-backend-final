@@ -1260,7 +1260,7 @@ function SubmissionsPanel() {
   const [lightbox, setLightbox] = React.useState(null)
 
   React.useEffect(() => {
-    api.get(`${API}/chambers`, { headers: authHdrs() }).then(r => setChambers(r.data||[])).catch(()=>{})
+    api.get(`${API}/chambers`, { headers: authHdrs() }).then(r => setChambers(Array.isArray(r.data) ? r.data : (r.data?.items || []))).catch(()=>{})
   }, [])
 
   const [counts, setCounts] = React.useState({ pending: 0, approved: 0, rejected: 0 })
@@ -1272,8 +1272,8 @@ function SubmissionsPanel() {
         api.get(`${API}/submissions?status=${statusFilter}&pageSize=50${typeFilter!=='all'?'&entityType='+typeFilter:''}`, { headers: authHdrs() }),
         api.get(`${API}/submissions/stats`, { headers: authHdrs() })
       ])
-      setItems(Array.isArray(r.data) ? r.data : (r.data.items || r.data || []))
-      setCounts({ pending: stats.data.pending, approved: stats.data.approved, rejected: stats.data.rejected })
+      setItems(Array.isArray(r.data) ? r.data : (r.data?.items || []))
+      setCounts({ pending: stats.data?.pending ?? 0, approved: stats.data?.approved ?? 0, rejected: stats.data?.rejected ?? 0 })
     } catch { setItems([]) }
     finally { setLoading(false) }
   }, [])
@@ -1414,11 +1414,12 @@ function SubmissionsPanel() {
                 cursor:'pointer',transition:'all 0.2s',display:'flex',alignItems:'center',gap:'14px'}}
               onClick={async ()=>{
                 setNote('')
-                // جيب التفاصيل الكاملة
+                setSelected(item) // افتح البطاقة فوراً
                 try {
                   const r = await api.get(`${API}/submissions/${item.id}`, { headers: authHdrs() })
-                  setSelected({...item, ...r.data, formData: r.data.formData || r.data.FormData || item.formData})
-                } catch { setSelected(item) }
+                  const fd = r.data?.formData || r.data?.FormData || item.formData
+                  setSelected({...item, ...r.data, formData: typeof fd === 'string' ? JSON.parse(fd) : (fd || {})})
+                } catch(e) { console.warn('submission detail error', e) }
               }}
               onMouseEnter={e=>e.currentTarget.style.boxShadow='0 4px 16px rgba(44,62,107,0.12)'}
               onMouseLeave={e=>e.currentTarget.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)'}>
