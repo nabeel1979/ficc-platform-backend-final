@@ -14,6 +14,7 @@ import Chambers, { ChamberDetailPage } from './pages/Chambers'
 import Members, { MemberDetailPage } from './pages/Members'
 import ShippingCompanies, { ShippingDetailPage } from './pages/ShippingCompanies'
 import News, { NewsDetailPage } from './pages/News'
+import Reports from './pages/Reports'
 import Exhibitions from './pages/Exhibitions'
 import Conferences from './pages/Conferences'
 import TraderDirectory, { TraderDetailPage } from './pages/TraderDirectory'
@@ -122,6 +123,7 @@ export default function App() {
       <Route path="/shipping/:id" element={<Layout><ShippingDetailPage /></Layout>} />
       <Route path="/news" element={<Layout><News /></Layout>} />
       <Route path="/news/:id" element={<Layout><NewsDetailPage /></Layout>} />
+      <Route path="/reports" element={<Layout><Reports /></Layout>} />
       <Route path="/exhibitions" element={<Layout><Exhibitions /></Layout>} />
       <Route path="/conferences" element={<Layout><Conferences /></Layout>} />
       <Route path="/directory" element={<Layout><TraderDirectory /></Layout>} />
