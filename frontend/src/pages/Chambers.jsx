@@ -103,22 +103,22 @@ function ChamberDetail({ chamber: c, onBack }) {
             <div style={{marginBottom:'24px',background:'#F8F9FA',borderRadius:'14px',padding:'16px 20px'}}>
               <p style={{color:'#888',fontSize:'13px',fontWeight:'700',margin:'0 0 12px'}}>📤 شارك صفحة الغرفة:</p>
               <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-                <a href={`https://wa.me/?text=${encodeURIComponent(c.name + '\n' + window.location.origin + '/og/chambers/' + c.id)}`}
+                <a href={`https://wa.me/?text=${encodeURIComponent(c.name + '\n' + window.location.origin + '/chambers/' + c.id)}`}
                   target="_blank" rel="noreferrer"
                   style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'10px',background:'#25D366',color:'#fff',textDecoration:'none',fontSize:'13px',fontWeight:'700'}}>
                   💬 واتساب
                 </a>
-                <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/og/chambers/' + c.id)}`}
+                <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/chambers/' + c.id)}`}
                   target="_blank" rel="noreferrer"
                   style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'10px',background:'#1877F2',color:'#fff',textDecoration:'none',fontSize:'13px',fontWeight:'700'}}>
                   📘 فيسبوك
                 </a>
-                <a href={`https://t.me/share/url?url=${encodeURIComponent(window.location.origin + '/og/chambers/' + c.id)}&text=${encodeURIComponent(c.name)}`}
+                <a href={`https://t.me/share/url?url=${encodeURIComponent(window.location.origin + '/chambers/' + c.id)}&text=${encodeURIComponent(c.name)}`}
                   target="_blank" rel="noreferrer"
                   style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'10px',background:'#0088cc',color:'#fff',textDecoration:'none',fontSize:'13px',fontWeight:'700'}}>
                   ✈️ تيليغرام
                 </a>
-                <button onClick={() => { navigator.clipboard.writeText(window.location.origin + '/og/chambers/' + c.id); alert('تم نسخ الرابط!') }}
+                <button onClick={() => { navigator.clipboard.writeText(window.location.origin + '/chambers/' + c.id); alert('تم نسخ الرابط!') }}
                   style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'10px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',fontSize:'13px',fontWeight:'700',fontFamily:'Cairo,sans-serif'}}>
                   🔗 نسخ الرابط
                 </button>
@@ -153,6 +153,7 @@ export default function Chambers() {
   const [loading, setLoading]   = useState(true)
   const [search, setSearch]     = useState('')
   const [governorate, setGovernorate] = useState('')
+  const navigate = useNavigate()
   const [selected, setSelected] = useState(null)
 
   useEffect(() => { fetchChambers() }, [])
@@ -209,7 +210,7 @@ export default function Chambers() {
           <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(340px, 1fr))', gap:'20px'}}>
             {chambers.map(c => (
               <div key={c.id}
-                onClick={() => setSelected(c)}
+                onClick={() => navigate(`/chambers/${c.id}`)}
                 style={{background:'#fff', borderRadius:'16px', boxShadow:'0 4px 16px rgba(44,62,107,0.08)', border:'1px solid #eef0f5', overflow:'hidden', cursor:'pointer', transition:'transform 0.2s, box-shadow 0.2s'}}
                 onMouseEnter={e => { e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.boxShadow='0 8px 32px rgba(44,62,107,0.15)' }}
                 onMouseLeave={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 4px 16px rgba(44,62,107,0.08)' }}
@@ -250,7 +251,7 @@ export default function Chambers() {
                     {c.phone && <a href={`tel:${c.phone}`} style={{flex:'1', textAlign:'center', padding:'9px 10px', borderRadius:'10px', background:'#F0FDF4', color:'#16a34a', fontSize:'13px', fontWeight:'700', textDecoration:'none', border:'1.5px solid #bbf7d0'}}>📞 اتصال</a>}
                     {c.email && <a href={`mailto:${c.email}`} style={{flex:'1', textAlign:'center', padding:'9px 10px', borderRadius:'10px', background:'#EEF2FF', color:'#2C3E6B', fontSize:'13px', fontWeight:'700', textDecoration:'none', border:'1.5px solid #c7d2fe'}}>✉️ مراسلة</a>}
                     <button style={{flex:'1', padding:'9px 10px', borderRadius:'10px', background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)', color:'#fff', fontSize:'13px', fontWeight:'700', border:'none', cursor:'pointer', fontFamily:'Cairo,sans-serif'}}
-                      onClick={e=>{e.stopPropagation();setSelected(c)}}>
+                      onClick={e=>{e.stopPropagation();navigate(`/chambers/${c.id}`)}}>
                       📋 التفاصيل
                     </button>
                   </div>
@@ -273,7 +274,7 @@ export function ChamberDetailPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get(`/api/chambers/${id}`)
+    api.get(`${API}/chambers/${id}`)
       .then(r => setChamber(r.data))
       .catch(() => navigate('/chambers'))
       .finally(() => setLoading(false))

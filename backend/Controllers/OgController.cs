@@ -53,7 +53,15 @@ public class OgController : ControllerBase {
         var item = await _db.Chambers.FindAsync(id);
         if (item == null) return Redirect("/chambers");
         var desc = item.Description?.Length>200 ? item.Description[..200]+"..." : item.Description ?? $"غرفة تجارة {item.Governorate} — {item.MemberCount} عضو";
-        return Content(BuildHtml(item.Name, desc, item.LogoUrl ?? "", $"{Request.Scheme}://{Request.Host}/chambers/{id}", Request.Scheme, Request.Host.ToString()), "text/html; charset=utf-8");
+        // استخدم OG cover إذا موجود (landscape 1200x630)
+        var ogImg = item.LogoUrl ?? "";
+        // استخدم OG cover (landscape) إذا موجود
+        if (!string.IsNullOrEmpty(ogImg) && ogImg.Contains("/chambers/")) {
+            var ext = System.IO.Path.GetExtension(ogImg);
+            var ogCover = ogImg.Replace(ext, $"_og{ext}");
+            ogImg = ogCover;
+        }
+        return Content(BuildHtml(item.Name, desc, ogImg, $"{Request.Scheme}://{Request.Host}/chambers/{id}", Request.Scheme, Request.Host.ToString()), "text/html; charset=utf-8");
     }
     [HttpGet("directory/index")]
     public IActionResult DirectoryOg() {
@@ -123,7 +131,7 @@ public class OgController : ControllerBase {
   {(string.IsNullOrEmpty(abs)?"":$@"<meta property=""og:image"" content=""{abs}?v={item.CreatedAt.Ticks}""/>
   <meta property=""og:image:width"" content=""800""/>
   <meta property=""og:image:height"" content=""800""/>")}
-  <meta name=""twitter:card"" content=""summary""/>
+  <meta name=""twitter:card"" content=""summary_large_image""/>
   <title>{System.Web.HttpUtility.HtmlEncode(item.FullName)} | اتحاد الغرف التجارية العراقية</title>
   <link href=""https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap"" rel=""stylesheet""/>
   <style>

@@ -238,7 +238,7 @@ function TraderDetail({ t, onBack }) {
             <div style={{background:'#F8F9FA',borderRadius:'14px',padding:'16px 20px'}}>
               <p style={{color:'#888',fontSize:'13px',fontWeight:'700',margin:'0 0 12px'}}>📤 شارك:</p>
               <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-                <a href={`https://wa.me/?text=${encodeURIComponent((t.tradeName||t.companyName||'') + '\n' + window.location.origin + '/og/traders/' + t.id)}`} target="_blank" rel="noreferrer"
+                <a href={`https://wa.me/?text=${encodeURIComponent((t.tradeName||t.companyName||'') + '\n' + window.location.origin + '/directory/' + t.id)}`} target="_blank" rel="noreferrer"
                   style={{...socialBtn('#25D366'),width:'auto',padding:'8px 16px',gap:'6px',borderRadius:'10px',fontSize:'13px',fontWeight:'700'}}>💬 واتساب</a>
                 <button onClick={()=>{navigator.clipboard.writeText(window.location.origin+'/directory/'+t.id);alert('تم نسخ الرابط!')}}
                   style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'10px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',fontSize:'13px',fontWeight:'700',fontFamily:'Cairo,sans-serif'}}>🔗 نسخ الرابط</button>

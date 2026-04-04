@@ -14,6 +14,7 @@ public class StorageService {
     private readonly string _bucket;
     private readonly string _r2Endpoint;
     private readonly bool _r2Enabled;
+    private string _publicUrl = "https://pub-be4a1829a4e84fc0b477dfe8adb915ef.r2.dev";
 
     public StorageService(IConfiguration cfg, IWebHostEnvironment env) {
         // مسار التخزين المحلي
@@ -23,11 +24,13 @@ public class StorageService {
             : Path.Combine(env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot"), "uploads");
         Directory.CreateDirectory(_uploadsRoot);
 
-        // إعداد Cloudflare R2
-        var accountId  = cfg["Cloudflare:AccountId"]  ?? "";
-        var accessKey  = cfg["Cloudflare:AccessKeyId"] ?? "";
-        var secretKey  = cfg["Cloudflare:SecretKey"]   ?? "";
-        _bucket        = cfg["Cloudflare:Bucket"]      ?? "ficcmedia";
+        // إعداد Cloudflare R2 - يقبل Cloudflare:* أو R2:*
+        var accountId  = cfg["Cloudflare:AccountId"]  ?? cfg["R2:AccountId"]  ?? "";
+        var accessKey  = cfg["Cloudflare:AccessKeyId"] ?? cfg["R2:AccessKeyId"] ?? "";
+        var secretKey  = cfg["Cloudflare:SecretKey"]   ?? cfg["R2:SecretAccessKey"] ?? "";
+        _bucket        = cfg["Cloudflare:Bucket"]      ?? cfg["R2:BucketName"] ?? "ficcmedia";
+        var publicUrl  = cfg["Cloudflare:PublicUrl"]   ?? cfg["R2:PublicUrl"]  ?? "https://pub-be4a1829a4e84fc0b477dfe8adb915ef.r2.dev";
+        _publicUrl = publicUrl;
         _r2Endpoint    = $"https://{accountId}.r2.cloudflarestorage.com";
         _r2Enabled     = !string.IsNullOrEmpty(accessKey) && !string.IsNullOrEmpty(secretKey) && !string.IsNullOrEmpty(accountId);
 
@@ -75,7 +78,7 @@ public class StorageService {
                 CannedACL   = S3CannedACL.PublicRead
             };
             await _s3.PutObjectAsync(request);
-            return $"https://pub-be4a1829a4e84fc0b477dfe8adb915ef.r2.dev/{key}";
+            return $"{_publicUrl}/{key}";
         } else {
             // حفظ محلي
             var folder = GetFolder(subFolder);
@@ -98,7 +101,7 @@ public class StorageService {
                 CannedACL   = S3CannedACL.PublicRead
             };
             await _s3.PutObjectAsync(request);
-            return $"https://pub-be4a1829a4e84fc0b477dfe8adb915ef.r2.dev/{key}";
+            return $"{_publicUrl}/{key}";
         } else {
             // حفظ محلي
             var parts = key.Split('/');
