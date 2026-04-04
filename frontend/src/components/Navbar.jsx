@@ -4,8 +4,8 @@ import { useState } from 'react'
 const navLinks = [
   { to: '/', icon: '🏠', title: 'الرئيسية', exact: true },
   { to: '/chambers', icon: '🏛️', title: 'الغرف' },
-  { to: '/shipping', icon: '🚢', title: 'شركات الشحن' },
   { to: '/members', icon: '👥', title: 'أعضاء المجلس' },
+  { to: '/shipping', icon: '🚢', title: 'شركات الشحن' },
   { to: '/directory', icon: '📋', title: 'دليل التجار' },
   { to: '/customs-agents', icon: '🏭', title: 'وكلاء الإخراج' },
   { to: '/lawyers', icon: '⚖️', title: 'المحامون' },

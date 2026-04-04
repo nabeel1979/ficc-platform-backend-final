@@ -1284,6 +1284,15 @@ function SubmissionsPanel() {
 
   const entityLabels = { chamber:'غرفة تجارية', member:'عضو مجلس الاتحاد', trader:'دليل التجار', shipping:'شركة شحن', lawyer:'محامٍ', agent:'وكيل إخراج' }
   const statusColors = { pending:'#F59E0B', approved:'#10b981', rejected:'#ef4444' }
+const buildImageUrl = (url) => {
+  if (!url) return null
+  if (url.startsWith('data:')) return url
+  if (url.startsWith('http')) return url
+  // local path - try R2
+  const path = url.replace('/uploads/', '')
+  return `https://pub-be4a1829a4e84fc0b477dfe8adb915ef.r2.dev/${path}`
+}
+
 const cleanSocialUrl = (v) => {
   if (!v) return ''
   // trim أولاً ثم خذ أول token (الرابط)
@@ -1510,10 +1519,10 @@ const cleanSocialUrl = (v) => {
                 <div style={{display:'flex',gap:'12px',padding:'12px 0',borderBottom:'1px solid #e5e7eb',alignItems:'center'}}>
                   <span style={{color:'#666',fontSize:'12px',minWidth:'130px',flexShrink:0}}>الصورة الشخصية:</span>
                   {selected.formData?._photo ? (
-                    <img src={selected.formData._photo.startsWith('data:') ? selected.formData._photo : `https://ficc.iq${selected.formData._photo}`}
-                      alt="صورة" onClick={()=>setLightbox(selected.formData._photo.startsWith('data:') ? selected.formData._photo : `https://ficc.iq${selected.formData._photo}`)} style={{width:'80px',height:'80px',borderRadius:'50%',objectFit:'cover',border:'3px solid #2C3E6B',cursor:'zoom-in'}} />
+                    <img src={buildImageUrl(selected.formData._photo)}
+                      alt="صورة" onClick={()=>setLightbox(buildImageUrl(selected.formData._photo))} style={{width:'80px',height:'80px',borderRadius:'50%',objectFit:'cover',border:'3px solid #2C3E6B',cursor:'zoom-in'}} />
                   ) : (
-                    <span style={{fontSize:'12px',color:'#ccc',background:'#f5f5f5',padding:'8px 16px',borderRadius:'6px'}}>— لم يرفع صورة</span>
+                    <div style={{width:'80px',height:'80px',borderRadius:'50%',background:'#f5f5f5',border:'2px dashed #ddd',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'24px'}}>👤</div>
                   )}
                 </div>
               )}
@@ -1550,8 +1559,8 @@ const cleanSocialUrl = (v) => {
               {selected.formData?._photo && !['member','lawyer','trader'].includes(selected.entityType) && (
                 <div style={{display:'flex',gap:'12px',padding:'12px 0',borderBottom:'1px solid #e5e7eb',alignItems:'center'}}>
                   <span style={{color:'#666',fontSize:'12px',minWidth:'130px',flexShrink:0}}>الصورة الشخصية:</span>
-                  <img src={selected.formData._photo.startsWith('data:') ? selected.formData._photo : `https://ficc.iq${selected.formData._photo}`}
-                    alt="صورة" onClick={()=>setLightbox(selected.formData._photo.startsWith('data:') ? selected.formData._photo : `https://ficc.iq${selected.formData._photo}`)} style={{width:'80px',height:'80px',borderRadius:'50%',objectFit:'cover',border:'3px solid #2C3E6B',cursor:'zoom-in'}} />
+                  <img src={buildImageUrl(selected.formData._photo)}
+                    alt="صورة" onClick={()=>setLightbox(buildImageUrl(selected.formData._photo))} style={{width:'80px',height:'80px',borderRadius:'50%',objectFit:'cover',border:'3px solid #2C3E6B',cursor:'zoom-in'}} />
                 </div>
               )}
               {/* منصات التواصل */}
@@ -1581,16 +1590,16 @@ const cleanSocialUrl = (v) => {
                   <div style={{display:'flex',gap:'12px',flexWrap:'wrap'}}>
                     {selected.formData?._idFile && (
                       <div style={{textAlign:'center'}}>
-                        <img src={selected.formData._idFile.startsWith('data:') ? selected.formData._idFile : `https://ficc.iq${selected.formData._idFile}`}
-                          alt="وجه الهوية" onClick={()=>setLightbox(selected.formData._idFile.startsWith('data:') ? selected.formData._idFile : `https://ficc.iq${selected.formData._idFile}`)}
+                        <img src={buildImageUrl(selected.formData._idFile)}
+                          alt="وجه الهوية" onClick={()=>setLightbox(buildImageUrl(selected.formData._idFile))}
                           style={{width:'150px',height:'100px',objectFit:'cover',borderRadius:'8px',border:'2px solid #2C3E6B',cursor:'zoom-in'}} />
                         <p style={{fontSize:'11px',color:'#888',margin:'4px 0 0'}}>الوجه</p>
                       </div>
                     )}
                     {selected.formData?._idFileBack && (
                       <div style={{textAlign:'center'}}>
-                        <img src={selected.formData._idFileBack.startsWith('data:') ? selected.formData._idFileBack : `https://ficc.iq${selected.formData._idFileBack}`}
-                          alt="خلف الهوية" onClick={()=>setLightbox(selected.formData._idFileBack.startsWith('data:') ? selected.formData._idFileBack : `https://ficc.iq${selected.formData._idFileBack}`)}
+                        <img src={buildImageUrl(selected.formData._idFileBack)}
+                          alt="خلف الهوية" onClick={()=>setLightbox(buildImageUrl(selected.formData._idFileBack))}
                           style={{width:'150px',height:'100px',objectFit:'cover',borderRadius:'8px',border:'2px solid #059669',cursor:'zoom-in'}} />
                         <p style={{fontSize:'11px',color:'#888',margin:'4px 0 0'}}>الخلف</p>
                       </div>

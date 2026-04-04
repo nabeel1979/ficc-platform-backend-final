@@ -49,7 +49,7 @@ export default function Footer() {
         <div>
           <h4>روابط سريعة</h4>
           <div className="footer-links">
-            {[['🏛️ الغرف التجارية','/chambers'],['📋 دليل التجار','/directory'],['🏭 وكلاء الإخراج','/customs-agents'],['⚖️ المحامون','/lawyers'],['🎪 المعارض','/exhibitions'],['🎤 المؤتمرات','/conferences']].map(([l,h]) => (
+            {[['🏛️ الغرف التجارية','/chambers'],['👥 أعضاء المجلس','/members'],['📋 دليل التجار','/directory'],['🏭 وكلاء الإخراج','/customs-agents'],['⚖️ المحامون','/lawyers'],['🎪 المعارض','/exhibitions'],['🎤 المؤتمرات','/conferences']].map(([l,h]) => (
               <a key={h} href={h}>{l}</a>
             ))}
           </div>
