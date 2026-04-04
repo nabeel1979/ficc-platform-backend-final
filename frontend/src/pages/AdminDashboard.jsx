@@ -1286,9 +1286,11 @@ function SubmissionsPanel() {
   const statusColors = { pending:'#F59E0B', approved:'#10b981', rejected:'#ef4444' }
 const cleanSocialUrl = (v) => {
   if (!v) return ''
-  const trimmed = v.trim()
-  const spaceIdx = trimmed.search(/\s/)
-  return spaceIdx > 0 ? trimmed.substring(0, spaceIdx) : trimmed
+  // trim أولاً ثم خذ أول token (الرابط)
+  const parts = v.trim().split(/\s+/).filter(p => p.length > 0)
+  // خذ أول جزء يشبه رابط
+  const url = parts.find(p => p.includes('.') || p.includes('http') || p.includes('wa.me') || p.includes('@')) || parts[0] || ''
+  return url
 }
   const statusLabels = { pending:'⏳ بانتظار المراجعة', approved:'✅ تمت الموافقة', rejected:'❌ مرفوض' }
 
@@ -1504,7 +1506,7 @@ const cleanSocialUrl = (v) => {
             <h4 style={{color:'#2C3E6B',fontWeight:'700',marginBottom:'10px'}}>📋 البيانات المدخلة:</h4>
             <div style={{background:'#F5F7FA',borderRadius:'12px',padding:'16px',marginBottom:'16px'}}>
               {/* الصورة الشخصية دائماً */}
-              {(selected.entityType === 'member' || selected.entityType === 'lawyer' || selected.entityType === 'trader') && (
+              {(['member','lawyer','trader','shipping','agent'].includes(selected.entityType)) && (
                 <div style={{display:'flex',gap:'12px',padding:'12px 0',borderBottom:'1px solid #e5e7eb',alignItems:'center'}}>
                   <span style={{color:'#666',fontSize:'12px',minWidth:'130px',flexShrink:0}}>الصورة الشخصية:</span>
                   {selected.formData?._photo ? (
@@ -1516,29 +1518,34 @@ const cleanSocialUrl = (v) => {
                 </div>
               )}
               {/* منصات التواصل دائماً */}
-              {(selected.entityType === 'member' || selected.entityType === 'lawyer') && (
-                <div style={{padding:'10px 0',borderBottom:'1px solid #e5e7eb'}}>
-                  <span style={{color:'#666',fontSize:'12px',display:'block',marginBottom:'6px',fontWeight:'700'}}>منصات التواصل الاجتماعي:</span>
-                  {(() => {
-                    const s = selected.formData?._social
-                    if (!s) return <span style={{fontSize:'12px',color:'#ccc'}}>— لم يدخل</span>
-                    const obj = typeof s === 'string' ? JSON.parse(s) : s
-                    const socialLabels = {facebook:'فيسبوك',twitter:'تويتر',instagram:'انستغرام',linkedin:'لينكدإن',youtube:'يوتيوب',whatsapp:'واتساب',telegram:'تيليغرام'}
-                    const entries = Object.entries(obj||{}).filter(([,v])=>v)
-                    if (!entries.length) return <span style={{fontSize:'12px',color:'#ccc'}}>— لم يدخل</span>
-                    return (
-                      <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
-                        {entries.map(([k2,v2])=>(
-                          <a key={k2} href={cleanSocialUrl(v2)} target="_blank" rel="noreferrer"
-                            style={{fontSize:'11px',padding:'3px 10px',borderRadius:'20px',background:'#EEF2FF',color:'#2C3E6B',textDecoration:'none',fontWeight:'700'}}>
-                            {socialLabels[k2]||k2}
-                          </a>
-                        ))}
-                      </div>
-                    )
-                  })()}
-                </div>
-              )}
+              {(['member','lawyer','trader','shipping','agent','chamber'].includes(selected.entityType)) && (() => {
+                const socialLabels = {facebook:'فيسبوك',twitter:'تويتر',instagram:'انستغرام',linkedin:'لينكدإن',youtube:'يوتيوب',whatsapp:'واتساب',whatsApp:'واتساب',telegram:'تيليغرام',youTube:'يوتيوب'}
+                const socialKeys = ['facebook','instagram','twitter','whatsApp','telegram','youTube','linkedin','youtube','whatsapp']
+                // قرأ من _social أو من الحقول المباشرة
+                let entries = []
+                if (selected.formData?._social) {
+                  const obj = typeof selected.formData._social === 'string' ? JSON.parse(selected.formData._social) : selected.formData._social
+                  entries = Object.entries(obj||{}).filter(([,v])=>v).map(([k,v])=>[k,cleanSocialUrl(v)])
+                } else {
+                  entries = socialKeys.map(k=>[k, selected.formData?.[k]||'']).filter(([,v])=>v).map(([k,v])=>[k,cleanSocialUrl(v)])
+                }
+                return (
+                  <div style={{padding:'10px 0',borderBottom:'1px solid #e5e7eb'}}>
+                    <span style={{color:'#666',fontSize:'12px',display:'block',marginBottom:'6px',fontWeight:'700'}}>منصات التواصل الاجتماعي:</span>
+                    {entries.length === 0
+                      ? <span style={{fontSize:'12px',color:'#ccc'}}>— لم يدخل</span>
+                      : <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
+                          {entries.map(([k2,v2])=>(
+                            <a key={k2} href={v2} target="_blank" rel="noreferrer"
+                              style={{fontSize:'11px',padding:'3px 10px',borderRadius:'20px',background:'#EEF2FF',color:'#2C3E6B',textDecoration:'none',fontWeight:'700'}}>
+                              {socialLabels[k2]||k2}
+                            </a>
+                          ))}
+                        </div>
+                    }
+                  </div>
+                )
+              })()}
               {/* الصورة الشخصية — للأنواع الأخرى */}
               {selected.formData?._photo && !['member','lawyer','trader'].includes(selected.entityType) && (
                 <div style={{display:'flex',gap:'12px',padding:'12px 0',borderBottom:'1px solid #e5e7eb',alignItems:'center'}}>
@@ -1602,6 +1609,8 @@ const cleanSocialUrl = (v) => {
               {Object.entries(selected.formData||{}).map(([k,v])=>{
                 // Skip internal fields
                 if (['_social','_idFile','_idFileBack','_photo','_logo'].includes(k)) return null
+                // Skip social fields - shown in dedicated section
+                if (['facebook','instagram','twitter','whatsApp','telegram','youTube','linkedin','youtube','whatsapp'].includes(k)) return null
                 // Skip metadata fields
                 if (k.endsWith('Name_') || k.endsWith('Size_') || k.endsWith('FileName_') || k.endsWith('FileSize_')) return null
                 if (k.startsWith('_')) return null
@@ -1629,7 +1638,7 @@ const cleanSocialUrl = (v) => {
                 const labels = {
                   // عضو مجلس الاتحاد
                   fullName:'اسم العضو واللقب', title:'المنصب', chamberId:'رقم الغرفة',
-                  chamberName:'اسم الغرفة التجارية', bio:'نبذة شخصية',
+                  chamberNameLabel:'اسم الغرفة التجارية', bio:'نبذة شخصية',
                   // تواصل
                   phone:'رقم الهاتف', mobile:'رقم الموبايل', email:'البريد الإلكتروني',
                   facebook:'فيسبوك', twitter:'تويتر / X', instagram:'انستغرام',
@@ -1637,7 +1646,7 @@ const cleanSocialUrl = (v) => {
                   // دليل التجار
                   tradeName:'الاسم التجاري', companyName:'اسم الشركة / المنشأة',
                   ownerName:'صاحب العمل', businessType:'نوع النشاط التجاري',
-                  tradeCategory:'التصنيف التجاري', chamberName:'رقم العرفة / الغرفة',
+                  tradeCategory:'التصنيف التجاري', chamberDisplayName:'رقم الغرفة / الاسم',
                   area:'المنطقة / الحي', logoUrl:'الشعار', notes:'ملاحظات',
                   // عام
                   name:'الاسم', governorate:'المحافظة', city:'المدينة',
