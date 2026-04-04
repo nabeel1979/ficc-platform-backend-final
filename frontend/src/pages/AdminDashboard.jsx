@@ -1284,6 +1284,12 @@ function SubmissionsPanel() {
 
   const entityLabels = { chamber:'غرفة تجارية', member:'عضو مجلس الاتحاد', trader:'دليل التجار', shipping:'شركة شحن', lawyer:'محامٍ', agent:'وكيل إخراج' }
   const statusColors = { pending:'#F59E0B', approved:'#10b981', rejected:'#ef4444' }
+const cleanSocialUrl = (v) => {
+  if (!v) return ''
+  const trimmed = v.trim()
+  const spaceIdx = trimmed.search(/\s/)
+  return spaceIdx > 0 ? trimmed.substring(0, spaceIdx) : trimmed
+}
   const statusLabels = { pending:'⏳ بانتظار المراجعة', approved:'✅ تمت الموافقة', rejected:'❌ مرفوض' }
 
   const handleAction = async (action) => {
@@ -1523,7 +1529,7 @@ function SubmissionsPanel() {
                     return (
                       <div style={{display:'flex',flexWrap:'wrap',gap:'6px'}}>
                         {entries.map(([k2,v2])=>(
-                          <a key={k2} href={v2} target="_blank" rel="noreferrer"
+                          <a key={k2} href={cleanSocialUrl(v2)} target="_blank" rel="noreferrer"
                             style={{fontSize:'11px',padding:'3px 10px',borderRadius:'20px',background:'#EEF2FF',color:'#2C3E6B',textDecoration:'none',fontWeight:'700'}}>
                             {socialLabels[k2]||k2}
                           </a>

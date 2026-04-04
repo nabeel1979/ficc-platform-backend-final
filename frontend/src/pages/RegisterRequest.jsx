@@ -393,15 +393,22 @@ function RegistrationForm({ entityType, onBack, showBack = true, constants = {} 
     // Clean temp fields
     delete finalForm._ziqaq; delete finalForm._dar; delete finalForm._social; delete finalForm._logo
 
-    // Merge social
+    // Merge social — تنظيف الروابط من أي نص زيادة
+    const cleanUrl = (v) => {
+      if (!v) return ''
+      // خذ أول token فقط (أول مساحة = نهاية الرابط)
+      const trimmed = v.trim()
+      const spaceIdx = trimmed.search(/\s/)
+      return spaceIdx > 0 ? trimmed.substring(0, spaceIdx) : trimmed
+    }
     if (form._social) {
       const s = form._social
-      if (s.facebook)  finalForm.facebook  = s.facebook
-      if (s.instagram) finalForm.instagram = s.instagram
-      if (s.twitter)   finalForm.twitter   = s.twitter
-      if (s.whatsapp)  finalForm.whatsApp  = s.whatsapp
-      if (s.telegram)  finalForm.telegram  = s.telegram
-      if (s.youtube)   finalForm.youTube   = s.youtube
+      if (s.facebook)  finalForm.facebook  = cleanUrl(s.facebook)
+      if (s.instagram) finalForm.instagram = cleanUrl(s.instagram)
+      if (s.twitter)   finalForm.twitter   = cleanUrl(s.twitter)
+      if (s.whatsapp)  finalForm.whatsApp  = cleanUrl(s.whatsapp)
+      if (s.telegram)  finalForm.telegram  = cleanUrl(s.telegram)
+      if (s.youtube)   finalForm.youTube   = cleanUrl(s.youtube)
     }
 
     setLoading(true); setMsg('')
