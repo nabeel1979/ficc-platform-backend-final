@@ -233,13 +233,14 @@ public class CorrespondenceController : ControllerBase {
         var name = $"{id}_{Guid.NewGuid():N}{Path.GetExtension(file.FileName)}";
         var path = Path.Combine(dir, name);
         await using var stream = System.IO.File.Create(path);
-        await file.CopyToAsync(stream);
+        // Upload to R2
+        var r2Path = await _storage.SaveFileAsync(file, "correspondence", name);
         _db.CorrespondenceAttachments.Add(new CorrespondenceAttachment {
             CorrespondenceId = id, FileName = file.FileName,
-            FilePath = $"/uploads/correspondence/{name}", FileSize = file.Length
+            FilePath = r2Path, FileSize = file.Length
         });
         await _db.SaveChangesAsync();
-        return Ok(new { filePath = $"/uploads/correspondence/{name}", fileName = file.FileName });
+        return Ok(new { filePath = r2Path, fileName = file.FileName });
     }
 
     // GET: Unread count

@@ -75,13 +75,11 @@ public class StartupsController : ControllerBase {
         var fileName = $"{id}_{Guid.NewGuid():N}{ext}";
         var filePath = Path.Combine(uploadsPath, fileName);
 
-        using var stream = new FileStream(filePath, FileMode.Create);
-        await file.CopyToAsync(stream);
-
+        var r2Path = await _storage.SaveFileAsync(file, "startups", fileName);
         var attachment = new StartupAttachment {
             StartupId = id,
             FileName = file.FileName,
-            FilePath = $"/uploads/startups/{fileName}",
+            FilePath = r2Path,
             FileSize = file.Length
         };
         _db.StartupAttachments.Add(attachment);

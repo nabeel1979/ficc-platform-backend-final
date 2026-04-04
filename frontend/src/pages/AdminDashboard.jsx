@@ -1670,7 +1670,7 @@ const cleanSocialUrl = (v) => {
                 }
                 const label = labels[k] || k
                 // رقم الغرفة → اسمها
-                let display = !v ? '—' : (typeof v === 'string' && v.length > 150 ? v.slice(0,150)+'...' : String(v))
+                let display = (v === null || v === undefined || v === '') ? '—' : (typeof v === 'string' && v.length > 150 ? v.slice(0,150)+'...' : String(v))
                 if (k === 'chamberId' && v) {
                   const ch = chambers?.find(c => c.id === parseInt(v))
                   if (ch) display = ch.name

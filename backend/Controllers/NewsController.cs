@@ -129,10 +129,9 @@ public class NewsController : ControllerBase {
             if (file.Length > 5_000_000) continue;
             var ext  = Path.GetExtension(file.FileName).ToLower();
             var name = $"{id}_{Guid.NewGuid():N}{ext}";
-            var path = Path.Combine(uploadsDir, name);
-            using var stream = System.IO.File.Create(path);
-            await file.CopyToAsync(stream);
-            newUrls.Add($"/uploads/news/{name}");
+            // Upload to R2 via StorageService
+            var r2Url = await _storage.SaveFileAsync(file, "news", name);
+            newUrls.Add(r2Url);
         }
 
         // Merge: existing + new (max 5 total)

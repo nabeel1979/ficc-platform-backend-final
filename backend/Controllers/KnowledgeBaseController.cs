@@ -72,11 +72,8 @@ public class KnowledgeBaseController : ControllerBase {
         var folder = _storage.GetFolder("knowledge");
         Directory.CreateDirectory(folder);
         var fileName = $"{Guid.NewGuid()}{ext}";
-        var fullPath = Path.Combine(folder, fileName);
-        using var stream = System.IO.File.Create(fullPath);
-        await file.CopyToAsync(stream);
-        var relativePath = $"/uploads/knowledge/{fileName}";
-        return Ok(new { path = relativePath, name = file.FileName });
+        var r2Path = await _storage.SaveFileAsync(file, "knowledge", fileName);
+        return Ok(new { path = r2Path, name = file.FileName });
     }
 
     // POST /api/knowledge/import-excel — استيراد Excel
