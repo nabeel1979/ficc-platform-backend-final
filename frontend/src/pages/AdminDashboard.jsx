@@ -1002,7 +1002,7 @@ const FIELDS = {
   ],
   traderdirectory: [
     {key:'tradeName',label:'الاسم التجاري',required:true},
-    {key:'businessType',label:'نوع النشاط التجاري',type:'searchable-select',options:['تجارة عامة','استيراد وتصدير','تجارة جملة','تجارة مفرد','مقاولات وإنشاءات','صناعة وتصنيع','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','أخرى']},
+    {key:'businessType',label:'نوع النشاط التجاري',type:'searchable-select',constantsKey:'trader_business_type',options:['تجارة عامة','استيراد وتصدير','تجارة جملة','تجارة مفرد','مقاولات وإنشاءات','صناعة وتصنيع','خدمات مهنية','تكنولوجيا ومعلوماتية','نقل ولوجستيات','زراعة وأغذية','صحة وصيدلة','تعليم وتدريب','سياحة وفنادق','عقارات','مالية وتأمين','أخرى']},
     {key:'tradeCategory',label:'التصنيف التجاري',type:'searchable-select',constantsKey:'trader_classification',options:['شركة ذات مسؤولية محدودة','شركة مساهمة','مؤسسة فردية','شركة تضامن','وكالة تجارية','فرع شركة أجنبية','تعاونية','أخرى']},
     {key:'chamberName',label:'الغرفة التجارية',type:'chamberSelect'},
     {key:'ownerName',label:'صاحب العمل'},
@@ -1514,18 +1514,7 @@ const cleanSocialUrl = (v) => {
             )}
             <h4 style={{color:'#2C3E6B',fontWeight:'700',marginBottom:'10px'}}>📋 البيانات المدخلة:</h4>
             <div style={{background:'#F5F7FA',borderRadius:'12px',padding:'16px',marginBottom:'16px'}}>
-              {/* الصورة الشخصية دائماً */}
-              {(['member','lawyer','trader','shipping','agent'].includes(selected.entityType)) && (
-                <div style={{display:'flex',gap:'12px',padding:'12px 0',borderBottom:'1px solid #e5e7eb',alignItems:'center'}}>
-                  <span style={{color:'#666',fontSize:'12px',minWidth:'130px',flexShrink:0}}>الصورة الشخصية:</span>
-                  {selected.formData?._photo ? (
-                    <img src={buildImageUrl(selected.formData._photo)}
-                      alt="صورة" onClick={()=>setLightbox(buildImageUrl(selected.formData._photo))} style={{width:'80px',height:'80px',borderRadius:'50%',objectFit:'cover',border:'3px solid #2C3E6B',cursor:'zoom-in'}} />
-                  ) : (
-                    <div style={{width:'80px',height:'80px',borderRadius:'50%',background:'#f5f5f5',border:'2px dashed #ddd',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'24px'}}>👤</div>
-                  )}
-                </div>
-              )}
+              {/* الصورة الشخصية تظهر في الأعلى فقط */}
               {/* منصات التواصل دائماً */}
               {(['member','lawyer','trader','shipping','agent','chamber'].includes(selected.entityType)) && (() => {
                 const socialLabels = {facebook:'فيسبوك',twitter:'تويتر',instagram:'انستغرام',linkedin:'لينكدإن',youtube:'يوتيوب',whatsapp:'واتساب',whatsApp:'واتساب',telegram:'تيليغرام',youTube:'يوتيوب'}
