@@ -74,9 +74,11 @@ public class AuthController : ControllerBase {
         if (user == null) return Unauthorized(new { message = "المستخدم غير موجود" });
 
         // Verify OTP from DB
+        var otpChannel = dto.Channel?.ToLower() ?? "email";
         var otp = await _db.OtpCodes.FirstOrDefaultAsync(o =>
             o.UserId == user.Id && o.Code == dto.Code && o.Type == "login" &&
-            o.Channel == dto.Channel && o.UsedAt == null && o.ExpiresAt > DateTime.UtcNow);
+            (o.Channel.ToLower() == otpChannel || o.Channel.ToLower() == "email" || o.Channel.ToLower() == "sms") &&
+            o.UsedAt == null && o.ExpiresAt > DateTime.UtcNow);
         if (otp == null) return BadRequest(new { message = "الرمز غير صحيح أو منتهي الصلاحية" });
 
         otp.UsedAt = DateTime.UtcNow;

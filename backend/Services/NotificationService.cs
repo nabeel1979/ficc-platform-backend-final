@@ -14,7 +14,65 @@ public class NotificationService {
     }
 
     public async Task<bool> SendEmail(string toEmail, string subject, string body) {
-        // Try Brevo HTTP API first (reliable)
+        // Try ZeptoMail API first (configured for ficc.iq domain)
+        var zeptoApiKey2 = _cfg["ZeptoMail:ApiKey"];
+        var zeptoFrom2 = _cfg["ZeptoMail:From"] ?? "no.reply@ficc.iq";
+        var zeptoFromName2 = _cfg["ZeptoMail:FromName"] ?? "اتحاد الغرف التجارية العراقية";
+        if (!string.IsNullOrEmpty(zeptoApiKey2)) {
+            var sent2 = await SendViaZeptoMail(toEmail, subject, body, zeptoApiKey2);
+            if (sent2) return true;
+        }
+        // Try Mailjet API first (most reliable - no SMTP port issues)
+        var mailjetApiKey = _cfg["Mailjet:ApiKey"];
+        var mailjetSecret = _cfg["Mailjet:SecretKey"];
+        if (!string.IsNullOrEmpty(mailjetApiKey) && !string.IsNullOrEmpty(mailjetSecret)) {
+            try {
+                using var mjHttp = new HttpClient();
+                var credentials = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"{mailjetApiKey}:{mailjetSecret}"));
+                mjHttp.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", credentials);
+                var fromEmail = _cfg["Mailjet:From"] ?? "noreply@ficc.iq";
+                var fromName = "اتحاد الغرف التجارية العراقية";
+                var mjPayload = new {
+                    Messages = new[] {
+                        new {
+                            From = new { Email = fromEmail, Name = fromName },
+                            To = new[] { new { Email = toEmail } },
+                            Subject = subject,
+                            HTMLPart = body
+                        }
+                    }
+                };
+                var mjContent = new StringContent(System.Text.Json.JsonSerializer.Serialize(mjPayload), System.Text.Encoding.UTF8, "application/json");
+                var mjResp = await mjHttp.PostAsync("https://api.mailjet.com/v3.1/send", mjContent);
+                var mjBody = await mjResp.Content.ReadAsStringAsync();
+                _log.LogInformation("Mailjet send to {Email}: {Status} {Body}", toEmail, mjResp.StatusCode, mjBody.Substring(0, Math.Min(200, mjBody.Length)));
+                if (mjResp.IsSuccessStatusCode) return true;
+            } catch (Exception ex) {
+                _log.LogError(ex, "Mailjet send failed");
+            }
+        }
+        // Try Brevo SMTP first (most reliable)
+        var brevoSmtpUser = _cfg["BrevoSmtp:Username"];
+        var brevoSmtpPass = _cfg["BrevoSmtp:Password"];
+        if (!string.IsNullOrEmpty(brevoSmtpUser) && !string.IsNullOrEmpty(brevoSmtpPass)) {
+            try {
+                using var brevoSmtp = new System.Net.Mail.SmtpClient("smtp-relay.brevo.com", 587) {
+                    EnableSsl = true,
+                    Credentials = new System.Net.NetworkCredential(brevoSmtpUser, brevoSmtpPass)
+                };
+                var brevoMsg = new System.Net.Mail.MailMessage {
+                    From = new System.Net.Mail.MailAddress("noreply@ficc.iq", "اتحاد الغرف التجارية العراقية"),
+                    Subject = subject, Body = body, IsBodyHtml = true
+                };
+                brevoMsg.To.Add(toEmail);
+                await brevoSmtp.SendMailAsync(brevoMsg);
+                _log.LogInformation("Brevo SMTP sent to {Email}", toEmail);
+                return true;
+            } catch (Exception ex) {
+                _log.LogError(ex, "Brevo SMTP failed, trying API");
+            }
+        }
+        // Try Brevo HTTP API
         var brevoKey = _cfg["Brevo:ApiKey"];
         if (!string.IsNullOrEmpty(brevoKey) && !brevoKey.Contains("YOUR_BREVO")) {
             return await SendViaBrevo(toEmail, subject, body, brevoKey);
@@ -25,7 +83,6 @@ public class NotificationService {
         if (!string.IsNullOrEmpty(zeptoKey)) {
             var sent = await SendViaZeptoMail(toEmail, subject, body, zeptoKey);
             if (sent) return true;
-            // fallback to Zoho SMTP if ZeptoMail fails
         }
 
         // Zoho SMTP fallback

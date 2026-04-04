@@ -32,9 +32,6 @@ public class OtpController : ControllerBase {
             if (string.IsNullOrEmpty(user.Phone))
                 return BadRequest(new { message = "لا يوجد رقم هاتف مسجل" });
 
-            // ⚠️ تعطيل WhatsApp مؤقتاً (UltraMsg معطل)
-            return BadRequest(new { message = "خدمة الواتساب معطّلة مؤقتاً. استخدم البريد الإلكتروني بدلاً منها 📧", disabled = true });
-            
             // SuperAdmin مستثنى من جميع القيود
             if (!isSuperAdmin) {
                 // فحص تعطيل SMS كلياً

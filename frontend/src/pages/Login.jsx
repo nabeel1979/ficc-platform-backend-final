@@ -114,7 +114,8 @@ export default function Login({ onLogin }) {
     if (!form.otp) { setMsg('أدخل الرمز'); return }
     setLoading(true); setMsg('')
     try {
-      const r = await api.post(`${API}/auth/login-otp-verify`, { username: form.username, code: form.otp, channel })
+      const verifyChannel = channel || (contactInfo?.hasEmail ? 'email' : 'sms')
+      const r = await api.post(`${API}/auth/login-otp-verify`, { username: form.username, code: form.otp, channel: verifyChannel })
       localStorage.setItem('ficc_token', r.data.token)
       localStorage.setItem('ficc_user', JSON.stringify(r.data.user))
       if (onLogin) onLogin(r.data)

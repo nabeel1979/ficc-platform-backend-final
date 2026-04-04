@@ -18,7 +18,7 @@ export default function Members() {
       const params = {}
       if (search) params.search = search
       const r = await api.get(`${API}/members`, { params })
-      setMembers(Array.isArray(r.data) ? r.data : [])
+      setMembers(Array.isArray(r.data) ? r.data : (r.data?.items || []))
     } catch { setMembers([]) }
     setLoading(false)
   }
