@@ -28,6 +28,7 @@ function getCatStyle(cat) {
 }
 
 export default function News() {
+  const navigate = useNavigate()
   const [news, setNews]         = useState([])
   const [loading, setLoading]   = useState(true)
   const [search, setSearch]     = useState('')
@@ -95,7 +96,7 @@ export default function News() {
                   ⭐ الأخبار المميزة
                 </h2>
                 <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(400px,1fr))', gap:'20px'}}>
-                  {featured.map(n => <NewsCard key={n.id} item={n} featured onClick={() => setSelected(n)} />)}
+                  {featured.map(n => <NewsCard key={n.id} item={n} featured onClick={() => navigate(`/news/${n.id}`)} />)}
                 </div>
               </div>
             )}
@@ -106,7 +107,7 @@ export default function News() {
                 <h2 style={{color:'#2C3E6B', fontWeight:'800', fontSize:'18px', margin:'0 0 16px'}}>📋 آخر الأخبار</h2>
               )}
               <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(340px,1fr))', gap:'20px'}}>
-                {(search || category ? news : regular).map(n => <NewsCard key={n.id} item={n} onClick={() => setSelected(n)} />)}
+                {(search || category ? news : regular).map(n => <NewsCard key={n.id} item={n} onClick={() => navigate(`/news/${n.id}`)} />)}
               </div>
             </div>
           </>

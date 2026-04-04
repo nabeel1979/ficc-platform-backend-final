@@ -12,7 +12,7 @@ public class OgController : ControllerBase {
 
     private string BuildHtml(string title, string description, string imageUrl, string pageUrl, string scheme, string host) {
         // Always use https for image URLs (required by WhatsApp/Telegram)
-        var abs = string.IsNullOrEmpty(imageUrl) ? "" : (imageUrl.StartsWith("http") ? imageUrl.Replace("http://", "https://") : $"https://{host}{imageUrl}");
+        var abs = string.IsNullOrEmpty(imageUrl) ? "" : (imageUrl.Contains("://") ? imageUrl.Replace("http://", "https://") : $"https://{host}{imageUrl}");
         return $@"<!DOCTYPE html>
 <html lang=""ar"" dir=""rtl"">
 <head>
@@ -55,6 +55,19 @@ public class OgController : ControllerBase {
         var desc = item.Description?.Length>200 ? item.Description[..200]+"..." : item.Description ?? $"غرفة تجارة {item.Governorate} — {item.MemberCount} عضو";
         return Content(BuildHtml(item.Name, desc, item.LogoUrl ?? "", $"{Request.Scheme}://{Request.Host}/chambers/{id}", Request.Scheme, Request.Host.ToString()), "text/html; charset=utf-8");
     }
+    [HttpGet("directory/index")]
+    public IActionResult DirectoryOg() {
+        var host = Request.Host.ToString();
+        var R2 = "https://pub-be4a1829a4e84fc0b477dfe8adb915ef.r2.dev";
+        return Content(BuildHtml(
+            "دليل التجار | اتحاد الغرف التجارية العراقية",
+            "دليل شامل للشركات والمنشآت التجارية العراقية المسجلة في اتحاد الغرف التجارية",
+            $"{R2}/ficc-logo.jpg",
+            $"https://{host}/directory",
+            Request.Scheme, host
+        ), "text/html; charset=utf-8");
+    }
+
     [HttpGet("traders/{id}")]
     public async Task<IActionResult> TraderOg(int id) {
         var item = await _db.TraderDirectory.FindAsync(id);
@@ -232,7 +245,7 @@ public class OgController : ControllerBase {
     public IActionResult StartupsOg() {
         var host = Request.Host.ToString();
         var pageUrl = $"https://{host}/startups";
-        var logoUrl = $"https://{host}/uploads/logo.png";
+        var logoUrl = $"https://{host}https://pub-be4a1829a4e84fc0b477dfe8adb915ef.r2.dev/ficc-logo.jpg";
         return Content(BuildHtml(
             "قسم ريادة الأعمال — اتحاد الغرف التجارية العراقية",
             "قدّم مشروعك الريادي واحصل على دعم اتحاد الغرف التجارية العراقية",
@@ -246,7 +259,7 @@ public class OgController : ControllerBase {
     public IActionResult ChatOg() {
         var host = Request.Host.ToString();
         var pageUrl = $"https://{host}/chat";
-        var img = $"https://{host}/uploads/ficc-logo.jpg";
+        var img = $"https://{host}https://pub-be4a1829a4e84fc0b477dfe8adb915ef.r2.dev/ficc-logo.jpg";
         return Content(BuildHtml(
             "راسلنا | اتحاد الغرف التجارية العراقية",
             "تواصل مع اتحاد الغرف التجارية العراقية — احصل على إجابات فورية لاستفساراتك التجارية والجمركية",
@@ -260,7 +273,7 @@ public class OgController : ControllerBase {
         var host = Request.Host.ToString();
         var scheme = Request.Scheme;
         var pageUrl = $"https://{host}/subscribe";
-        var img = $"https://{host}/uploads/ficc-logo.jpg";
+        var img = $"https://{host}https://pub-be4a1829a4e84fc0b477dfe8adb915ef.r2.dev/ficc-logo.jpg";
         return Content(BuildHtml(
             "سجّل متابعاً | اتحاد الغرف التجارية العراقية",
             "سجّل الآن لتصلك آخر الأخبار والإعلانات من اتحاد الغرف التجارية العراقية — اختر قطاعاتك وطريقة الإشعار المفضّلة",
@@ -275,7 +288,7 @@ public class OgController : ControllerBase {
         var host = Request.Host.ToString();
         var pageUrl = $"https://{host}/startups/{id}";
         if (s == null) return Redirect(pageUrl);
-        var img = s.Attachments?.FirstOrDefault(a => a.FilePath.Contains(".jpg") || a.FilePath.Contains(".jpeg") || a.FilePath.Contains(".png"))?.FilePath ?? $"/uploads/logo.png";
+        var img = s.Attachments?.FirstOrDefault(a => a.FilePath.Contains(".jpg") || a.FilePath.Contains(".jpeg") || a.FilePath.Contains(".png"))?.FilePath ?? $"https://pub-be4a1829a4e84fc0b477dfe8adb915ef.r2.dev/ficc-logo.jpg";
         return Content(BuildHtml(
             $"{s.Name} — ريادة الأعمال",
             $"{s.Description ?? s.OwnerName} | {s.Sector}",
