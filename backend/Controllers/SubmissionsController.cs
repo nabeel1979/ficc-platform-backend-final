@@ -34,24 +34,26 @@ public class SubmissionsController : ControllerBase {
         var ts = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var uploadsBase = _storage.GetFolder("submissions");
         Directory.CreateDirectory(uploadsBase);
+        Console.WriteLine($"[R2] enabled={_storage.IsR2Enabled}, bucket=ficcmedia");
         foreach (var imgKey in imageKeys) {
-            if (formDataClean.TryGetValue(imgKey, out var imgVal) && imgVal is System.Text.Json.JsonElement je && je.ValueKind == JsonValueKind.String) {
-                var raw = je.GetString() ?? "";
-                if (raw.StartsWith("data:")) {
+            if (formDataClean.TryGetValue(imgKey, out var imgVal)) {
+                string raw = "";
+                if (imgVal is System.Text.Json.JsonElement je2 && je2.ValueKind == JsonValueKind.String)
+                    raw = je2.GetString() ?? "";
+                else if (imgVal is string s2)
+                    raw = s2;
+                if (!string.IsNullOrEmpty(raw) && raw.StartsWith("data:")) {
                     try {
                         var ext = raw.Contains("png") ? ".png" : raw.Contains("gif") ? ".gif" : ".jpg";
                         var b64 = raw.Contains(",") ? raw.Split(',')[1] : raw;
                         var fn = $"{dto.EntityType}_{imgKey.TrimStart('_')}_{ts}{ext}";
                         var bytes = Convert.FromBase64String(b64);
-                        // Try R2 first
-                        // Upload to R2 via StorageService
-                        using var ms = new MemoryStream(bytes);
-                        var ext2 = ext.TrimStart('.');
+                        Console.WriteLine($"[R2] Uploading {imgKey} → submissions/{fn} ({bytes.Length} bytes)");
                         var r2Url = await _storage.SaveFileBytesAsync(bytes, $"submissions/{fn}");
+                        Console.WriteLine($"[R2] Result for {imgKey}: {r2Url ?? "NULL"}");
                         formDataClean[imgKey] = r2Url ?? $"/uploads/submissions/{fn}";
-                        // Also save locally as fallback
                         try { await System.IO.File.WriteAllBytesAsync(Path.Combine(uploadsBase, fn), bytes); } catch { }
-                    } catch { /* keep original if save fails */ }
+                    } catch (Exception ex) { Console.WriteLine($"[R2] Error for {imgKey}: {ex.Message}"); }
                 }
             }
         }
@@ -256,7 +258,14 @@ public class SubmissionsController : ControllerBase {
             if(string.IsNullOrEmpty(yt2)) yt2=gf("youtube");
             if(string.IsNullOrEmpty(wa2)) wa2=gf("whatsApp");
             if(string.IsNullOrEmpty(tg2)) tg2=gf("telegram");
-            return (fb2,tw2,ig2,li2,yt2,wa2,tg2,"");
+            // تنظيف الروابط من النص الزيادة
+            string cleanUrl(string v) {
+                if (string.IsNullOrEmpty(v)) return v;
+                var trimmed = v.Trim();
+                var spaceIdx = trimmed.IndexOfAny(new char[]{' ', '\t', '\n', '\r'});
+                return spaceIdx > 0 ? trimmed.Substring(0, spaceIdx) : trimmed;
+            }
+            return (cleanUrl(fb2),cleanUrl(tw2),cleanUrl(ig2),cleanUrl(li2),cleanUrl(yt2),cleanUrl(wa2),cleanUrl(tg2),"");
         }
 
         int createdId = 0;
@@ -331,9 +340,9 @@ public class SubmissionsController : ControllerBase {
                     Email = getString("email"), Description = getString("description"),
                     TradeCategory = getString("tradeCategory"),
                     ChamberId = traderChamberId, ChamberName = traderChamberName,
-                    PhotoUrl = string.IsNullOrEmpty(traderPhotoUrl) ? null : traderPhotoUrl,
-                    IdFileUrl = getString("_idFile"),
-                    IdFileBackUrl = getString("_idFileBack"),
+                    PhotoUrl = string.IsNullOrEmpty(traderPhotoUrl) ? null : (traderPhotoUrl.StartsWith("data:") ? null : traderPhotoUrl),
+                    IdFileUrl = (getString("_idFile") is var idF && !string.IsNullOrEmpty(idF) && !idF.StartsWith("data:")) ? idF : null,
+                    IdFileBackUrl = (getString("_idFileBack") is var idFB && !string.IsNullOrEmpty(idFB) && !idFB.StartsWith("data:")) ? idFB : null,
                     Facebook = fbVal, Instagram = igVal, Twitter = twVal,
                     WhatsApp = waVal, Telegram = tgVal, YouTube = ytVal,
                     Notes = getString("notes"),

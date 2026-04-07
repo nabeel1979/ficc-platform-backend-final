@@ -98,7 +98,8 @@ public class StorageService {
                 Key         = key,
                 InputStream = ms,
                 ContentType = key.EndsWith(".png") ? "image/png" : key.EndsWith(".gif") ? "image/gif" : "image/jpeg",
-                CannedACL   = S3CannedACL.PublicRead
+                CannedACL   = S3CannedACL.PublicRead,
+                DisablePayloadSigning = true
             };
             await _s3.PutObjectAsync(request);
             return $"{_publicUrl}/{key}";
