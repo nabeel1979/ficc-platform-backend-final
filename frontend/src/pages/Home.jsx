@@ -142,6 +142,34 @@ function CouncilMembers() {
         </div>
       </div>
     </section>
+
+    {/* قسم الموقع على الخريطة */}
+    <section style={{ background: '#1a2a4a', padding: '48px 20px' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#fff', marginBottom: '6px' }}>📍 موقعنا</h2>
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px' }}>اتحاد الغرف التجارية العراقية — شارع السعدون، الرصافة، بغداد</p>
+        </div>
+        <div style={{ borderRadius: '20px', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', marginBottom: '16px' }}>
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d832.3!2d44.39614!3d33.34065!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x61c6d0ace17f693b%3A0x8585bf35223675e0!2z2KfYqtit2KfYryDYp9mE2LrYsdmB2Kcg2KfZhNiq2KrYp9ix2Kkg2KfZhNi52YLYp9mC2Kk!5e0!3m2!1sar!2siq!4v1681000000000!5m2!1sar!2siq"
+            width="100%"
+            height="350"
+            style={{ border: 0, display: 'block' }}
+            allowFullScreen=""
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title="موقع اتحاد الغرف التجارية العراقية"
+          />
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <a href="https://maps.app.goo.gl/HJHisaK4AsEEzhnC8" target="_blank" rel="noreferrer"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 28px', borderRadius: '12px', background: '#FFC72C', color: '#1a1a2e', fontWeight: '800', fontSize: '14px', textDecoration: 'none', fontFamily: 'Cairo,sans-serif' }}>
+            🗺️ فتح في Google Maps
+          </a>
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -213,6 +241,34 @@ function LatestNewsSection() {
         </div>
       </div>
     </section>
+
+    {/* قسم الموقع على الخريطة */}
+    <section style={{ background: '#1a2a4a', padding: '48px 20px' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#fff', marginBottom: '6px' }}>📍 موقعنا</h2>
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px' }}>اتحاد الغرف التجارية العراقية — شارع السعدون، الرصافة، بغداد</p>
+        </div>
+        <div style={{ borderRadius: '20px', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', marginBottom: '16px' }}>
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d832.3!2d44.39614!3d33.34065!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x61c6d0ace17f693b%3A0x8585bf35223675e0!2z2KfYqtit2KfYryDYp9mE2LrYsdmB2Kcg2KfZhNiq2KrYp9ix2Kkg2KfZhNi52YLYp9mC2Kk!5e0!3m2!1sar!2siq!4v1681000000000!5m2!1sar!2siq"
+            width="100%"
+            height="350"
+            style={{ border: 0, display: 'block' }}
+            allowFullScreen=""
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title="موقع اتحاد الغرف التجارية العراقية"
+          />
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <a href="https://maps.app.goo.gl/HJHisaK4AsEEzhnC8" target="_blank" rel="noreferrer"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 28px', borderRadius: '12px', background: '#FFC72C', color: '#1a1a2e', fontWeight: '800', fontSize: '14px', textDecoration: 'none', fontFamily: 'Cairo,sans-serif' }}>
+            🗺️ فتح في Google Maps
+          </a>
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -257,6 +313,34 @@ function AboutSection() {
               <p style={{color:'#777',fontSize:'12px',lineHeight:'1.7',margin:0}}>{g(c.dk)}</p>
             </div>
           ))}
+        </div>
+      </div>
+    </section>
+
+    {/* قسم الموقع على الخريطة */}
+    <section style={{ background: '#1a2a4a', padding: '48px 20px' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#fff', marginBottom: '6px' }}>📍 موقعنا</h2>
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px' }}>اتحاد الغرف التجارية العراقية — شارع السعدون، الرصافة، بغداد</p>
+        </div>
+        <div style={{ borderRadius: '20px', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', marginBottom: '16px' }}>
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d832.3!2d44.39614!3d33.34065!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x61c6d0ace17f693b%3A0x8585bf35223675e0!2z2KfYqtit2KfYryDYp9mE2LrYsdmB2Kcg2KfZhNiq2KrYp9ix2Kkg2KfZhNi52YLYp9mC2Kk!5e0!3m2!1sar!2siq!4v1681000000000!5m2!1sar!2siq"
+            width="100%"
+            height="350"
+            style={{ border: 0, display: 'block' }}
+            allowFullScreen=""
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title="موقع اتحاد الغرف التجارية العراقية"
+          />
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <a href="https://maps.app.goo.gl/HJHisaK4AsEEzhnC8" target="_blank" rel="noreferrer"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 28px', borderRadius: '12px', background: '#FFC72C', color: '#1a1a2e', fontWeight: '800', fontSize: '14px', textDecoration: 'none', fontFamily: 'Cairo,sans-serif' }}>
+            🗺️ فتح في Google Maps
+          </a>
         </div>
       </div>
     </section>
@@ -310,6 +394,34 @@ function RegisterSection() {
               fontFamily:'Cairo,sans-serif',fontWeight:'800',fontSize:'15px',
               boxShadow:'0 4px 20px rgba(255,199,44,0.4)'}}>
             ✅ انضم كعضو في الاتحاد
+          </a>
+        </div>
+      </div>
+    </section>
+
+    {/* قسم الموقع على الخريطة */}
+    <section style={{ background: '#1a2a4a', padding: '48px 20px' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#fff', marginBottom: '6px' }}>📍 موقعنا</h2>
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px' }}>اتحاد الغرف التجارية العراقية — شارع السعدون، الرصافة، بغداد</p>
+        </div>
+        <div style={{ borderRadius: '20px', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', marginBottom: '16px' }}>
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d832.3!2d44.39614!3d33.34065!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x61c6d0ace17f693b%3A0x8585bf35223675e0!2z2KfYqtit2KfYryDYp9mE2LrYsdmB2Kcg2KfZhNiq2KrYp9ix2Kkg2KfZhNi52YLYp9mC2Kk!5e0!3m2!1sar!2siq!4v1681000000000!5m2!1sar!2siq"
+            width="100%"
+            height="350"
+            style={{ border: 0, display: 'block' }}
+            allowFullScreen=""
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title="موقع اتحاد الغرف التجارية العراقية"
+          />
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <a href="https://maps.app.goo.gl/HJHisaK4AsEEzhnC8" target="_blank" rel="noreferrer"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 28px', borderRadius: '12px', background: '#FFC72C', color: '#1a1a2e', fontWeight: '800', fontSize: '14px', textDecoration: 'none', fontFamily: 'Cairo,sans-serif' }}>
+            🗺️ فتح في Google Maps
           </a>
         </div>
       </div>
@@ -387,6 +499,34 @@ function YouTubeSection() {
             </a>
           </div>
         )}
+      </div>
+    </section>
+
+    {/* قسم الموقع على الخريطة */}
+    <section style={{ background: '#1a2a4a', padding: '48px 20px' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#fff', marginBottom: '6px' }}>📍 موقعنا</h2>
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px' }}>اتحاد الغرف التجارية العراقية — شارع السعدون، الرصافة، بغداد</p>
+        </div>
+        <div style={{ borderRadius: '20px', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', marginBottom: '16px' }}>
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d832.3!2d44.39614!3d33.34065!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x61c6d0ace17f693b%3A0x8585bf35223675e0!2z2KfYqtit2KfYryDYp9mE2LrYsdmB2Kcg2KfZhNiq2KrYp9ix2Kkg2KfZhNi52YLYp9mC2Kk!5e0!3m2!1sar!2siq!4v1681000000000!5m2!1sar!2siq"
+            width="100%"
+            height="350"
+            style={{ border: 0, display: 'block' }}
+            allowFullScreen=""
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title="موقع اتحاد الغرف التجارية العراقية"
+          />
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <a href="https://maps.app.goo.gl/HJHisaK4AsEEzhnC8" target="_blank" rel="noreferrer"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 28px', borderRadius: '12px', background: '#FFC72C', color: '#1a1a2e', fontWeight: '800', fontSize: '14px', textDecoration: 'none', fontFamily: 'Cairo,sans-serif' }}>
+            🗺️ فتح في Google Maps
+          </a>
+        </div>
       </div>
     </section>
   )
