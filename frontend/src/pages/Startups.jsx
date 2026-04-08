@@ -139,7 +139,7 @@ function CourseApplyModal({ course, onClose }) {
   const submit = async (e) => {
     e.preventDefault(); setLoading(true); setMsg('')
     try {
-      await api.post(`/api/courses/${course.id}/apply`, form)
+      await api.post(`/courses/${course.id}/apply`, form)
       setSuccess(true)
     } catch(err) {
       setMsg(err.response?.data?.message || 'حدث خطأ، حاول مرة أخرى')
@@ -193,10 +193,11 @@ function CoursesSection() {
   const [filter, setFilter] = useState('all')
   const [applying, setApplying] = useState(null)
   const [contact, setContact] = useState({ email:'', phone1:'', phone2:'' })
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get('/api/courses').then(r => setCourses(r.data)).catch(()=>{})
-    api.get('/api/constants/startup_contact').then(r => {
+    api.get('/courses').then(r => setCourses(r.data)).catch(()=>{}).finally(()=>setLoading(false))
+    api.get('/constants/startup_contact').then(r => {
       const items = r.data || []
       setContact({
         email: items.find(i => i.label?.includes('البريد') || i.sortOrder===1)?.value || '',
@@ -209,11 +210,11 @@ function CoursesSection() {
   const filtered = filter==='all' ? courses : courses.filter(c=>c.status===filter)
   const counts = { all:courses.length, upcoming:courses.filter(c=>c.status==='upcoming').length, ongoing:courses.filter(c=>c.status==='ongoing').length, completed:courses.filter(c=>c.status==='completed').length }
 
-  if (courses.length === 0) return null
 
   return (
-    <div style={{marginBottom:28}}>
+    <div style={{marginBottom:28,background:'#f8fafc',borderRadius:16,padding:20}}>
       {applying && <CourseApplyModal course={applying} onClose={()=>setApplying(null)} />}
+      {loading && <div style={{textAlign:'center',padding:20,color:'#94a3b8',fontSize:13}}>⏳ جارٍ تحميل الدورات...</div>}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:10}}>
         <div>
           <h2 style={{fontSize:18,fontWeight:800,color:'#2C3E6B',marginBottom:4}}>🎓 الدورات الريادية</h2>
@@ -380,9 +381,6 @@ export default function Startups() {
         </button>
       </div>
 
-      {/* قسم الدورات الريادية */}
-      <CoursesSection />
-
       {/* Stats */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',gap:'12px',marginBottom:'24px'}}>
         {[
@@ -399,6 +397,10 @@ export default function Startups() {
         ))}
       </div>
 
+
+      {/* قسم الدورات الريادية */}
+      <CoursesSection />
+
       {/* Success message */}
       {success && (
         <div style={{background:'#F0FDF4',border:'1px solid #bbf7d0',borderRadius:'12px',padding:'16px',marginBottom:'16px',color:'#16a34a',fontWeight:'700'}}>
@@ -410,13 +412,9 @@ export default function Startups() {
       {loading ? (
         <div style={{textAlign:'center',padding:'40px',color:'#94a3b8'}}>⏳ جاري التحميل...</div>
       ) : startups.length === 0 ? (
-        <div style={{textAlign:'center',padding:'60px',background:'white',borderRadius:'16px',border:'2px dashed #e2e8f0'}}>
-          <div style={{fontSize:'48px',marginBottom:'16px'}}>🚀</div>
-          <p style={{color:'#94a3b8',fontSize:'16px'}}>لا توجد مشاريع بعد — كن أول من يقدّم!</p>
-          <button onClick={() => setShowForm(true)}
-            style={{background:'#2C3E6B',color:'white',border:'none',padding:'12px 24px',borderRadius:'10px',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',marginTop:'12px'}}>
-            قدّم مشروعك
-          </button>
+        <div style={{textAlign:'center',padding:'40px',background:'white',borderRadius:'16px',border:'2px dashed #e2e8f0'}}>
+          <div style={{fontSize:'48px',marginBottom:'12px'}}>🚀</div>
+          <p style={{color:'#94a3b8',fontSize:'15px'}}>لا توجد مشاريع بعد — كن أول من يقدّم!</p>
         </div>
       ) : (
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:'16px'}}>

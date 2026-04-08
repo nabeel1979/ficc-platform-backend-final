@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import AdminCoursesPage from './AdminCourses'
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
 import api from '../lib/api'
 
@@ -23,6 +24,7 @@ const NAV = [
   { to: '/admin/knowledge',   label: 'قاعدة المعرفة',    icon: '🧠' },
   { to: '/admin/chats',       label: 'المحادثات',         icon: '💬' },
   { to: '/admin/startups',   label: 'ريادة الأعمال',   icon: '🚀' },
+  { to: '/admin/courses',    label: 'الدورات الريادية', icon: '🎓' },
   { to: '/admin/constants',  label: 'ثوابت النظام',    icon: '⚙️' },
   { to: '/admin/security',   label: 'إدارة الأمان',    icon: '🔒' },
   { to: '/admin/contacts',    label: 'إدارة جهات الاتصال', icon: '📋' },
@@ -1251,6 +1253,7 @@ export default function AdminDashboard() {
           <Route path="knowledge" element={<KnowledgePanel />} />
           <Route path="chats" element={<AdminChatsPanel />} />
           <Route path="startups" element={<StartupsAdminPanel />} />
+          <Route path="courses" element={<AdminCoursesPage />} />
           <Route path="constants" element={<SystemConstantsPanel />} />
           <Route path="security" element={isSuperAdmin ? <SecurityPanel /> : <div style={{padding:'40px',textAlign:'center',color:'#dc2626',fontSize:'18px',fontWeight:'700'}}>⛔ غير مصرّح لك بالوصول</div>} />
         </Routes>
