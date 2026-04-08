@@ -5,6 +5,7 @@ const spinnerStyle = document.createElement('style')
 spinnerStyle.textContent = `@keyframes spin { to { transform: rotate(360deg) } } .ficc-spinner { display:inline-block;width:36px;height:36px;border:4px solid #e2e8f0;border-top-color:#2C3E6B;border-radius:50%;animation:spin 0.8s linear infinite; }`
 document.head.appendChild(spinnerStyle)
 import Startups from './pages/Startups'
+import Courses from './pages/Courses'
 import TrackRequest from './pages/TrackRequest'
 import JoinPage from './pages/JoinPage'
 import Navbar from './components/Navbar'
@@ -130,7 +131,8 @@ export default function App() {
       <Route path="/directory/:id" element={<Layout><TraderDetailPage /></Layout>} />
       <Route path="/customs-agents" element={<Layout><CustomsAgents /></Layout>} />
       <Route path="/lawyers" element={<Layout><Lawyers /></Layout>} />
-      <Route path="/startups" element={<Layout><Startups /></Layout>} />
+      <Route path="/courses" element={<Courses />} />
+          <Route path="/startups" element={<Layout><Startups /></Layout>} />
       <Route path="/track-request" element={<TrackRequest />} />
       <Route path="/join" element={<JoinPage />} />
       <Route path="/contact" element={<Layout><Contact /></Layout>} />

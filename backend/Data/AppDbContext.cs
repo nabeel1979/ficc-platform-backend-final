@@ -56,6 +56,9 @@ public class AppDbContext : DbContext {
     public DbSet<BlockedContact> BlockedContacts => Set<BlockedContact>();
     public DbSet<SystemConstant> SystemConstants => Set<SystemConstant>();
 
+    public DbSet<FICCPlatform.Models.EntrepreneurCourse> EntrepreneurCourses => Set<FICCPlatform.Models.EntrepreneurCourse>();
+    public DbSet<FICCPlatform.Models.CourseApplication> CourseApplications => Set<FICCPlatform.Models.CourseApplication>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         modelBuilder.Entity<ExhibitionParticipant>()
             .HasIndex(e => new { e.ExhibitionId, e.MemberId }).IsUnique();

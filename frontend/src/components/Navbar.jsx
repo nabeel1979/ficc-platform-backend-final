@@ -11,6 +11,7 @@ const navLinks = [
   { to: '/lawyers', icon: '⚖️', title: 'المحامون' },
   { to: '/news', icon: '📰', title: 'الأخبار' },
   { to: '/startups', icon: '🚀', title: 'ريادة الأعمال' },
+  { to: '/courses', icon: '🎓', title: 'الدورات' },
   { to: '/exhibitions', icon: '🎪', title: 'المعارض' },
   { to: '/conferences', icon: '🎤', title: 'المؤتمرات' },
 ]
