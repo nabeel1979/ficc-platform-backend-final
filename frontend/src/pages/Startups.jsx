@@ -192,9 +192,18 @@ function CoursesSection() {
   const [courses, setCourses] = useState([])
   const [filter, setFilter] = useState('all')
   const [applying, setApplying] = useState(null)
+  const [contact, setContact] = useState({ email:'', phone1:'', phone2:'' })
 
   useEffect(() => {
     api.get('/api/courses').then(r => setCourses(r.data)).catch(()=>{})
+    api.get('/api/constants/startup_contact').then(r => {
+      const items = r.data || []
+      setContact({
+        email: items.find(i => i.label?.includes('البريد') || i.sortOrder===1)?.value || '',
+        phone1: items.find(i => i.label?.includes('الأول') || i.sortOrder===2)?.value || '',
+        phone2: items.find(i => i.label?.includes('الثاني') || i.sortOrder===3)?.value || '',
+      })
+    }).catch(()=>{})
   }, [])
 
   const filtered = filter==='all' ? courses : courses.filter(c=>c.status===filter)
@@ -206,7 +215,16 @@ function CoursesSection() {
     <div style={{marginBottom:28}}>
       {applying && <CourseApplyModal course={applying} onClose={()=>setApplying(null)} />}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:10}}>
-        <h2 style={{fontSize:18,fontWeight:800,color:'#2C3E6B'}}>🎓 الدورات الريادية</h2>
+        <div>
+          <h2 style={{fontSize:18,fontWeight:800,color:'#2C3E6B',marginBottom:4}}>🎓 الدورات الريادية</h2>
+          {(contact.email || contact.phone1) && (
+            <div style={{display:'flex',gap:16,flexWrap:'wrap',marginTop:6}}>
+              {contact.email && <a href={`mailto:${contact.email}`} style={{display:'flex',alignItems:'center',gap:5,fontSize:12,color:'#4A6FA5',textDecoration:'none',fontWeight:600}}>📧 {contact.email}</a>}
+              {contact.phone1 && <a href={`tel:${contact.phone1}`} style={{display:'flex',alignItems:'center',gap:5,fontSize:12,color:'#4A6FA5',textDecoration:'none',fontWeight:600}}>📞 {contact.phone1}</a>}
+              {contact.phone2 && <a href={`tel:${contact.phone2}`} style={{display:'flex',alignItems:'center',gap:5,fontSize:12,color:'#4A6FA5',textDecoration:'none',fontWeight:600}}>📞 {contact.phone2}</a>}
+            </div>
+          )}
+        </div>
         <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
           {[{k:'all',l:'الكل'},{k:'upcoming',l:'🟢 قادمة'},{k:'ongoing',l:'🔴 جارية'},{k:'completed',l:'✅ منتهية'}].map(f=>(
             <button key={f.k} onClick={()=>setFilter(f.k)} style={{padding:'6px 14px',borderRadius:20,border:'1.5px solid',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12,borderColor:filter===f.k?'#2C3E6B':'#e5e7eb',background:filter===f.k?'#2C3E6B':'#fff',color:filter===f.k?'#fff':'#374151'}}>
