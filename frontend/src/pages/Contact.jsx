@@ -104,6 +104,42 @@ export default function Contact() {
           </div>
         </div>
 
+        {/* الموقع على الخريطة */}
+        <div style={{ background: '#1a2a4a', borderRadius: '20px', padding: '28px 24px', marginTop: '20px', boxShadow: '0 4px 20px rgba(44,62,107,0.2)' }}>
+          <h3 style={{ fontSize: '22px', fontWeight: '800', color: '#fff', marginBottom: '6px', textAlign: 'center' }}>📍 الموقع</h3>
+          <a href="https://maps.app.goo.gl/HJHisaK4AsEEzhnC8" target="_blank" rel="noreferrer"
+            style={{ display: 'block', textAlign: 'center', color: '#FFC72C', fontSize: '14px', fontWeight: '700', marginBottom: '16px', textDecoration: 'none' }}>
+            🗺️ فتح الخريطة
+          </a>
+          {/* Embedded Google Map */}
+          <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}>
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3333.5!2d44.3961!3d33.3406!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x61c6d0ace17f693b%3A0x8585bf35223675e0!2z2KfYqtit2KfYryDYp9mE2LrYsdmB2Kcg2KfZhNiq2KrYp9ix2Kkg2KfZhNi52YLYp9mC2Kk!5e0!3m2!1sar!2siq!4v1681000000000!5m2!1sar!2siq"
+              width="100%"
+              height="280"
+              style={{ border: 0, display: 'block' }}
+              allowFullScreen=""
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="موقع اتحاد الغرف التجارية العراقية"
+            />
+          </div>
+          {/* معلومات إضافية */}
+          <div style={{ display: 'flex', gap: 20, marginTop: 16, flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginBottom: 3 }}>📧 الأيميل</div>
+              <div style={{ color: '#fff', fontWeight: 700 }}>info@ficc.iq</div>
+            </div>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, marginBottom: 3 }}>🕐 اوقات الدوام</div>
+              <div style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>السبت - الخميس، 9 صباحاً إلى 4 عصراً</div>
+            </div>
+          </div>
+          <div style={{ textAlign: 'left', marginTop: 12 }}>
+            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>اتحاد الغرف التجارية العراقية</span>
+          </div>
+        </div>
+
         {/* زر الرجوع */}
         <div style={{ textAlign: 'center', marginTop: '28px' }}>
           <Link to="/" style={{ display: 'inline-block', padding: '12px 32px', background: '#2C3E6B', color: 'white', borderRadius: '12px', textDecoration: 'none', fontWeight: '700', fontSize: '14px' }}>
