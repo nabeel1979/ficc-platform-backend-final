@@ -75,7 +75,8 @@ public class StorageService {
                 Key         = key,
                 InputStream = stream,
                 ContentType = file.ContentType,
-                CannedACL   = S3CannedACL.PublicRead
+                CannedACL   = S3CannedACL.PublicRead,
+                DisablePayloadSigning = true
             };
             await _s3.PutObjectAsync(request);
             return $"{_publicUrl}/{key}";

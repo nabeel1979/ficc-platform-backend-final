@@ -246,7 +246,8 @@ public class SubmissionsController : ControllerBase {
                     case "twitter":  tw2=sp.Value.GetString()??""; break;
                     case "instagram":ig2=sp.Value.GetString()??""; break;
                     case "linkedin": li2=sp.Value.GetString()??""; break;
-                    case "youtube":  yt2=sp.Value.GetString()??""; break;
+                    case "youtube":
+                    case "YouTube":  yt2=sp.Value.GetString()??""; break;
                     case "whatsapp": wa2=sp.Value.GetString()??""; break;
                     case "telegram": tg2=sp.Value.GetString()??""; break;
                 }
@@ -256,6 +257,8 @@ public class SubmissionsController : ControllerBase {
             if(string.IsNullOrEmpty(ig2)) ig2=gf("instagram");
             if(string.IsNullOrEmpty(li2)) li2=gf("linkedin");
             if(string.IsNullOrEmpty(yt2)) yt2=gf("youtube");
+            if(string.IsNullOrEmpty(yt2)) yt2=gf("youTube");
+            if(string.IsNullOrEmpty(yt2)) yt2=gf("YouTube");
             if(string.IsNullOrEmpty(wa2)) wa2=gf("whatsApp");
             if(string.IsNullOrEmpty(tg2)) tg2=gf("telegram");
             // تنظيف الروابط من النص الزيادة

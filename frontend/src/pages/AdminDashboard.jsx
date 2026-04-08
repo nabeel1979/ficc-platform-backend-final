@@ -491,11 +491,22 @@ function FormField({ field, value, onChange, onVerified }) {
   if (field.type === 'social') return (
     <SocialField formData={field._formData} onChange={onChange} value={value} />
   )
+const buildImageUrl = (url) => {
+  if (!url) return null
+  if (url.startsWith('data:')) return url
+  if (url.startsWith('http')) return url
+  // local path - try R2
+  const path = url.replace('/uploads/', '')
+  return `https://pub-be4a1829a4e84fc0b477dfe8adb915ef.r2.dev/${path}`
+}
+
+
   if (field.type === 'logo') {
     const isPhoto = field.label?.includes('صورة') || field.key === '_photo'
-    const existingLogo = isPhoto
-      ? (field._formData?.photoUrl || null)
-      : (field._formData?.logoUrl || null)
+    const rawLogoUrl = isPhoto
+      ? (field._formData?.photoUrl || field._formData?._photo || null)
+      : (field._formData?.logoUrl || field._formData?._logo || null)
+    const existingLogo = rawLogoUrl ? buildImageUrl(rawLogoUrl) : null
     return <LogoField value={value} onChange={onChange} existingLogo={existingLogo} isPhoto={isPhoto} />
   }
   if (field.type === 'images') return (
@@ -680,14 +691,19 @@ function CrudTable({ title, icon, endpoint, columns, fields: rawFields, addLabel
         }
       }
       // رفع الصورة الشخصية للتاجر (_photo) منفصلاً عن الشعار
-      if (form._photo && endpoint === 'traderdirectory') {
+      if (form._photo && form._photo instanceof File && endpoint === 'traderdirectory') {
         const itemId = savedItem?.id || modal?.item?.id
         if (itemId) {
           const fd = new FormData()
           fd.append('photo', form._photo)
           try {
-            await api.post(`${API}/${endpoint}/${itemId}/upload-photo`, fd, { headers: { Authorization: authHdrs().Authorization } })
-            setMsg('✅ تم الحفظ والصور')
+            const photoRes = await api.post(`${API}/${endpoint}/${itemId}/upload-photo`, fd, { headers: { Authorization: authHdrs().Authorization } })
+            // تحديث modal.item لعرض الصورة الجديدة فوراً
+            if (photoRes?.data?.photoUrl) {
+              setModal(prev => prev ? { ...prev, item: { ...prev.item, photoUrl: photoRes.data.photoUrl } } : prev)
+              setForm(prev => ({ ...prev, _photo: null }))
+            }
+            setMsg('✅ تم الحفظ والصورة الشخصية')
           } catch(uploadErr) {
             setMsg('⚠️ تم الحفظ لكن فشل رفع الصورة الشخصية: ' + (uploadErr?.response?.data?.message || uploadErr.message))
           }
@@ -1284,21 +1300,23 @@ function SubmissionsPanel() {
 
   const entityLabels = { chamber:'غرفة تجارية', member:'عضو مجلس الاتحاد', trader:'دليل التجار', shipping:'شركة شحن', lawyer:'محامٍ', agent:'وكيل إخراج' }
   const statusColors = { pending:'#F59E0B', approved:'#10b981', rejected:'#ef4444' }
-const buildImageUrl = (url) => {
-  if (!url) return null
-  if (url.startsWith('data:')) return url
-  if (url.startsWith('http')) return url
-  // local path - try R2
-  const path = url.replace('/uploads/', '')
-  return `https://pub-be4a1829a4e84fc0b477dfe8adb915ef.r2.dev/${path}`
-}
 
-const cleanSocialUrl = (v) => {
+const cleanSocialUrl = (v, key) => {
   if (!v) return ''
-  // trim أولاً ثم خذ أول token (الرابط)
   const parts = v.trim().split(/\s+/).filter(p => p.length > 0)
-  // خذ أول جزء يشبه رابط
-  const url = parts.find(p => p.includes('.') || p.includes('http') || p.includes('wa.me') || p.includes('@')) || parts[0] || ''
+  let url = parts.find(p => p.includes('.') || p.includes('http') || p.includes('wa.me') || p.includes('@')) || parts[0] || ''
+  // واتساب: إذا رقم هاتف → حوّله لرابط wa.me
+  if ((key === 'whatsApp' || key === 'whatsapp') && url && !url.includes('http') && !url.includes('wa.me')) {
+    const digits = url.replace(/[^0-9]/g, '')
+    if (digits.length >= 9) {
+      const intl = digits.startsWith('0') ? '964' + digits.slice(1) : digits
+      url = 'https://wa.me/' + intl
+    }
+  }
+  // إضافة https:// إذا ناقص
+  if (url && !url.startsWith('http') && !url.startsWith('wa.me') && url.includes('.')) {
+    url = 'https://' + url
+  }
   return url
 }
   const statusLabels = { pending:'⏳ بانتظار المراجعة', approved:'✅ تمت الموافقة', rejected:'❌ مرفوض' }
@@ -1523,9 +1541,9 @@ const cleanSocialUrl = (v) => {
                 let entries = []
                 if (selected.formData?._social) {
                   const obj = typeof selected.formData._social === 'string' ? JSON.parse(selected.formData._social) : selected.formData._social
-                  entries = Object.entries(obj||{}).filter(([,v])=>v).map(([k,v])=>[k,cleanSocialUrl(v)])
+                  entries = Object.entries(obj||{}).filter(([,v])=>v).map(([k,v])=>[k,cleanSocialUrl(v,k)])
                 } else {
-                  entries = socialKeys.map(k=>[k, selected.formData?.[k]||'']).filter(([,v])=>v).map(([k,v])=>[k,cleanSocialUrl(v)])
+                  entries = socialKeys.map(k=>[k, selected.formData?.[k]||'']).filter(([,v])=>v).map(([k,v])=>[k,cleanSocialUrl(v,k)])
                 }
                 return (
                   <div style={{padding:'10px 0',borderBottom:'1px solid #e5e7eb'}}>

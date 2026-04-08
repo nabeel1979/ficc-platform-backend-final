@@ -110,6 +110,17 @@ if (storage.UploadsRoot != Path.Combine(wwwroot, "uploads")) {
     });
 }
 
+// تحديث قاعدة البيانات تلقائياً بدون حذف البيانات
+using (var scope = app.Services.CreateScope()) {
+    var db = scope.ServiceProvider.GetRequiredService<FICCPlatform.Data.AppDbContext>();
+    try {
+        db.Database.EnsureCreated();
+        app.Logger.LogInformation("✅ FICC Database schema verified");
+    } catch (Exception ex) {
+        app.Logger.LogWarning("⚠️ DB init warning: {msg}", ex.Message);
+    }
+}
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
