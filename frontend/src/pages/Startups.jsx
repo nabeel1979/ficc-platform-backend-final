@@ -122,6 +122,146 @@ const API = '/startups'
 const SECTORS = ['تجارة','صناعة','زراعة','خدمات','تقنية','سياحة','نقل','بناء','صحة','تعليم','أخرى']
 const STAGES = ['فكرة','نموذج أولي','مشروع ناشئ','شركة قائمة']
 
+
+// ─── قسم الدورات الريادية ───
+const STATUS_LABELS = {
+  upcoming:  { label: '📅 قادمة', color: '#10b981', bg: '#d1fae5' },
+  ongoing:   { label: '🔴 جارية', color: '#ef4444', bg: '#fee2e2' },
+  completed: { label: '✅ منتهية', color: '#6b7280', bg: '#f3f4f6' },
+}
+
+function CourseApplyModal({ course, onClose }) {
+  const [form, setForm] = useState({ fullName:'', phone:'', email:'', company:'', motivation:'' })
+  const [loading, setLoading] = useState(false)
+  const [msg, setMsg] = useState('')
+  const [success, setSuccess] = useState(false)
+
+  const submit = async (e) => {
+    e.preventDefault(); setLoading(true); setMsg('')
+    try {
+      await api.post(`/api/courses/${course.id}/apply`, form)
+      setSuccess(true)
+    } catch(err) {
+      setMsg(err.response?.data?.message || 'حدث خطأ، حاول مرة أخرى')
+    } finally { setLoading(false) }
+  }
+
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:2000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:'#fff',borderRadius:20,padding:'28px 24px',width:'100%',maxWidth:460,maxHeight:'90vh',overflowY:'auto',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
+        {success ? (
+          <div style={{textAlign:'center',padding:'20px 0'}}>
+            <div style={{fontSize:56,marginBottom:12}}>🎉</div>
+            <h2 style={{fontSize:18,fontWeight:800,color:'#10b981',marginBottom:8}}>تم التسجيل بنجاح!</h2>
+            <p style={{color:'#64748b',fontSize:13,marginBottom:20}}>سيتم التواصل معك قريباً لتأكيد مشاركتك في "{course.title}".</p>
+            <button onClick={onClose} style={{padding:'11px 28px',background:'#2C3E6B',color:'#fff',border:'none',borderRadius:12,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700}}>إغلاق</button>
+          </div>
+        ) : (
+          <>
+            <h2 style={{fontSize:17,fontWeight:800,color:'#2C3E6B',marginBottom:4}}>📝 التسجيل في الدورة</h2>
+            <p style={{fontSize:12,color:'#64748b',marginBottom:18}}>{course.title}</p>
+            <form onSubmit={submit}>
+              {[{label:'الاسم الكامل *',k:'fullName',required:true},{label:'رقم الهاتف *',k:'phone',required:true,t:'tel'},{label:'البريد الإلكتروني',k:'email',t:'email'},{label:'الشركة / الجهة',k:'company'}].map(f=>(
+                <div key={f.k} style={{marginBottom:12}}>
+                  <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>{f.label}</label>
+                  <input type={f.t||'text'} required={f.required} value={form[f.k]} onChange={e=>setForm(p=>({...p,[f.k]:e.target.value}))}
+                    style={{width:'100%',padding:'10px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontSize:13,fontFamily:'Cairo,sans-serif',outline:'none',boxSizing:'border-box'}} />
+                </div>
+              ))}
+              <div style={{marginBottom:16}}>
+                <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>سبب الانضمام</label>
+                <textarea value={form.motivation} onChange={e=>setForm(p=>({...p,motivation:e.target.value}))}
+                  style={{width:'100%',padding:'10px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontSize:13,fontFamily:'Cairo,sans-serif',outline:'none',boxSizing:'border-box',height:70,resize:'vertical'}} />
+              </div>
+              {msg && <div style={{background:'#fef2f2',border:'1px solid #fecaca',borderRadius:8,padding:'8px 12px',color:'#ef4444',fontSize:12,marginBottom:12}}>{msg}</div>}
+              <div style={{display:'flex',gap:8}}>
+                <button type="submit" disabled={loading} style={{flex:1,padding:'11px',background:'linear-gradient(135deg,#10b981,#059669)',color:'#fff',border:'none',borderRadius:12,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:800,fontSize:13}}>
+                  {loading?'⏳ جارٍ...':'✅ تسجيل'}
+                </button>
+                <button type="button" onClick={onClose} style={{padding:'11px 18px',background:'#f1f5f9',border:'none',borderRadius:12,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700}}>إلغاء</button>
+              </div>
+            </form>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function CoursesSection() {
+  const [courses, setCourses] = useState([])
+  const [filter, setFilter] = useState('all')
+  const [applying, setApplying] = useState(null)
+
+  useEffect(() => {
+    api.get('/api/courses').then(r => setCourses(r.data)).catch(()=>{})
+  }, [])
+
+  const filtered = filter==='all' ? courses : courses.filter(c=>c.status===filter)
+  const counts = { all:courses.length, upcoming:courses.filter(c=>c.status==='upcoming').length, ongoing:courses.filter(c=>c.status==='ongoing').length, completed:courses.filter(c=>c.status==='completed').length }
+
+  if (courses.length === 0) return null
+
+  return (
+    <div style={{marginBottom:28}}>
+      {applying && <CourseApplyModal course={applying} onClose={()=>setApplying(null)} />}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:10}}>
+        <h2 style={{fontSize:18,fontWeight:800,color:'#2C3E6B'}}>🎓 الدورات الريادية</h2>
+        <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+          {[{k:'all',l:'الكل'},{k:'upcoming',l:'🟢 قادمة'},{k:'ongoing',l:'🔴 جارية'},{k:'completed',l:'✅ منتهية'}].map(f=>(
+            <button key={f.k} onClick={()=>setFilter(f.k)} style={{padding:'6px 14px',borderRadius:20,border:'1.5px solid',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12,borderColor:filter===f.k?'#2C3E6B':'#e5e7eb',background:filter===f.k?'#2C3E6B':'#fff',color:filter===f.k?'#fff':'#374151'}}>
+              {f.l} ({counts[f.k]})
+            </button>
+          ))}
+        </div>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(290px,1fr))',gap:16}}>
+        {filtered.map(course => {
+          const st = STATUS_LABELS[course.status]||STATUS_LABELS.upcoming
+          const pct = course.maxParticipants>0 ? Math.round((course.currentParticipants/course.maxParticipants)*100) : 0
+          const fmt = d => new Date(d).toLocaleDateString('ar-IQ',{year:'numeric',month:'short',day:'numeric'})
+          return (
+            <div key={course.id} style={{background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:'0 2px 10px rgba(44,62,107,0.07)',border:'1px solid #e5e7eb',display:'flex',flexDirection:'column'}}>
+              <div style={{background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',padding:'16px 16px 12px',position:'relative'}}>
+                <span style={{position:'absolute',top:10,left:10,padding:'3px 10px',borderRadius:20,fontSize:10,fontWeight:800,background:st.bg,color:st.color}}>{st.label}</span>
+                {course.category && <span style={{position:'absolute',top:10,right:10,padding:'2px 8px',borderRadius:20,fontSize:10,background:'rgba(255,199,44,0.2)',color:'#FFC72C',fontWeight:700}}>{course.category}</span>}
+                <h3 style={{color:'#fff',fontSize:14,fontWeight:800,marginTop:20,marginBottom:4,lineHeight:1.4}}>{course.title}</h3>
+                {course.speaker && <div style={{color:'rgba(255,255,255,0.75)',fontSize:11}}>👤 {course.speaker}</div>}
+              </div>
+              <div style={{padding:'12px 16px',flex:1}}>
+                {course.description && <p style={{color:'#64748b',fontSize:12,lineHeight:1.6,marginBottom:10}}>{course.description.slice(0,90)}{course.description.length>90?'...':''}</p>}
+                <div style={{display:'flex',flexDirection:'column',gap:5,fontSize:12,color:'#374151',marginBottom:10}}>
+                  <span>📅 {fmt(course.startDate)} — {fmt(course.endDate)}</span>
+                  {course.location && <span>📍 {course.location}</span>}
+                  <span style={{fontWeight:700,color:course.isFree?'#10b981':'#2C3E6B'}}>💰 {course.isFree?'مجانية':`${course.price?.toLocaleString('ar')} د.ع`}</span>
+                </div>
+                <div>
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'#94a3b8',marginBottom:3}}>
+                    <span>المشاركون</span><span>{course.currentParticipants}/{course.maxParticipants}</span>
+                  </div>
+                  <div style={{background:'#e2e8f0',borderRadius:4,height:5}}>
+                    <div style={{background:pct>=90?'#ef4444':pct>=70?'#f59e0b':'#10b981',width:`${pct}%`,height:5,borderRadius:4}} />
+                  </div>
+                </div>
+              </div>
+              <div style={{padding:'12px 16px',borderTop:'1px solid #f1f5f9'}}>
+                {course.status==='upcoming' && course.currentParticipants<course.maxParticipants
+                  ? <button onClick={()=>setApplying(course)} style={{width:'100%',padding:'10px',background:'linear-gradient(135deg,#10b981,#059669)',color:'#fff',border:'none',borderRadius:10,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:800,fontSize:13}}>📝 سجّل الآن</button>
+                  : course.status==='upcoming'
+                    ? <div style={{textAlign:'center',padding:'8px',background:'#fef2f2',borderRadius:10,color:'#ef4444',fontSize:12,fontWeight:700}}>❌ اكتملت الأماكن</div>
+                    : course.status==='ongoing'
+                      ? <div style={{textAlign:'center',padding:'8px',background:'#fff7ed',borderRadius:10,color:'#ea580c',fontSize:12,fontWeight:700}}>🔴 الدورة جارية الآن</div>
+                      : <div style={{textAlign:'center',padding:'8px',background:'#f8fafc',borderRadius:10,color:'#64748b',fontSize:12}}>✅ انتهت الدورة</div>
+                }
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function Startups() {
   const [startups, setStartups] = useState([])
   const [showForm, setShowForm] = useState(false)
@@ -221,6 +361,9 @@ export default function Startups() {
           📝 قدّم مشروعك الآن
         </button>
       </div>
+
+      {/* قسم الدورات الريادية */}
+      <CoursesSection />
 
       {/* Stats */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',gap:'12px',marginBottom:'24px'}}>
