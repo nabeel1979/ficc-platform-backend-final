@@ -1,72 +1,73 @@
-# طريقة التشغيل — FICC Platform
+# FICC Platform Backend - Setup Guide
 
-## الطريقة 1: تشغيل يدوي (Windows أو Linux)
+## خطوات التثبيت على سيرفر جديد
 
-### المتطلبات
-- .NET 8 SDK: https://dotnet.microsoft.com/download
-- Node.js 18+: https://nodejs.org
-- SQL Server (أو SQL Server Express): https://www.microsoft.com/sql-server
+### 1️⃣ نسخ ملف الإعدادات
 
-### الخطوات
-
-#### 1. إعداد قاعدة البيانات
-```sql
--- شغّل بـ SQL Server Management Studio أو sqlcmd
-sqlcmd -S localhost -U sa -P YourPassword -i schema.sql
-sqlcmd -S localhost -U sa -P YourPassword -i schema_forms.sql
-sqlcmd -S localhost -U sa -P YourPassword -i schema_directories.sql
+```bash
+# انسخ الملف
+cp appsettings.TEMPLATE.json appsettings.json
 ```
 
-#### 2. إعداد الـ Backend
+### 2️⃣ تحديث معلومات الاتصال
+
+**افتح `appsettings.json` وعدّل:**
+
+```json
+"DefaultConnection": "Server=YOUR_SERVER_NAME;Database=YOUR_DATABASE_NAME;User Id=YOUR_USERNAME;Password=YOUR_PASSWORD;TrustServerCertificate=true;"
 ```
-cd backend
--- عدّل appsettings.json:
--- Server=localhost;Database=FICCPlatform;User Id=sa;Password=YourPassword;TrustServerCertificate=True;
-dotnet restore
+
+**المتغيرات:**
+- `YOUR_SERVER_NAME`: اسم السيرفر (مثل: `localhost\SQLEXPRESS`)
+- `YOUR_DATABASE_NAME`: اسم قاعدة البيانات (مثل: `FICCPlatform`)
+- `YOUR_USERNAME`: اسم المستخدم (مثل: `sa`)
+- `YOUR_PASSWORD`: كلمة السر
+
+### 3️⃣ تحديث Secret Key
+
+```json
+"Secret": "أضيف مفتاح سري عشوائي 32 حرف على الأقل"
+```
+
+### 4️⃣ تحديث CORS Origins
+
+إذا كان السيرفر مختلف، حدّث:
+
+```json
+"AllowedOrigins": [
+  "http://your-frontend-url",
+  "https://your-domain.com"
+]
+```
+
+### 5️⃣ تشغيل المشروع
+
+```bash
 dotnet run
 ```
 
-#### 3. إعداد الـ Frontend
-```
-cd frontend
-npm install
-npm run dev
-```
+---
 
-### Windows: شغّل start-windows.bat مباشرة
-### Linux/Mac: شغّل ./start-linux.sh
+## ⚠️ أمان مهم
+
+- **لا تنسخ `appsettings.json` على GitHub!**
+- احفظها محلياً فقط
+- غيّر كلمة السر في السيرفر الجديد
+- استخدم مفتاح سري قوي
 
 ---
 
-## الطريقة 2: Docker (الأسهل — يشتغل على Windows و Linux)
+## قاعدة البيانات
 
-### المتطلبات
-- Docker Desktop: https://www.docker.com/products/docker-desktop
+الـ migrations موجودة في مجلد `Migrations/`
 
-### التشغيل
 ```bash
-docker-compose up -d
-```
-
-### الروابط
-- **الموقع:** http://localhost:3000
-- **Backend API:** http://localhost:5000
-- **Swagger:** http://localhost:5000/swagger
-
-### إيقاف التشغيل
-```bash
-docker-compose down
+# تطبيق الـ migrations
+dotnet ef database update
 ```
 
 ---
 
-## الروابط بعد التشغيل
-| الخدمة | Windows/Linux | Docker |
-|---|---|---|
-| الموقع | http://localhost:5173 | http://localhost:3000 |
-| API | http://localhost:5000 | http://localhost:5000 |
-| Swagger | http://localhost:5000/swagger | http://localhost:5000/swagger |
+## المزيد من المساعدة
 
-## دخول المدير
-- **اسم المستخدم:** admin
-- **كلمة المرور:** Admin@123 (غيّرها أول دخول!)
+راجع المستندات الرسمية في GitHub.
