@@ -321,27 +321,21 @@ export default function Subscribe() {
 
   const saveProfile = async () => {
     setProfileMsg('')
+    // دالة مساعدة — تحوّل التاب وتصعد الصفحة
+    const failWith = (tab, msg) => {
+      setProfileTab(tab)
+      setProfileMsg(msg)
+      setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50)
+    }
+
     // التحقق من الحقول الإلزامية مع التوجيه للـ tab الصحيح
-    if (!form.fullName?.trim()) {
-      setProfileTab('info')
-      return setProfileMsg('❌ الاسم الكامل مطلوب')
-    }
-    if (!form.phone?.trim()) {
-      setProfileTab('info')
-      return setProfileMsg('❌ رقم الهاتف مطلوب')
-    }
-    if (!form.notifyBy?.length) {
-      setProfileTab('info')
-      return setProfileMsg('❌ اختر طريقة إشعار واحدة على الأقل')
-    }
-    if (!(profileForm.interests||[]).length) {
-      setProfileTab('interests')
-      return setProfileMsg('❌ اختر قسماً واحداً على الأقل')
-    }
-    if (!(profileForm.traderSectors||[]).length) {
-      setProfileTab('sectors_tab')
-      return setProfileMsg('❌ اختر قطاعاً واحداً على الأقل')
-    }
+    if (!form.fullName?.trim())       return failWith('info',        '❌ الاسم الكامل مطلوب')
+    if (!form.phone?.trim())          return failWith('info',        '❌ رقم الهاتف مطلوب')
+    if (!form.email?.trim() && !form.whatsApp?.trim())
+      return failWith('info', '❌ يجب إضافة إيميل أو رقم واتساب على الأقل')
+    if (!form.notifyBy?.length)       return failWith('info',        '❌ اختر طريقة إشعار واحدة على الأقل')
+    if (!(profileForm.interests||[]).length)     return failWith('interests',    '❌ اختر قسماً واحداً على الأقل')
+    if (!(profileForm.traderSectors||[]).length) return failWith('sectors_tab',  '❌ اختر قطاعاً واحداً على الأقل')
 
     setProfileMsg('⏳ جارٍ الحفظ...')
     try {
@@ -736,15 +730,28 @@ export default function Subscribe() {
                 </button>
               </div>
               <div style={{display:'flex',gap:'10px',flexWrap:'wrap'}}>
-                {NOTIFY_OPTIONS.map(o=>(
-                  <button key={o.key} type="button" onClick={()=>toggleNotify(o.key)}
-                    style={{flex:1,minWidth:'100px',padding:'12px 8px',borderRadius:'12px',border:'2px solid',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'13px',fontWeight:'700',textAlign:'center',transition:'all 0.15s',
-                      background:form.notifyBy.includes(o.key)?'#059669':'#fff',
-                      color:form.notifyBy.includes(o.key)?'#fff':'#059669',
-                      borderColor:form.notifyBy.includes(o.key)?'#059669':'#86efac'}}>
+                {NOTIFY_OPTIONS.map(o=>{
+                  // الواتساب يشتغل إذا عنده واتساب أو هاتف (يرسل عليهم)
+                  const disabled = (o.key==='email' && !form.email) || (o.key==='whatsapp' && !form.whatsApp && !form.phone)
+                  // إذا الإيميل فارغ وكان مختاراً — أزله تلقائياً
+                  if (disabled && form.notifyBy.includes(o.key)) {
+                    setTimeout(() => set('notifyBy', form.notifyBy.filter(x=>x!==o.key)), 0)
+                  }
+                  return (
+                  <button key={o.key} type="button"
+                    onClick={()=>!disabled && toggleNotify(o.key)}
+                    disabled={disabled}
+                    title={disabled ? `يتطلب إضافة ${o.key==='email'?'البريد الإلكتروني':'رقم الهاتف أو الواتساب'} أولاً` : ''}
+                    style={{flex:1,minWidth:'100px',padding:'12px 8px',borderRadius:'12px',border:'2px solid',fontFamily:'Cairo,sans-serif',fontSize:'13px',fontWeight:'700',textAlign:'center',transition:'all 0.15s',
+                      cursor: disabled ? 'not-allowed' : 'pointer',
+                      opacity: disabled ? 0.4 : 1,
+                      background: disabled ? '#f1f5f9' : form.notifyBy.includes(o.key)?'#059669':'#fff',
+                      color: disabled ? '#94a3b8' : form.notifyBy.includes(o.key)?'#fff':'#059669',
+                      borderColor: disabled ? '#e2e8f0' : form.notifyBy.includes(o.key)?'#059669':'#86efac'}}>
                     {o.label}
+                    {disabled && <span style={{fontSize:'10px',display:'block',marginTop:'2px',fontWeight:400}}>يتطلب إضافة أولاً</span>}
                   </button>
-                ))}
+                )})}
               </div>
             </div>
 
