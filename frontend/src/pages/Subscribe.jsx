@@ -122,13 +122,21 @@ export default function Subscribe() {
   }
 
   const saveProfile = async () => {
-    setProfileMsg('')
+    setProfileMsg('⏳ جارٍ الحفظ...')
     try {
-      await api.put(`/subscribers/${subscriber.id}/profile`, profileForm)
-      setSubscriber(p => ({...p, ...profileForm}))
+      const payload = {
+        ...profileForm,
+        interests: profileForm.interests || []
+      }
+      console.log('[saveProfile] subscriber.id:', subscriber?.id, 'payload:', payload)
+      await api.put(`/subscribers/${subscriber.id}/profile`, payload)
+      setSubscriber(p => ({...p, ...payload}))
       setProfileMsg('✅ تم حفظ البيانات بنجاح')
       setTimeout(() => setProfileMsg(''), 3000)
-    } catch { setProfileMsg('❌ حدث خطأ') }
+    } catch(err) {
+      console.error('[saveProfile] error:', err?.response?.data || err?.message)
+      setProfileMsg('❌ حدث خطأ: ' + (err?.response?.data?.message || err?.message || 'تأكد من تسجيل الدخول'))
+    }
   }
 
   const toggleInterest = (id) => {
@@ -154,7 +162,7 @@ export default function Subscribe() {
 
   // تسجيل جديد - الخطوة 2: حفظ
   const register = async () => {
-    if (form.sectors.length === 0) { setErr('اختر قطاعاً واحداً على الأقل'); return }
+    if ((form.sectors||[]).length === 0) { setErr('اختر قسماً واحداً على الأقل'); return }
     if (form.notifyBy.length === 0) { setErr('اختر طريقة إشعار واحدة على الأقل'); return }
     setLoading(true); setErr('')
     try {
@@ -190,7 +198,23 @@ export default function Subscribe() {
       const s = r.data
       const sec = (() => { try { return JSON.parse(s.sectors||'[]') } catch { return [] } })()
       const ntf = (() => { try { return JSON.parse(s.notifyBy||'[]') } catch { return [] } })()
+      const interests = (() => { try { return JSON.parse(s.interests||'[]') } catch { return [] } })()
       setForm({ fullName: s.fullName, phone: s.phone, whatsApp: s.whatsApp||'', email: s.email||'', sectors: sec, notifyBy: ntf })
+      setProfileForm({
+        profileImage: s.profileImage||'',
+        nationalIdFront: s.nationalIdFront||'',
+        nationalIdBack: s.nationalIdBack||'',
+        passport: s.passport||'',
+        tradeIdFront: s.tradeIdFront||'',
+        tradeIdBack: s.tradeIdBack||'',
+        cv: s.cv||s.cV||'',
+        facebook: s.facebook||'',
+        instagram: s.instagram||'',
+        twitter: s.twitter||'',
+        linkedIn: s.linkedIn||'',
+        tikTok: s.tikTok||'',
+        interests: interests
+      })
       setVerified({ phone: true, whatsApp: !!s.whatsApp, email: !!s.email })
       setStep(3); setMsg('')
     } catch(e) { setErr(e?.response?.data?.message || 'رمز خاطئ') }
@@ -199,7 +223,7 @@ export default function Subscribe() {
 
   // مسجّل سابق - تحديث
   const update = async () => {
-    if (form.sectors.length === 0) { setErr('اختر قطاعاً على الأقل'); return }
+    if ((form.sectors||[]).length === 0) { setErr('اختر قسماً على الأقل'); return }
     setLoading(true); setErr('')
     try {
       await api.put(`${API}/subscribers/${subscriber.id}`, {
@@ -294,18 +318,27 @@ export default function Subscribe() {
             <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
               <div>
                 <label style={{display:'block',fontSize:'13px',fontWeight:'700',color:'#2C3E6B',marginBottom:'8px'}}>القطاعات * <span style={{color:'#888',fontWeight:'400'}}>(اختر واحداً أو أكثر)</span></label>
-                <div style={{display:'flex',flexWrap:'wrap',gap:'8px',marginBottom:'8px'}}>
-                  {SECTORS.map(s=>(
-                    <button key={s} type="button" onClick={()=>toggleSector(s)}
-                      style={{padding:'6px 14px',borderRadius:'20px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'600',
-                        background:form.sectors.includes(s)?'#2C3E6B':'#EEF2FF',color:form.sectors.includes(s)?'#fff':'#2C3E6B'}}>
-                      {form.sectors.includes(s)?'✓ ':''}{s}
-                    </button>
+                <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:8}}>
+                  {sectors.map(s=>(
+                    <div key={s.id} onClick={()=>{
+                      const curr = form.sectors || []
+                      set('sectors', curr.includes(s.id) ? curr.filter(x=>x!==s.id) : [...curr, s.id])
+                    }}
+                      style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px',borderRadius:12,border:`1.5px solid ${(form.sectors||[]).includes(s.id)?'#2C3E6B':'#e5e7eb'}`,background:(form.sectors||[]).includes(s.id)?'#eef2ff':'#fafafa',cursor:'pointer'}}>
+                      <span style={{fontSize:20}}>{s.icon}</span>
+                      <div style={{flex:1}}>
+                        <div style={{fontWeight:700,fontSize:13,color:(form.sectors||[]).includes(s.id)?'#2C3E6B':'#374151'}}>{s.name}</div>
+                        {s.description && <div style={{fontSize:11,color:'#64748b'}}>{s.description}</div>}
+                      </div>
+                      <div style={{width:20,height:20,borderRadius:5,border:`2px solid ${(form.sectors||[]).includes(s.id)?'#2C3E6B':'#cbd5e1'}`,background:(form.sectors||[]).includes(s.id)?'#2C3E6B':'#fff',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:12}}>
+                        {(form.sectors||[]).includes(s.id)?'✓':''}
+                      </div>
+                    </div>
                   ))}
                 </div>
-                <button type="button" onClick={()=>set('sectors', form.sectors.length===SECTORS.length ? [] : [...SECTORS])}
+                <button type="button" onClick={()=>set('sectors', (form.sectors||[]).length===sectors.length ? [] : sectors.map(s=>s.id))}
                   style={{padding:'6px 14px',borderRadius:'8px',background:'#FFF8E7',color:'#B8860B',border:'1px solid #fde68a',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'700'}}>
-                  {form.sectors.length===SECTORS.length ? '❌ إلغاء الكل' : '✅ اختر الكل'}
+                  {(form.sectors||[]).length===sectors.length ? '❌ إلغاء الكل' : '✅ اختر الكل'}
                 </button>
               </div>
               <div>
@@ -427,23 +460,28 @@ export default function Subscribe() {
               </div>
             </div>
 
-            {/* القطاعات */}
+            {/* الأقسام — من الـ DB */}
             <div style={{background:'#fff',borderRadius:'16px',padding:'20px',boxShadow:'0 4px 16px rgba(44,62,107,0.08)',marginBottom:'12px'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px',paddingBottom:'10px',borderBottom:'2px solid #FFC72C'}}>
-                <h3 style={{color:'#2C3E6B',fontWeight:'800',fontSize:'15px',margin:0}}>🏭 القطاعات</h3>
-                <button type="button" onClick={()=>set('sectors', form.sectors.length===SECTORS.length ? [] : [...SECTORS])}
+                <h3 style={{color:'#2C3E6B',fontWeight:'800',fontSize:'15px',margin:0}}>🎯 الأقسام</h3>
+                <button type="button" onClick={()=>set('sectors', (form.sectors||[]).length===sectors.length ? [] : sectors.map(s=>s.id))}
                   style={{padding:'5px 12px',borderRadius:'8px',background:'#FFF8E7',color:'#B8860B',border:'1px solid #fde68a',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700'}}>
-                  {form.sectors.length===SECTORS.length ? '❌ إلغاء الكل' : '✅ اختر الكل'}
+                  {(form.sectors||[]).length===sectors.length ? '❌ إلغاء الكل' : '✅ اختر الكل'}
                 </button>
               </div>
-              <div style={{display:'flex',flexWrap:'wrap',gap:'8px'}}>
-                {SECTORS.map(s=>(
-                  <button key={s} type="button" onClick={()=>toggleSector(s)}
-                    style={{padding:'7px 14px',borderRadius:'20px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'12px',fontWeight:'600',transition:'all 0.15s',
-                      background:form.sectors.includes(s)?'#2C3E6B':'#EEF2FF',color:form.sectors.includes(s)?'#fff':'#2C3E6B',
-                      boxShadow:form.sectors.includes(s)?'0 2px 8px rgba(44,62,107,0.25)':'none'}}>
-                    {form.sectors.includes(s)?'✓ ':''}{s}
-                  </button>
+              <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                {sectors.map(s=>(
+                  <div key={s.id} onClick={()=>{
+                    const curr = form.sectors||[]
+                    set('sectors', curr.includes(s.id) ? curr.filter(x=>x!==s.id) : [...curr, s.id])
+                  }}
+                    style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',borderRadius:12,border:`1.5px solid ${(form.sectors||[]).includes(s.id)?'#2C3E6B':'#e5e7eb'}`,background:(form.sectors||[]).includes(s.id)?'#eef2ff':'#fafafa',cursor:'pointer'}}>
+                    <span style={{fontSize:18}}>{s.icon}</span>
+                    <div style={{flex:1,fontWeight:700,fontSize:13,color:(form.sectors||[]).includes(s.id)?'#2C3E6B':'#374151'}}>{s.name}</div>
+                    <div style={{width:20,height:20,borderRadius:5,border:`2px solid ${(form.sectors||[]).includes(s.id)?'#2C3E6B':'#cbd5e1'}`,background:(form.sectors||[]).includes(s.id)?'#2C3E6B':'#fff',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:12}}>
+                      {(form.sectors||[]).includes(s.id)?'✓':''}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -479,7 +517,14 @@ export default function Subscribe() {
             {/* Tab: الأقسام */}
             {profileTab === 'interests' && (
             <div style={{background:'#fff',borderRadius:16,padding:20,boxShadow:'0 4px 16px rgba(44,62,107,0.08)',marginBottom:12}}>
-              <h3 style={{color:'#2C3E6B',fontWeight:800,fontSize:15,margin:'0 0 16px',paddingBottom:10,borderBottom:'2px solid #FFC72C'}}>🎯 الأقسام التي تريد متابعتها</h3>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,paddingBottom:10,borderBottom:'2px solid #FFC72C'}}>
+                <h3 style={{color:'#2C3E6B',fontWeight:800,fontSize:15,margin:0}}>🎯 الأقسام التي تريد متابعتها</h3>
+                <button type="button"
+                  onClick={() => setProfileForm(p => ({...p, interests: (p.interests||[]).length===sectors.length ? [] : sectors.map(s=>s.id)}))}
+                  style={{padding:'5px 12px',borderRadius:8,background:'#FFF8E7',color:'#B8860B',border:'1px solid #fde68a',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:11,fontWeight:700}}>
+                  {(profileForm.interests||[]).length===sectors.length ? '❌ إلغاء الكل' : '✅ اختيار الكل'}
+                </button>
+              </div>
               <div style={{display:'flex',flexDirection:'column',gap:12}}>
                 {sectors.map(s => {
                   const selected = (profileForm.interests||[]).includes(s.id)
