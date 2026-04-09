@@ -89,15 +89,12 @@ function VerifiedField({ label, value, onChange, placeholder, isLtr, required, f
 
 // Component للقطاعات من ثوابت النظام
 function TraderSectorsTab({ profileForm, setProfileForm }) {
-  const [items, setItems] = React.useState([])
-  React.useEffect(() => {
-    import('../lib/api').then(m => {
-      m.default.get('/constants/trader_sector').then(r => {
-        const data = Array.isArray(r.data) ? r.data : []
-        setItems(data)
-        window._traderSectors = data
-      }).catch(() => {})
-    })
+  const [items, setItems] = useState([])
+  useEffect(() => {
+    api.get('/constants/trader_sector').then(r => {
+      const data = Array.isArray(r.data) ? r.data : []
+      setItems(data)
+    }).catch(() => {})
   }, [])
   const toggle = (id) => {
     const curr = profileForm.traderSectors || []
@@ -167,17 +164,30 @@ export default function Subscribe() {
   const saveProfile = async () => {
     setProfileMsg('⏳ جارٍ الحفظ...')
     try {
+      // يجمع بيانات جميع الـ tabs ويحفظها دفعة واحدة
       const payload = {
-        ...profileForm,
-        interests: profileForm.interests || []
+        // وثائق
+        profileImage:    profileForm.profileImage    || null,
+        nationalIdFront: profileForm.nationalIdFront || null,
+        nationalIdBack:  profileForm.nationalIdBack  || null,
+        passport:        profileForm.passport        || null,
+        tradeIdFront:    profileForm.tradeIdFront    || null,
+        tradeIdBack:     profileForm.tradeIdBack     || null,
+        cv:              profileForm.cv || profileForm.cV || null,
+        // تواصل اجتماعي
+        facebook:  profileForm.facebook  || null,
+        instagram: profileForm.instagram || null,
+        twitter:   profileForm.twitter   || null,
+        linkedIn:  profileForm.linkedIn  || null,
+        tikTok:    profileForm.tikTok    || null,
+        // الأقسام (IDs للتعميم)
+        interests: profileForm.interests || [],
       }
-      console.log('[saveProfile] subscriber.id:', subscriber?.id, 'payload:', payload)
       await api.put(`/subscribers/${subscriber.id}/profile`, payload)
       setSubscriber(p => ({...p, ...payload}))
-      setProfileMsg('✅ تم حفظ البيانات بنجاح')
+      setProfileMsg('✅ تم حفظ جميع البيانات بنجاح')
       setTimeout(() => setProfileMsg(''), 3000)
     } catch(err) {
-      console.error('[saveProfile] error:', err?.response?.data || err?.message)
       setProfileMsg('❌ حدث خطأ: ' + (err?.response?.data?.message || err?.message || 'تأكد من تسجيل الدخول'))
     }
   }
@@ -480,7 +490,7 @@ export default function Subscribe() {
               ))}
             </div>
 
-            {profileMsg && <div style={{background: profileMsg.includes('✅') ? '#f0fdf4' : '#fef2f2', color: profileMsg.includes('✅') ? '#059669' : '#ef4444', padding:'10px 14px', borderRadius:10, fontSize:13, marginBottom:12, fontWeight:700}}>{profileMsg}</div>}
+
 
             {/* Tab: بياناتي */}
             {profileTab === 'info' && (
@@ -528,7 +538,7 @@ export default function Subscribe() {
             {err && <div style={{background:'#fee2e2',color:'#dc2626',padding:'12px 16px',borderRadius:'12px',fontSize:'13px',marginBottom:'12px',fontWeight:'700'}}>{err}</div>}
             {msg && <div style={{background:'#d1fae5',color:'#065f46',padding:'12px 16px',borderRadius:'12px',fontSize:'13px',marginBottom:'12px',fontWeight:'700'}}>{msg}</div>}
             <button onClick={update} disabled={loading} style={{...btnPrimary,borderRadius:'14px',fontSize:'16px',padding:'15px'}}>
-              {loading?'⏳ جاري الحفظ...':'💾 حفظ البيانات الأساسية'}
+              {loading?'⏳ جاري الحفظ...':'💾 حفظ'}
             </button>
             </div>)} {/* نهاية tab info */}
 
@@ -564,7 +574,6 @@ export default function Subscribe() {
                 })}
               </div>
               {/* التواصل — في نفس الـ tab */}
-              <button onClick={saveProfile} style={{...btnPrimary,marginTop:16,borderRadius:14}}>💾 حفظ الأقسام</button>
             </div>
             )}
 
@@ -581,7 +590,6 @@ export default function Subscribe() {
                 </button>
               </div>
               <TraderSectorsTab profileForm={profileForm} setProfileForm={setProfileForm} />
-              <button onClick={saveProfile} style={{...btnPrimary,marginTop:16,borderRadius:14}}>💾 حفظ القطاعات</button>
             </div>
             )}
 
@@ -604,7 +612,6 @@ export default function Subscribe() {
                   </div>
                 ))}
               </div>
-              <button onClick={saveProfile} style={{...btnPrimary,marginTop:16,borderRadius:14}}>💾 حفظ التواصل</button>
             </div>
             )}
 
@@ -641,11 +648,15 @@ export default function Subscribe() {
                   )
                 })}
               </div>
-              <button onClick={saveProfile} style={{...btnPrimary,marginTop:16,borderRadius:14}}>💾 حفظ</button>
             </div>
             )}
 
-
+            {/* زر الحفظ الثابت — يعمل من أي tab */}
+            {profileMsg && <div style={{background: profileMsg.includes('✅') ? '#f0fdf4' : '#fef2f2', color: profileMsg.includes('✅') ? '#059669' : '#ef4444', padding:'10px 14px', borderRadius:10, fontSize:13, marginBottom:12, fontWeight:700, marginTop:8}}>{profileMsg}</div>}
+            <button onClick={saveProfile}
+              style={{width:'100%',padding:'15px',borderRadius:14,background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:800,fontSize:16,marginTop:8}}>
+              💾 حفظ
+            </button>
 
           </div>
         )}
