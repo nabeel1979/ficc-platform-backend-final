@@ -912,35 +912,32 @@ export default function Subscribe() {
             {profileTab === 'company_docs' && (
             <div style={{background:'#fff',borderRadius:16,padding:20,boxShadow:'0 4px 16px rgba(44,62,107,0.08)',marginBottom:12}}>
               <h3 style={{color:'#2C3E6B',fontWeight:800,fontSize:15,margin:'0 0 16px',paddingBottom:10,borderBottom:'2px solid #FFC72C'}}>🏢 أوراق الشركة</h3>
-              <div style={{display:'flex',flexDirection:'column',gap:14}}>
-                {[
-                  {key:'companyReg',  label:'شهادة تسجيل الشركة', icon:'📜', accept:'application/pdf,image/*'},
-                  {key:'chamberCert', label:'شهادة اتحاد الغرف',   icon:'🏛️', accept:'application/pdf,image/*'},
-                  {key:'taxCert',     label:'شهادة الإفادة الضريبية', icon:'📑', accept:'application/pdf,image/*'},
-                  {key:'companyStamp',label:'ختم الشركة (صورة)',   icon:'🔏', accept:'image/*'},
-                  {key:'otherDoc',    label:'وثيقة أخرى',          icon:'📂', accept:'application/pdf,image/*'},
-                ].map(doc => {
-                  const val = profileForm[doc.key] || subscriber?.[doc.key]
-                  const isPdf = val && val.toLowerCase().endsWith('.pdf')
-                  return (
-                    <div key={doc.key} style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px',borderRadius:12,border:'1.5px solid #e5e7eb',background:'#fafafa'}}>
-                      <span style={{fontSize:22,flexShrink:0}}>{doc.icon}</span>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontWeight:700,fontSize:13,color:'#374151',marginBottom:4}}>{doc.label}</div>
-                        {val ? (
-                          isPdf
-                            ? <a href={val} target="_blank" rel="noreferrer" style={{fontSize:11,color:'#dc2626',fontWeight:700}}>📄 PDF — اضغط للفتح</a>
-                            : <a href={val} target="_blank" rel="noreferrer" style={{fontSize:11,color:'#2C3E6B',fontWeight:700}}>✅ مرفوع — اضغط للعرض</a>
-                        ) : <span style={{fontSize:11,color:'#94a3b8'}}>لم يرفع بعد</span>}
+              <p style={{fontSize:12,color:'#64748b',marginBottom:16}}>ارفع ملف PDF واحد يحتوي على جميع أوراق الشركة (تسجيل، غرفة، ضريبية، إلخ)</p>
+              {(() => {
+                const val = profileForm.companyReg || subscriber?.companyReg
+                const isPdf = val && val.toLowerCase().endsWith('.pdf')
+                return (
+                  <div style={{border:'2px dashed #c7d2fe',borderRadius:14,padding:24,textAlign:'center',background:'#f8faff'}}>
+                    <div style={{fontSize:48,marginBottom:8}}>🏢</div>
+                    <div style={{fontWeight:700,fontSize:14,color:'#2C3E6B',marginBottom:4}}>أوراق الشركة</div>
+                    {val ? (
+                      <div style={{marginBottom:16}}>
+                        {isPdf
+                          ? <a href={val} target="_blank" rel="noreferrer" style={{fontSize:13,color:'#dc2626',fontWeight:700,display:'block',marginBottom:8}}>📄 PDF مرفوع — اضغط لفتحه</a>
+                          : <a href={val} target="_blank" rel="noreferrer" style={{fontSize:13,color:'#059669',fontWeight:700,display:'block',marginBottom:8}}>✅ ملف مرفوع — اضغط للعرض</a>
+                        }
                       </div>
-                      <label style={{padding:'6px 12px',background:'#e0e7ff',color:'#4338ca',borderRadius:8,cursor:'pointer',fontSize:11,fontWeight:700,flexShrink:0}}>
-                        {uploading[doc.key] ? '⏳' : '📁 رفع'}
-                        <input type="file" accept={doc.accept} style={{display:'none'}} onChange={e => uploadDoc(doc.key, e.target.files[0])} />
-                      </label>
-                    </div>
-                  )
-                })}
-              </div>
+                    ) : (
+                      <div style={{fontSize:12,color:'#94a3b8',marginBottom:16}}>لم يرفع بعد</div>
+                    )}
+                    <label style={{display:'inline-block',padding:'10px 28px',background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:'#fff',borderRadius:10,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:14}}>
+                      {uploading.companyReg ? '⏳ جاري الرفع...' : val ? '🔄 تحديث الملف' : '📤 رفع PDF'}
+                      <input type="file" accept="application/pdf,image/*" style={{display:'none'}} onChange={e => uploadDoc('companyReg', e.target.files[0])} />
+                    </label>
+                    <div style={{fontSize:11,color:'#94a3b8',marginTop:8}}>PDF أو صورة — الحجم الأقصى 10MB</div>
+                  </div>
+                )
+              })()}
             </div>
             )}
 
