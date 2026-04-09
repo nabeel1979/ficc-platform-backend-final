@@ -138,13 +138,16 @@ function MediaManager({ course, onClose }) {
   const [msg, setMsg] = useState('')
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState([]) // [{name, status: 'pending'|'uploading'|'done'|'error'}]
+  const [dragOverId, setDragOverId] = useState(null)
+  const [localImgs, setLocalImgs] = useState([])
+  const dragItem = useRef(null)
   const fileRef = useRef(null)
   const multiFileRef = useRef(null)
 
-  const load = () => { setLoading(true); api.get(`/courses/${course.id}/media`).then(r => setMedia(r.data||[])).finally(() => setLoading(false)) }
+  const load = () => { setLoading(true); api.get(`/courses/${course.id}/media`).then(r => { setMedia(r.data||[]); setLocalImgs(r.data?.filter(m=>m.type==='image')||[]) }).finally(() => setLoading(false)) }
   useEffect(() => { load() }, [course.id])
 
-  const imgs = media.filter(m => m.type === 'image')
+  const imgs = localImgs
   const vids = media.filter(m => m.type === 'video')
 
   const addMedia = async (e) => {
@@ -169,6 +172,31 @@ function MediaManager({ course, onClose }) {
     } catch { setMsg('فشل رفع الصورة') }
     setUploading(false)
   }
+
+  // Drag & Drop reorder
+  const onDragStart = (id) => { dragItem.current = id }
+  const onDragOver = (e, id) => { e.preventDefault(); setDragOverId(id) }
+  const onDrop = async (e, targetId) => {
+    e.preventDefault(); setDragOverId(null)
+    if (dragItem.current === targetId) return
+    const from = localImgs.findIndex(i => i.id === dragItem.current)
+    const to   = localImgs.findIndex(i => i.id === targetId)
+    if (from < 0 || to < 0) return
+
+    // Reorder locally first
+    const newOrder = [...localImgs]
+    const [moved] = newOrder.splice(from, 1)
+    newOrder.splice(to, 0, moved)
+    setLocalImgs(newOrder)
+
+    // Save new displayOrder to backend
+    try {
+      await Promise.all(newOrder.map((img, idx) =>
+        api.put(`/courses/${course.id}/media/${img.id}`, { ...img, displayOrder: idx })
+      ))
+    } catch { load() } // rollback on error
+  }
+  const onDragEnd = () => { dragItem.current = null; setDragOverId(null) }
 
   // رفع مجموعة صور دفعة واحدة (حتى 10)
   const uploadMultiple = async (files) => {
@@ -303,17 +331,38 @@ function MediaManager({ course, onClose }) {
           <div>
             {tab === 'image' && (
               imgs.length === 0 ? <div style={{textAlign:'center',padding:30,color:'#94a3b8',fontSize:13}}>لا توجد صور بعد</div> :
-              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))',gap:10}}>
-                {imgs.map(img => (
-                  <div key={img.id} style={{position:'relative',borderRadius:12,overflow:'hidden',aspectRatio:'4/3',background:'#f1f5f9'}}>
-                    <img src={img.url} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}} />
-                    <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'6px 8px',background:'linear-gradient(transparent,rgba(0,0,0,0.75))',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                      <span style={{color:'#fff',fontSize:10,fontWeight:600}}>{img.title||''}</span>
-                      <button onClick={()=>delMedia(img.id)} style={{background:'rgba(239,68,68,0.8)',border:'none',color:'#fff',borderRadius:6,padding:'2px 6px',cursor:'pointer',fontSize:10}}>🗑️</button>
+              <>
+                <div style={{fontSize:11,color:'#94a3b8',marginBottom:8,textAlign:'center'}}>
+                  ✋ اسحب الصور لتغيير الترتيب
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))',gap:10}}>
+                  {imgs.map((img, idx) => (
+                    <div key={img.id}
+                      draggable
+                      onDragStart={() => onDragStart(img.id)}
+                      onDragOver={e => onDragOver(e, img.id)}
+                      onDrop={e => onDrop(e, img.id)}
+                      onDragEnd={onDragEnd}
+                      style={{
+                        position:'relative', borderRadius:12, overflow:'hidden', aspectRatio:'4/3', background:'#f1f5f9',
+                        cursor:'grab', transition:'transform 0.15s, box-shadow 0.15s',
+                        transform: dragOverId===img.id ? 'scale(1.04)' : 'scale(1)',
+                        boxShadow: dragOverId===img.id ? '0 0 0 3px #2C3E6B' : 'none',
+                        opacity: dragItem.current===img.id ? 0.5 : 1
+                      }}>
+                      {/* رقم الترتيب */}
+                      <div style={{position:'absolute',top:6,right:6,background:'rgba(0,0,0,0.55)',color:'#fff',borderRadius:6,padding:'2px 7px',fontSize:10,fontWeight:700,zIndex:2}}>
+                        {idx + 1}
+                      </div>
+                      <img src={img.url} alt="" style={{width:'100%',height:'100%',objectFit:'cover',pointerEvents:'none'}} />
+                      <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'6px 8px',background:'linear-gradient(transparent,rgba(0,0,0,0.75))',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                        <span style={{color:'#fff',fontSize:10,fontWeight:600}}>{img.title||''}</span>
+                        <button onClick={()=>delMedia(img.id)} style={{background:'rgba(239,68,68,0.8)',border:'none',color:'#fff',borderRadius:6,padding:'2px 6px',cursor:'pointer',fontSize:10}}>🗑️</button>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </>
             )}
             {tab === 'video' && (
               vids.length === 0 ? <div style={{textAlign:'center',padding:30,color:'#94a3b8',fontSize:13}}>لا توجد فيديوهات بعد</div> :
