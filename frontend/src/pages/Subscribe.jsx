@@ -105,7 +105,16 @@ export default function Subscribe() {
   const [uploading, setUploading] = useState({})
 
   useEffect(() => {
-    api.get('/sectors').then(r => setSectors(r.data)).catch(() => {})
+    // نستخدم ثوابت النظام (trader_sector) — نفس جدول ثوابت الـ admin
+    api.get('/constants/trader_sector')
+      .then(r => {
+        const data = Array.isArray(r.data) ? r.data : []
+        setSectors(data.map(s => ({ id: s.id, name: s.label || s.value, icon: '🏭', description: null })))
+      })
+      .catch(() => {
+        // fallback للأقسام الجديدة
+        api.get('/sectors').then(r => setSectors(r.data)).catch(() => {})
+      })
   }, [])
 
   const uploadDoc = async (field, file) => {

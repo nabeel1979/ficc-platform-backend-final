@@ -56,17 +56,28 @@ public class SectorsController : ControllerBase {
         return Ok(s);
     }
 
-    // GET /api/sectors/{id}/subscribers — جلب المتابعين لقسم معين
+    // GET /api/sectors/{id}/subscribers — جلب المتابعين لقسم معين (بـ SystemConstant ID)
     [HttpGet("{id}/subscribers")]
     [Authorize(Roles = "SuperAdmin,Admin")]
     public async Task<IActionResult> GetSubscribers(int id) {
-        var subscribers = await _db.Subscribers
-            .Where(s => s.IsActive && s.Interests != null && s.Interests.Contains(id.ToString()))
+        // البحث في Interests (JSON array of IDs)
+        var all = await _db.Subscribers
+            .Where(s => s.IsActive && s.Interests != null)
             .Select(s => new {
                 s.Id, s.FullName, s.Phone, s.WhatsApp, s.Email,
-                s.ProfileImage, s.CreatedAt
+                s.ProfileImage, s.Interests, s.CreatedAt
             })
             .ToListAsync();
-        return Ok(subscribers);
+
+        // Filter: check if id is in JSON array
+        var result = all.Where(s => {
+            try {
+                var ids = System.Text.Json.JsonSerializer.Deserialize<List<int>>(s.Interests!);
+                return ids != null && ids.Contains(id);
+            } catch { return false; }
+        }).Select(s => new { s.Id, s.FullName, s.Phone, s.WhatsApp, s.Email, s.ProfileImage, s.CreatedAt })
+        .ToList();
+
+        return Ok(result);
     }
 }
