@@ -2,6 +2,7 @@ import React from 'react'
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
+import ShareButtons from '../components/ShareButtons'
 
 const API = ''
 
@@ -268,40 +269,9 @@ function NewsDetail({ item: n, onBack }) {
           <div style={{padding:'28px 40px 36px'}}>
             <p style={{color:'#444', fontSize:'16px', lineHeight:'2', margin:'0 0 32px', whiteSpace:'pre-wrap'}}>{n.body}</p>
 
-            {/* Share Buttons */}
+            {/* Share Buttons — نفس طريقة الغرف التجارية */}
             <div style={{borderTop:'2px solid #f0f2f8', paddingTop:'24px'}}>
-              <p style={{color:'#888', fontSize:'13px', fontWeight:'700', margin:'0 0 12px'}}>📤 شارك هذا الخبر:</p>
-              <div style={{display:'flex', gap:'10px', flexWrap:'wrap'}}>
-                {/* WhatsApp */}
-                <a href={`https://wa.me/?text=${encodeURIComponent(n.title + '\n\n' + (n.body?.slice(0,200)||'') + '...\n\n🔗 ' + `${window.location.origin}/news/${n.id}`)}`}
-                  target="_blank" rel="noreferrer"
-                  style={{display:'flex', alignItems:'center', gap:'8px', padding:'10px 20px', borderRadius:'12px', background:'#25D366', color:'#fff', textDecoration:'none', fontSize:'14px', fontWeight:'700'}}>
-                  <span style={{fontSize:'18px'}}>💬</span> واتساب
-                </a>
-                {/* Facebook */}
-                <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${window.location.origin}/news/${n.id}`)}`}
-                  target="_blank" rel="noreferrer"
-                  style={{display:'flex', alignItems:'center', gap:'8px', padding:'10px 20px', borderRadius:'12px', background:'#1877F2', color:'#fff', textDecoration:'none', fontSize:'14px', fontWeight:'700'}}>
-                  <span style={{fontSize:'18px'}}>📘</span> فيسبوك
-                </a>
-                {/* Telegram */}
-                <a href={`https://t.me/share/url?url=${encodeURIComponent(`${window.location.origin}/news/${n.id}`)}&text=${encodeURIComponent(n.title)}`}
-                  target="_blank" rel="noreferrer"
-                  style={{display:'flex', alignItems:'center', gap:'8px', padding:'10px 20px', borderRadius:'12px', background:'#0088cc', color:'#fff', textDecoration:'none', fontSize:'14px', fontWeight:'700'}}>
-                  <span style={{fontSize:'18px'}}>✈️</span> تيليگرام
-                </a>
-                {/* Twitter/X */}
-                <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(n.title)}&url=${encodeURIComponent(`${window.location.origin}/news/${n.id}`)}`}
-                  target="_blank" rel="noreferrer"
-                  style={{display:'flex', alignItems:'center', gap:'8px', padding:'10px 20px', borderRadius:'12px', background:'#000', color:'#fff', textDecoration:'none', fontSize:'14px', fontWeight:'700'}}>
-                  <span style={{fontSize:'18px'}}>𝕏</span> تويتر
-                </a>
-                {/* Copy Link */}
-                <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/news/${n.id}`); alert('تم نسخ الرابط!') }}
-                  style={{display:'flex', alignItems:'center', gap:'8px', padding:'10px 20px', borderRadius:'12px', background:'#f3f4f6', color:'#444', border:'none', cursor:'pointer', fontSize:'14px', fontWeight:'700', fontFamily:'Cairo,sans-serif'}}>
-                  <span style={{fontSize:'18px'}}>🔗</span> نسخ الرابط
-                </button>
-              </div>
+              <ShareButtons url={`${window.location.origin}/news/${n.id}`} title={n.title} label="شارك هذا الخبر" />
             </div>
           </div>
         </div>

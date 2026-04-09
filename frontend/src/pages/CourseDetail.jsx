@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
+import ShareButtons from '../components/ShareButtons'
 
 const STATUS_LABEL = { upcoming:'📅 قادمة', ongoing:'🔴 جارية الآن', completed:'✅ منتهية' }
 const STATUS_COLOR = { upcoming:'#10b981', ongoing:'#ef4444', completed:'#6b7280' }
@@ -75,12 +76,7 @@ export default function CourseDetail() {
   const [media, setMedia] = useState([])
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(false)
-  const [copied, setCopied] = useState(false)
   const courseUrl = typeof window !== 'undefined' ? `${window.location.origin}/courses/${id}` : ''
-  const copyLink = () => {
-    navigator.clipboard.writeText(courseUrl)
-    setCopied(true); setTimeout(() => setCopied(false), 2500)
-  }
   const [form, setForm] = useState({ fullName:'', phone:'', email:'', company:'', motivation:'' })
   const [msg, setMsg] = useState({ type:'', text:'' })
   const [submitting, setSubmitting] = useState(false)
@@ -298,31 +294,8 @@ export default function CourseDetail() {
         </div>
       )}
 
-      {/* أزرار المشاركة — أسفل الصفحة — نفس طريقة الأخبار */}
-      <div style={{background:'#fff',borderRadius:20,padding:'20px 24px',marginBottom:24,boxShadow:'0 2px 12px rgba(44,62,107,0.07)'}}>
-        <div style={{fontSize:14,fontWeight:700,color:'#2C3E6B',marginBottom:12}}>📤 شارك الورشة</div>
-        <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
-          <a href={`https://wa.me/?text=${encodeURIComponent((course?.title||'') + '\n' + courseUrl)}`}
-            target="_blank" rel="noreferrer"
-            style={{display:'flex',alignItems:'center',gap:6,padding:'10px 18px',borderRadius:12,background:'#25D366',color:'#fff',textDecoration:'none',fontSize:13,fontWeight:700,fontFamily:'Cairo,sans-serif'}}>
-            💬 واتساب
-          </a>
-          <a href={`https://t.me/share/url?url=${encodeURIComponent(courseUrl)}&text=${encodeURIComponent(course?.title||'')}`}
-            target="_blank" rel="noreferrer"
-            style={{display:'flex',alignItems:'center',gap:6,padding:'10px 18px',borderRadius:12,background:'#0088cc',color:'#fff',textDecoration:'none',fontSize:13,fontWeight:700,fontFamily:'Cairo,sans-serif'}}>
-            ✈️ تيليگرام
-          </a>
-          <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(courseUrl)}`}
-            target="_blank" rel="noreferrer"
-            style={{display:'flex',alignItems:'center',gap:6,padding:'10px 18px',borderRadius:12,background:'#1877F2',color:'#fff',textDecoration:'none',fontSize:13,fontWeight:700,fontFamily:'Cairo,sans-serif'}}>
-            📘 فيسبوك
-          </a>
-          <button onClick={copyLink}
-            style={{display:'flex',alignItems:'center',gap:6,padding:'10px 18px',borderRadius:12,background:'#f3f4f6',color:'#444',border:'none',cursor:'pointer',fontSize:13,fontWeight:700,fontFamily:'Cairo,sans-serif'}}>
-            {copied ? '✅ تم النسخ!' : '🔗 نسخ الرابط'}
-          </button>
-        </div>
-      </div>
+      {/* أزرار المشاركة — نفس طريقة الغرف التجارية */}
+      <ShareButtons url={courseUrl} title={course?.title||''} label="شارك الورشة" />
 
       {/* نموذج التسجيل */}
       {applying && (
