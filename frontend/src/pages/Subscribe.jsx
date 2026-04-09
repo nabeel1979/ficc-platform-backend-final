@@ -422,6 +422,7 @@ export default function Subscribe() {
         profileImage: '', nationalIdFront: '', nationalIdBack: '',
         passport: '', tradeIdFront: '', tradeIdBack: '', cv: '',
         facebook: '', instagram: '', twitter: '', linkedIn: '', tikTok: '',
+        companyReg: '', chamberCert: '', taxCert: '', companyStamp: '', otherDoc: '',
         interests: form.sectors || [],
         traderSectors: []
       })
@@ -463,6 +464,11 @@ export default function Subscribe() {
         tradeIdFront: s.tradeIdFront||'',
         tradeIdBack: s.tradeIdBack||'',
         cv: s.cv||s.cV||'',
+        companyReg: s.companyReg||'',
+        chamberCert: s.chamberCert||'',
+        taxCert: s.taxCert||'',
+        companyStamp: s.companyStamp||'',
+        otherDoc: s.otherDoc||'',
         facebook: s.facebook||'',
         instagram: s.instagram||'',
         twitter: s.twitter||'',
@@ -496,15 +502,8 @@ export default function Subscribe() {
   const btnBack = { padding:'10px', borderRadius:'10px', background:'none', border:'none', color:'#888', cursor:'pointer', fontFamily:'Cairo,sans-serif', fontSize:'13px', width:'100%' }
 
   return (
-    <div style={{minHeight:'80vh',background:'#F5F7FA',padding:'32px 16px',fontFamily:'Cairo,sans-serif',direction:'rtl'}}>
+    <div style={{background:'#F5F7FA',padding:'24px 16px',fontFamily:'Cairo,sans-serif',direction:'rtl',overflowX:'hidden'}}>
       <div style={{maxWidth:'540px',margin:'0 auto'}}>
-
-        {/* Header */}
-        <div style={{background:'linear-gradient(135deg,#1a1a2e,#2C3E6B)',borderRadius:'20px',padding:'32px',textAlign:'center',marginBottom:'24px'}}>
-          <div style={{fontSize:'48px',marginBottom:'12px'}}>🔔</div>
-          <h1 style={{color:'#fff',fontWeight:'800',fontSize:'22px',margin:'0 0 8px'}}>سجّل متابعاً</h1>
-          <p style={{color:'rgba(255,255,255,0.7)',fontSize:'14px',margin:0}}>ليصلك كل ما هو جديد من اتحاد الغرف التجارية العراقية</p>
-        </div>
 
         {/* نجاح */}
         {step === 99 && (
@@ -519,14 +518,14 @@ export default function Subscribe() {
 
         {/* اختيار النوع */}
         {step === 1 && !mode && (
-          <div style={{background:'#fff',borderRadius:'16px',padding:'28px',boxShadow:'0 4px 16px rgba(44,62,107,0.08)'}}>
+          <div style={{background:'linear-gradient(135deg,#1a1a2e,#2C3E6B)',borderRadius:'20px',padding:'32px',boxShadow:'0 4px 24px rgba(44,62,107,0.18)'}}>
             {/* Header */}
-            <div style={{textAlign:'center',marginBottom:24}}>
-              <div style={{fontSize:48,marginBottom:8}}>🔔</div>
-              <h2 style={{color:'#2C3E6B',fontWeight:900,fontSize:20,margin:'0 0 6px'}}>سجّل متابعاً</h2>
-              <p style={{color:'#64748b',fontSize:13,margin:0}}>ابقَ على اطّلاع بكل أحداث اتحاد الغرف التجارية العراقية</p>
+            <div style={{textAlign:'center',marginBottom:28}}>
+              <div style={{fontSize:52,marginBottom:10}}>🔔</div>
+              <h2 style={{color:'#fff',fontWeight:900,fontSize:22,margin:'0 0 8px'}}>سجّل متابعاً</h2>
+              <p style={{color:'rgba(255,255,255,0.7)',fontSize:13,margin:0}}>ابقَ على اطّلاع بكل أحداث اتحاد الغرف التجارية العراقية</p>
             </div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px'}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px'}}>
               <button onClick={()=>setMode('new')} style={{padding:'24px 16px',borderRadius:'14px',background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',textAlign:'center'}}>
                 <div style={{fontSize:'36px',marginBottom:'8px'}}>✨</div>
                 <div style={{fontWeight:'800',fontSize:'15px'}}>تسجيل جديد</div>
@@ -703,6 +702,7 @@ export default function Subscribe() {
                 {key:'sectors_tab', label:'🏭 القطاعات'},
                 {key:'social',    label:'🌐 التواصل'},
                 {key:'docs',      label:'📄 الوثائق'},
+                {key:'company_docs', label:'🏢 أوراق الشركة'},
               ].map(t => (
                 <button key={t.key} onClick={() => setProfileTab(t.key)}
                   style={{padding:'7px 14px',borderRadius:20,border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11,whiteSpace:'nowrap',
@@ -882,18 +882,56 @@ export default function Subscribe() {
                   {key:'passport', label:'جواز السفر', icon:'📗', accept:'image/*'},
                   {key:'tradeIdFront', label:'هوية التجارة — أمام', icon:'🏪', accept:'image/*'},
                   {key:'tradeIdBack', label:'هوية التجارة — خلف', icon:'🏪', accept:'image/*'},
-                  {key:'cv', label:'السيفي (CV)', icon:'📋', accept:'image/*,application/pdf'},
+                  {key:'cv', label:'السيفي (CV)', icon:'📋', accept:'application/pdf,image/*'},
                 ].map(doc => {
                   const val = profileForm[doc.key] || subscriber?.[doc.key]
+                  const isPdf = val && val.toLowerCase().endsWith('.pdf')
                   return (
                     <div key={doc.key} style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px',borderRadius:12,border:'1.5px solid #e5e7eb',background:'#fafafa'}}>
                       <span style={{fontSize:22,flexShrink:0}}>{doc.icon}</span>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontWeight:700,fontSize:13,color:'#374151',marginBottom:4}}>{doc.label}</div>
-                        {val
-                          ? <a href={val} target="_blank" rel="noreferrer" style={{fontSize:11,color:'#2C3E6B',fontWeight:700}}>✅ مرفوع — اضغط للعرض</a>
-                          : <span style={{fontSize:11,color:'#94a3b8'}}>لم يرفع بعد</span>
-                        }
+                        {val ? (
+                          isPdf
+                            ? <a href={val} target="_blank" rel="noreferrer" style={{fontSize:11,color:'#dc2626',fontWeight:700}}>📄 PDF — اضغط للفتح</a>
+                            : <a href={val} target="_blank" rel="noreferrer" style={{fontSize:11,color:'#2C3E6B',fontWeight:700}}>✅ مرفوع — اضغط للعرض</a>
+                        ) : <span style={{fontSize:11,color:'#94a3b8'}}>لم يرفع بعد</span>}
+                      </div>
+                      <label style={{padding:'6px 12px',background:'#e0e7ff',color:'#4338ca',borderRadius:8,cursor:'pointer',fontSize:11,fontWeight:700,flexShrink:0}}>
+                        {uploading[doc.key] ? '⏳' : '📁 رفع'}
+                        <input type="file" accept={doc.accept} style={{display:'none'}} onChange={e => uploadDoc(doc.key, e.target.files[0])} />
+                      </label>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+            )}
+
+            {/* Tab: أوراق الشركة */}
+            {profileTab === 'company_docs' && (
+            <div style={{background:'#fff',borderRadius:16,padding:20,boxShadow:'0 4px 16px rgba(44,62,107,0.08)',marginBottom:12}}>
+              <h3 style={{color:'#2C3E6B',fontWeight:800,fontSize:15,margin:'0 0 16px',paddingBottom:10,borderBottom:'2px solid #FFC72C'}}>🏢 أوراق الشركة</h3>
+              <div style={{display:'flex',flexDirection:'column',gap:14}}>
+                {[
+                  {key:'companyReg',  label:'شهادة تسجيل الشركة', icon:'📜', accept:'application/pdf,image/*'},
+                  {key:'chamberCert', label:'شهادة اتحاد الغرف',   icon:'🏛️', accept:'application/pdf,image/*'},
+                  {key:'taxCert',     label:'شهادة الإفادة الضريبية', icon:'📑', accept:'application/pdf,image/*'},
+                  {key:'companyStamp',label:'ختم الشركة (صورة)',   icon:'🔏', accept:'image/*'},
+                  {key:'otherDoc',    label:'وثيقة أخرى',          icon:'📂', accept:'application/pdf,image/*'},
+                ].map(doc => {
+                  const val = profileForm[doc.key] || subscriber?.[doc.key]
+                  const isPdf = val && val.toLowerCase().endsWith('.pdf')
+                  return (
+                    <div key={doc.key} style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px',borderRadius:12,border:'1.5px solid #e5e7eb',background:'#fafafa'}}>
+                      <span style={{fontSize:22,flexShrink:0}}>{doc.icon}</span>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontWeight:700,fontSize:13,color:'#374151',marginBottom:4}}>{doc.label}</div>
+                        {val ? (
+                          isPdf
+                            ? <a href={val} target="_blank" rel="noreferrer" style={{fontSize:11,color:'#dc2626',fontWeight:700}}>📄 PDF — اضغط للفتح</a>
+                            : <a href={val} target="_blank" rel="noreferrer" style={{fontSize:11,color:'#2C3E6B',fontWeight:700}}>✅ مرفوع — اضغط للعرض</a>
+                        ) : <span style={{fontSize:11,color:'#94a3b8'}}>لم يرفع بعد</span>}
                       </div>
                       <label style={{padding:'6px 12px',background:'#e0e7ff',color:'#4338ca',borderRadius:8,cursor:'pointer',fontSize:11,fontWeight:700,flexShrink:0}}>
                         {uploading[doc.key] ? '⏳' : '📁 رفع'}

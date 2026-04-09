@@ -259,6 +259,13 @@ public class SubscribersController : ControllerBase {
         if (dto.TradeIdBack != null) sub.TradeIdBack = dto.TradeIdBack;
         if (dto.CV != null) sub.CV = dto.CV;
 
+        // أوراق الشركة
+        if (dto.CompanyReg != null) sub.CompanyReg = dto.CompanyReg;
+        if (dto.ChamberCert != null) sub.ChamberCert = dto.ChamberCert;
+        if (dto.TaxCert != null) sub.TaxCert = dto.TaxCert;
+        if (dto.CompanyStamp != null) sub.CompanyStamp = dto.CompanyStamp;
+        if (dto.OtherDoc != null) sub.OtherDoc = dto.OtherDoc;
+
         // تواصل اجتماعي
         if (dto.Facebook != null) sub.Facebook = dto.Facebook;
         if (dto.Instagram != null) sub.Instagram = dto.Instagram;
@@ -324,7 +331,12 @@ public class SubscribersController : ControllerBase {
 }
 
 public record SubscriberDto(string FullName, string Phone, string? WhatsApp, string? Email, string? Sectors, string? NotifyBy);
-public record SubscriberUpdateDto(string? FullName, string? Phone, string? WhatsApp, string? Email, string? Sectors, string? NotifyBy, bool? IsActive);
+public record SubscriberUpdateDto(string? FullName, string? Phone, string? WhatsApp, string? Email, string? Sectors, string? NotifyBy, bool? IsActive,
+    string? ProfileImage, string? NationalIdFront, string? NationalIdBack, string? Passport,
+    string? TradeIdFront, string? TradeIdBack, string? CV,
+    string? CompanyReg, string? ChamberCert, string? TaxCert, string? CompanyStamp, string? OtherDoc,
+    string? Facebook, string? Instagram, string? Twitter, string? LinkedIn, string? TikTok,
+    List<int>? Interests, List<int>? TraderSectors);
 public record PhoneDto(string Phone);
 public class SendOtpLoginDto { public string? Phone { get; set; } public string? Email { get; set; } }
 public class VerifyOtpLoginDto { public string? Phone { get; set; } public string? Email { get; set; } public string Code { get; set; } = ""; }
@@ -357,6 +369,12 @@ public class SubscriberProfileDto {
     public string? TradeIdFront { get; set; }
     public string? TradeIdBack { get; set; }
     public string? CV { get; set; }
+    // أوراق الشركة
+    public string? CompanyReg { get; set; }
+    public string? ChamberCert { get; set; }
+    public string? TaxCert { get; set; }
+    public string? CompanyStamp { get; set; }
+    public string? OtherDoc { get; set; }
     // تواصل اجتماعي
     public string? Facebook { get; set; }
     public string? Instagram { get; set; }

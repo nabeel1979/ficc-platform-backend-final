@@ -393,6 +393,13 @@ public class Subscriber {
     public string? TradeIdBack { get; set; }
     public string? CV { get; set; }
 
+    // أوراق الشركة
+    public string? CompanyReg { get; set; }    // شهادة تسجيل الشركة
+    public string? ChamberCert { get; set; }   // شهادة اتحاد الغرف
+    public string? TaxCert { get; set; }       // شهادة الإفادة الضريبية
+    public string? CompanyStamp { get; set; }  // ختم الشركة
+    public string? OtherDoc { get; set; }      // وثيقة أخرى
+
     // Social Links
     public string? Facebook { get; set; }
     public string? Instagram { get; set; }
