@@ -330,7 +330,7 @@ export default function Subscribe() {
 
     // التحقق من الحقول الإلزامية مع التوجيه للـ tab الصحيح
     if (!form.fullName?.trim())       return failWith('info',        '❌ الاسم الكامل مطلوب')
-    if (!form.phone?.trim())          return failWith('info',        '❌ رقم الهاتف مطلوب')
+    if (!form.whatsApp?.trim())        return failWith('info',        '❌ رقم الواتساب مطلوب')
     if (!form.email?.trim() && !form.whatsApp?.trim())
       return failWith('info', '❌ يجب إضافة إيميل أو رقم واتساب على الأقل')
     if (!form.notifyBy?.length)       return failWith('info',        '❌ اختر طريقة إشعار واحدة على الأقل')
@@ -399,9 +399,8 @@ export default function Subscribe() {
   // تسجيل جديد - الخطوة 1 → 2
   const goStep2 = () => {
     if (!form.fullName) { setErr('الاسم مطلوب'); return }
-    if (!form.phone) { setErr('رقم الهاتف مطلوب'); return }
-    if (!verified.phone) { setErr('⚠️ رقم الهاتف مطلوب — اضغط 📲 تحقق وأدخل الرمز المرسل على واتساب'); return }
-    if (!form.email?.trim() && !form.whatsApp?.trim()) { setErr('❌ يجب إضافة إيميل أو رقم واتساب على الأقل للإشعارات'); return }
+    if (!form.whatsApp) { setErr('رقم الواتساب مطلوب'); return }
+    if (!verified.whatsApp) { setErr('⚠️ تحقق من رقم الواتساب أولاً — اضغط 📲 تحقق'); return }
     setErr(''); setStep(2)
   }
 
@@ -535,19 +534,17 @@ export default function Subscribe() {
               <div>
                 <label style={{display:'block',fontSize:'13px',fontWeight:'700',color:'#2C3E6B',marginBottom:'6px'}}>الاسم الكامل *</label>
                 <input value={form.fullName} onChange={e=>set('fullName',e.target.value)} placeholder="الاسم والكنية"
+                  autoComplete="off" name="subscriber-name"
                   style={{width:'100%',padding:'11px 14px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'14px',fontFamily:'Cairo,sans-serif',outline:'none',boxSizing:'border-box'}}/>
               </div>
 
-              <VerifiedField label="رقم الهاتف" value={form.phone} onChange={v=>set('phone',v)}
-                placeholder="07xxxxxxxxx — لغاية تسجيل الحساب" isLtr field="phone" required
-                verified={verified.phone} onVerified={v=>setV('phone',v)}/>
-
-              <VerifiedField label="رقم الواتساب" value={form.whatsApp} onChange={v=>set('whatsApp',v)}
-                placeholder="07xxxxxxxxx — لغاية إرسال التبليغات" isLtr field="whatsapp"
-                verified={verified.whatsApp} onVerified={v=>setV('whatsApp',v)}/>
+              {/* رقم الواتساب = رقم الهاتف الرئيسي */}
+              <VerifiedField label="رقم الواتساب *" value={form.whatsApp} onChange={v=>{ set('whatsApp',v); set('phone',v) }}
+                placeholder="07xxxxxxxxx" isLtr field="whatsapp" required
+                verified={verified.whatsApp} onVerified={v=>{ setV('whatsApp',v); setV('phone',v) }}/>
 
               <VerifiedField label="البريد الإلكتروني" value={form.email} onChange={v=>set('email',v)}
-                placeholder="email@example.com — لغاية إرسال التبليغات" isLtr field="email"
+                placeholder="email@example.com — اختياري" isLtr field="email"
                 verified={verified.email} onVerified={v=>setV('email',v)}/>
 
               {err && <div style={{background:'#fee2e2',color:'#dc2626',padding:'10px 14px',borderRadius:'10px',fontSize:'13px'}}>{err}</div>}
