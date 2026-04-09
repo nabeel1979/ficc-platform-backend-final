@@ -168,9 +168,6 @@ public class SubscribersController : ControllerBase {
             if (blocked) return StatusCode(429, new { message = blockMsg });
             sub = await _db.Subscribers.FirstOrDefaultAsync(s => s.Phone == phone);
         }
-        if (sub == null) return NotFound(new { message = "هذا الرقم غير مسجّل" });
-        if (sub == null) return NotFound(new { message = "هذا الرقم غير مسجّل" });
-
         var otp = new string(System.Linq.Enumerable.Repeat("0123456789", 6)
             .Select(s => s[new Random().Next(s.Length)]).ToArray());
 
@@ -178,33 +175,27 @@ public class SubscribersController : ControllerBase {
         if (existing != null) _db.OtpCodes.Remove(existing);
 
         _db.OtpCodes.Add(new OtpCode {
-            UserId = sub.Id, Code = otp, Channel = "sms",
+            UserId = sub.Id, Code = otp, Channel = !string.IsNullOrEmpty(dto.Email) ? "email" : "sms",
             Type = "subscriber", IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
             CreatedAt = DateTime.UtcNow, ExpiresAt = DateTime.UtcNow.AddMinutes(10)
         });
         await _db.SaveChangesAsync();
 
-        // أرسل على القنوات المفضّلة للمتابع
-        var notifyBy = new List<string>();
-        try { notifyBy = System.Text.Json.JsonSerializer.Deserialize<List<string>>(sub.NotifyBy ?? "[]") ?? new(); } catch {}
-        
-        var sent = false;
-        if (notifyBy.Contains("email") && !string.IsNullOrEmpty(sub.Email)) {
-            await _notify.SendEmail(sub.Email, "رمز الدخول | اتحاد الغرف التجارية العراقية",
-                $"<div dir='rtl' style='font-family:Cairo,sans-serif'><p>رمز تأكيد الدخول:</p><h1 style='letter-spacing:8px;color:#2C3E6B'>{otp}</h1><p>صالح 10 دقائق</p></div>");
-            sent = true;
-        }
-        if (!notifyBy.Contains("email") || notifyBy.Contains("whatsapp")) {
+        // إرسال OTP حسب الطريقة المختارة
+        if (!string.IsNullOrEmpty(dto.Email)) {
+            // طلب دخول بالإيميل → أرسل OTP للإيميل مباشرة
+            await _notify.SendEmail(sub.Email!, "رمز الدخول | اتحاد الغرف التجارية العراقية",
+                $"<div dir='rtl' style='font-family:Cairo,sans-serif;text-align:center;padding:20px'>" +
+                $"<h2 style='color:#2C3E6B'>رمز تأكيد الدخول</h2>" +
+                $"<h1 style='letter-spacing:10px;color:#2C3E6B;font-size:40px'>{otp}</h1>" +
+                $"<p style='color:#64748b'>الرمز صالح لمدة 10 دقائق</p></div>");
+            return Ok(new { message = $"تم إرسال رمز التأكيد على البريد: {EmailHelper.Mask(sub.Email!)}" });
+        } else {
+            // طلب دخول بالهاتف → أرسل OTP للواتساب
             var waNum = sub.WhatsApp ?? sub.Phone;
-            if (!string.IsNullOrEmpty(waNum)) {
-                await _notify.SendWhatsAppOtp(waNum, otp);
-                sent = true;
-            }
+            await _notify.SendWhatsAppOtp(waNum, otp);
+            return Ok(new { message = $"تم إرسال رمز التأكيد على الواتساب" });
         }
-        if (!sent) await _notify.SendWhatsAppOtp(dto.Phone, otp); // fallback
-        
-        var channel = notifyBy.Contains("email") && !notifyBy.Contains("whatsapp") ? "البريد الإلكتروني" : "الواتساب";
-        return Ok(new { message = $"تم إرسال رمز التأكيد عبر {channel}" });
     }
 
     // POST /api/subscribers/verify-otp — تحقق OTP (بالهاتف أو الإيميل)
@@ -337,6 +328,17 @@ public class VerifyOtpLoginDto { public string? Phone { get; set; } public strin
 public record VerifyOtpDto(string Phone, string Code);
 public record FieldOtpDto(string Field, string Value);
 public record FieldVerifyDto(string Field, string Value, string Code);
+
+public static class EmailHelper {
+    public static string Mask(string email) {
+        if (string.IsNullOrEmpty(email)) return "";
+        var parts = email.Split('@');
+        if (parts.Length < 2) return email;
+        var name = parts[0];
+        var masked = name.Length <= 2 ? "**" : name[..2] + new string('*', name.Length - 2);
+        return $"{masked}@{parts[1]}";
+    }
+}
 
 public class BroadcastDto {
     public List<int> SubscriberIds { get; set; } = new();
