@@ -25,9 +25,10 @@ function getYTId(url) {
 // YouTube Thumbnail
 function YTThumb({ url, title, onClick }) {
   const id = getYTId(url)
+  const shorts = isShorts(url)
   if (!id) return null
   return (
-    <div onClick={onClick} style={{cursor:'pointer',borderRadius:12,overflow:'hidden',position:'relative',background:'#000',aspectRatio:'16/9'}}>
+    <div onClick={onClick} style={{cursor:'pointer',borderRadius:12,overflow:'hidden',position:'relative',background:'#000',aspectRatio: shorts ? '9/16' : '16/9', maxHeight: shorts ? 320 : 'unset'}}>
       <img src={`https://img.youtube.com/vi/${id}/hqdefault.jpg`} alt={title||'فيديو'} style={{width:'100%',height:'100%',objectFit:'cover',opacity:0.85,transition:'opacity 0.2s'}}
         onMouseEnter={e=>e.target.style.opacity=1} onMouseLeave={e=>e.target.style.opacity=0.85} />
       <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
@@ -35,29 +36,15 @@ function YTThumb({ url, title, onClick }) {
           <div style={{width:0,height:0,borderTop:'10px solid transparent',borderBottom:'10px solid transparent',borderLeft:'18px solid white',marginRight:-4}} />
         </div>
       </div>
+      {shorts && <div style={{position:'absolute',top:8,right:8,background:'#ff0000',color:'#fff',fontSize:10,fontWeight:800,padding:'2px 8px',borderRadius:6}}>Shorts</div>}
       {title && <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'8px 12px',background:'linear-gradient(transparent,rgba(0,0,0,0.75))',color:'#fff',fontSize:12,fontWeight:700,direction:'rtl'}}>{title}</div>}
     </div>
   )
 }
 
 // Video Modal
-function VideoModal({ url, title, onClose }) {
-  const id = getYTId(url)
-  if (!id) return null
-  return (
-    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.9)',zIndex:2000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{width:'100%',maxWidth:860,position:'relative'}}>
-        <button onClick={onClose} style={{position:'absolute',top:-44,left:0,background:'none',border:'none',color:'#fff',fontSize:32,cursor:'pointer',lineHeight:1}}>✕</button>
-        {title && <div style={{color:'#fff',fontSize:16,fontWeight:700,marginBottom:12,direction:'rtl',fontFamily:'Cairo,sans-serif'}}>{title}</div>}
-        <div style={{position:'relative',paddingBottom:'56.25%',height:0}}>
-          <iframe
-            src={`https://www.youtube.com/embed/${id}?autoplay=1&rel=0`}
-            style={{position:'absolute',top:0,left:0,width:'100%',height:'100%',border:'none',borderRadius:12}}
-            allow="autoplay; encrypted-media" allowFullScreen />
-        </div>
-      </div>
-    </div>
-  )
+function isShorts(url) {
+  return url && url.includes('/shorts/')
 }
 
 // Image Lightbox
@@ -102,7 +89,7 @@ export default function CourseDetail() {
   const [form, setForm] = useState({ fullName:'', phone:'', email:'', company:'', motivation:'' })
   const [msg, setMsg] = useState({ type:'', text:'' })
   const [submitting, setSubmitting] = useState(false)
-  const [videoModal, setVideoModal] = useState(null)
+  const [videoModal, setVideoModal] = useState(null) // kept for compatibility
   const [imageModal, setImageModal] = useState(null)
 
   useEffect(() => {
@@ -284,13 +271,27 @@ export default function CourseDetail() {
           <h2 style={{fontSize:18,fontWeight:800,color:'#2C3E6B',marginBottom:16,display:'flex',alignItems:'center',gap:8}}>
             🎥 فيديوهات الدورة <span style={{fontSize:12,color:'#94a3b8',fontWeight:600}}>({videos.length})</span>
           </h2>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:14}}>
-            {videos.map(vid => (
-              <div key={vid.id}>
-                <YTThumb url={vid.url} title={vid.title} onClick={() => setVideoModal(vid)} />
-                {vid.description && <p style={{fontSize:12,color:'#64748b',marginTop:6,lineHeight:1.5}}>{vid.description}</p>}
-              </div>
-            ))}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:16}}>
+            {videos.map(vid => {
+              const id = getYTId(vid.url)
+              if (!id) return null
+              return (
+                <div key={vid.id}>
+                  {/* iframe مباشرة — يشتغل من الموبايل والكمبيوتر */}
+                  <div style={{position:'relative',paddingBottom:'56.25%',height:0,overflow:'hidden',borderRadius:12,background:'#000'}}>
+                    <iframe
+                      src={`https://www.youtube.com/embed/${id}?rel=0&modestbranding=1`}
+                      style={{position:'absolute',top:0,left:0,width:'100%',height:'100%',border:'none'}}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title={vid.title||'فيديو'}
+                    />
+                  </div>
+                  {vid.title && <div style={{fontWeight:700,fontSize:13,color:'#1e293b',marginTop:8,direction:'rtl'}}>{vid.title}</div>}
+                  {vid.description && <p style={{fontSize:12,color:'#64748b',marginTop:4,lineHeight:1.5}}>{vid.description}</p>}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
