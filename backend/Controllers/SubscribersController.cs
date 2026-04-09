@@ -152,13 +152,23 @@ public class SubscribersController : ControllerBase {
         return await VerifyFieldOtp(new FieldVerifyDto("phone", dto.Phone, dto.Code));
     }
 
-    // POST /api/subscribers/send-otp — إرسال OTP للمتابع المسجّل سابقاً
+    // POST /api/subscribers/send-otp — إرسال OTP (بالهاتف أو الإيميل)
     [HttpPost("send-otp")]
-    public async Task<IActionResult> SendOtp([FromBody] PhoneDto dto) {
-        var (blocked, blockMsg) = await CheckRateLimit(dto.Phone, "phone-login");
-        if (blocked) return StatusCode(429, new { message = blockMsg });
-
-        var sub = await _db.Subscribers.FirstOrDefaultAsync(s => s.Phone == dto.Phone);
+    public async Task<IActionResult> SendOtp([FromBody] SendOtpLoginDto dto) {
+        // البحث بالهاتف أو الإيميل
+        Subscriber? sub = null;
+        if (!string.IsNullOrEmpty(dto.Email)) {
+            var (blocked, blockMsg) = await CheckRateLimit(dto.Email, "email-login");
+            if (blocked) return StatusCode(429, new { message = blockMsg });
+            sub = await _db.Subscribers.FirstOrDefaultAsync(s => s.Email == dto.Email);
+            if (sub == null) return NotFound(new { message = "هذا البريد الإلكتروني غير مسجّل" });
+        } else {
+            var phone = dto.Phone ?? "";
+            var (blocked, blockMsg) = await CheckRateLimit(phone, "phone-login");
+            if (blocked) return StatusCode(429, new { message = blockMsg });
+            sub = await _db.Subscribers.FirstOrDefaultAsync(s => s.Phone == phone);
+        }
+        if (sub == null) return NotFound(new { message = "هذا الرقم غير مسجّل" });
         if (sub == null) return NotFound(new { message = "هذا الرقم غير مسجّل" });
 
         var otp = new string(System.Linq.Enumerable.Repeat("0123456789", 6)
@@ -197,11 +207,13 @@ public class SubscribersController : ControllerBase {
         return Ok(new { message = $"تم إرسال رمز التأكيد عبر {channel}" });
     }
 
-    // POST /api/subscribers/verify-otp — تحقق OTP وإرجاع بيانات المتابع
+    // POST /api/subscribers/verify-otp — تحقق OTP (بالهاتف أو الإيميل)
     [HttpPost("verify-otp")]
-    public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto) {
-        var sub = await _db.Subscribers.FirstOrDefaultAsync(s => s.Phone == dto.Phone);
-        if (sub == null) return NotFound(new { message = "الرقم غير مسجّل" });
+    public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpLoginDto dto) {
+        Subscriber? sub = !string.IsNullOrEmpty(dto.Email)
+            ? await _db.Subscribers.FirstOrDefaultAsync(s => s.Email == dto.Email)
+            : await _db.Subscribers.FirstOrDefaultAsync(s => s.Phone == dto.Phone);
+        if (sub == null) return NotFound(new { message = "غير مسجّل" });
 
         var otpRecord = await _db.OtpCodes.FirstOrDefaultAsync(o =>
             o.UserId == sub.Id && o.Code == dto.Code && o.Type == "subscriber" &&
@@ -320,6 +332,8 @@ public class SubscribersController : ControllerBase {
 public record SubscriberDto(string FullName, string Phone, string? WhatsApp, string? Email, string? Sectors, string? NotifyBy);
 public record SubscriberUpdateDto(string? FullName, string? Phone, string? WhatsApp, string? Email, string? Sectors, string? NotifyBy, bool? IsActive);
 public record PhoneDto(string Phone);
+public class SendOtpLoginDto { public string? Phone { get; set; } public string? Email { get; set; } }
+public class VerifyOtpLoginDto { public string? Phone { get; set; } public string? Email { get; set; } public string Code { get; set; } = ""; }
 public record VerifyOtpDto(string Phone, string Code);
 public record FieldOtpDto(string Field, string Value);
 public record FieldVerifyDto(string Field, string Value, string Code);

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 
 const API = ''
@@ -118,11 +119,13 @@ function TraderSectorsTab({ profileForm, setProfileForm }) {
 }
 
 export default function Subscribe() {
+  const navigate = useNavigate()
   const [mode, setMode] = useState(null)
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({ fullName:'', phone:'', whatsApp:'', email:'', sectors:[], notifyBy:[] })
   const [verified, setVerified] = useState({ phone: false, whatsApp: false, email: false })
   const [loginPhone, setLoginPhone] = useState('')
+  const [loginChannel, setLoginChannel] = useState('phone') // phone | email
   const [loginOtp, setLoginOtp] = useState('')
   const [subscriber, setSubscriber] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -208,7 +211,8 @@ export default function Subscribe() {
       await api.put(`/subscribers/${subscriber.id}/profile`, payload)
       setSubscriber(p => ({...p, ...payload}))
       setProfileMsg('✅ تم حفظ جميع البيانات بنجاح')
-      setTimeout(() => setProfileMsg(''), 3000)
+      // إغلاق الصفحة والرجوع للرئيسية بعد ثانيتين
+      setTimeout(() => navigate('/'), 2000)
     } catch(err) {
       setProfileMsg('❌ حدث خطأ: ' + (err?.response?.data?.message || err?.message || 'تأكد من تسجيل الدخول'))
     }
@@ -254,10 +258,10 @@ export default function Subscribe() {
 
   // مسجّل سابق - إرسال OTP
   const sendLoginOtp = async () => {
-    if (!loginPhone) { setErr('أدخل رقم الهاتف'); return }
+    if (!loginPhone) { setErr(loginChannel==='email' ? 'أدخل البريد الإلكتروني' : 'أدخل رقم الهاتف'); return }
     setLoading(true); setErr('')
     try {
-      await api.post(`${API}/subscribers/send-otp`, { phone: loginPhone })
+      await api.post(`${API}/subscribers/send-otp`, loginChannel === 'email' ? { email: loginPhone } : { phone: loginPhone })
       setStep(2); setLoginOtp(''); setMsg('💬 سيصل الرمز عبر الواتساب')
     } catch(e) { setErr(e?.response?.data?.message || 'الرقم غير مسجّل') }
     setLoading(false)
@@ -268,7 +272,7 @@ export default function Subscribe() {
     if (!loginOtp) { setErr('أدخل الرمز'); return }
     setLoading(true); setErr('')
     try {
-      const r = await api.post(`${API}/subscribers/verify-otp`, { phone: loginPhone, code: loginOtp })
+      const r = await api.post(`${API}/subscribers/verify-otp`, loginChannel === 'email' ? { email: loginPhone, code: loginOtp } : { phone: loginPhone, code: loginOtp })
       setSubscriber(r.data)
       const s = r.data
       const sec = (() => { try { return JSON.parse(s.sectors||'[]') } catch { return [] } })()
@@ -449,14 +453,29 @@ export default function Subscribe() {
           </div>
         )}
 
-        {/* مسجّل سابق - خطوة 1: رقم الهاتف */}
+        {/* مسجّل سابق - خطوة 1: هاتف أو إيميل */}
         {mode === 'existing' && step === 1 && (
           <div style={{background:'#fff',borderRadius:'16px',padding:'28px',boxShadow:'0 4px 16px rgba(44,62,107,0.08)'}}>
-            <h2 style={{color:'#2C3E6B',fontWeight:'800',margin:'0 0 20px',fontSize:'18px'}}>🔑 الدخول برقم الهاتف</h2>
-            <input value={loginPhone} onChange={e=>setLoginPhone(e.target.value)} placeholder="07xxxxxxxxx"
+            <h2 style={{color:'#2C3E6B',fontWeight:'800',margin:'0 0 20px',fontSize:'18px'}}>🔑 تسجيل الدخول</h2>
+
+            {/* اختيار الطريقة */}
+            <div style={{display:'flex',gap:8,marginBottom:16}}>
+              {[{k:'phone',l:'📱 رقم الهاتف'},{k:'email',l:'📧 البريد الإلكتروني'}].map(c=>(
+                <button key={c.k} type="button" onClick={()=>{setLoginChannel(c.k); setLoginPhone(''); setErr('')}}
+                  style={{flex:1,padding:'10px',borderRadius:10,border:`1.5px solid ${loginChannel===c.k?'#2C3E6B':'#e5e7eb'}`,background:loginChannel===c.k?'#eef2ff':'#fafafa',color:loginChannel===c.k?'#2C3E6B':'#64748b',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12}}>
+                  {c.l}
+                </button>
+              ))}
+            </div>
+
+            <input value={loginPhone} onChange={e=>setLoginPhone(e.target.value)}
+              placeholder={loginChannel==='email' ? 'example@email.com' : '07xxxxxxxxx'}
+              type={loginChannel==='email' ? 'email' : 'tel'}
               style={{width:'100%',padding:'11px 14px',borderRadius:'10px',border:'1.5px solid #dde3ed',fontSize:'14px',direction:'ltr',fontFamily:'Cairo,sans-serif',outline:'none',boxSizing:'border-box'}}/>
             {err && <div style={{background:'#fee2e2',color:'#dc2626',padding:'10px 14px',borderRadius:'10px',fontSize:'13px',marginTop:'12px'}}>{err}</div>}
-            <button onClick={sendLoginOtp} disabled={loading} style={{...btnPrimary,marginTop:'16px'}}>{loading?'⏳...':'📱 أرسل رمز التأكيد'}</button>
+            <button onClick={sendLoginOtp} disabled={loading} style={{...btnPrimary,marginTop:'16px'}}>
+              {loading?'⏳...': loginChannel==='email' ? '📧 أرسل رمز التأكيد' : '📱 أرسل رمز التأكيد'}
+            </button>
             <button onClick={()=>setMode(null)} style={{...btnBack,marginTop:'8px'}}>← رجوع</button>
           </div>
         )}
