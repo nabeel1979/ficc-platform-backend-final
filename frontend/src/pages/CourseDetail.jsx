@@ -211,23 +211,7 @@ export default function CourseDetail() {
                 {msg.text}
               </div>
             )}
-            {/* أزرار المشاركة — نفس طريقة الأخبار */}
-            <div style={{display:'flex',flexWrap:'wrap',gap:6,marginTop:12}}>
-              <a href={`https://wa.me/?text=${encodeURIComponent((course?.title||'') + ' ' + courseUrl)}`}
-                target="_blank" rel="noreferrer"
-                style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'8px',borderRadius:10,background:'#25D366',color:'#fff',textDecoration:'none',fontSize:11,fontWeight:700,fontFamily:'Cairo,sans-serif'}}>
-                💬 واتساب
-              </a>
-              <a href={`https://t.me/share/url?url=${encodeURIComponent(courseUrl)}&text=${encodeURIComponent(course?.title||'')}`}
-                target="_blank" rel="noreferrer"
-                style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'8px',borderRadius:10,background:'#0088cc',color:'#fff',textDecoration:'none',fontSize:11,fontWeight:700,fontFamily:'Cairo,sans-serif'}}>
-                ✈️ تيليگرام
-              </a>
-              <button onClick={copyLink}
-                style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'8px',borderRadius:10,background:'rgba(255,255,255,0.15)',color:'#fff',border:'1px solid rgba(255,255,255,0.2)',cursor:'pointer',fontSize:11,fontWeight:700,fontFamily:'Cairo,sans-serif'}}>
-                {copied ? '✅ تم النسخ!' : '🔗 نسخ الرابط'}
-              </button>
-            </div>
+
           </div>
         </div>
       </div>
@@ -313,6 +297,32 @@ export default function CourseDetail() {
           </div>
         </div>
       )}
+
+      {/* أزرار المشاركة — أسفل الصفحة — نفس طريقة الأخبار */}
+      <div style={{background:'#fff',borderRadius:20,padding:'20px 24px',marginBottom:24,boxShadow:'0 2px 12px rgba(44,62,107,0.07)'}}>
+        <div style={{fontSize:14,fontWeight:700,color:'#2C3E6B',marginBottom:12}}>📤 شارك الورشة</div>
+        <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+          <a href={`https://wa.me/?text=${encodeURIComponent((course?.title||'') + '\n' + courseUrl)}`}
+            target="_blank" rel="noreferrer"
+            style={{display:'flex',alignItems:'center',gap:6,padding:'10px 18px',borderRadius:12,background:'#25D366',color:'#fff',textDecoration:'none',fontSize:13,fontWeight:700,fontFamily:'Cairo,sans-serif'}}>
+            💬 واتساب
+          </a>
+          <a href={`https://t.me/share/url?url=${encodeURIComponent(courseUrl)}&text=${encodeURIComponent(course?.title||'')}`}
+            target="_blank" rel="noreferrer"
+            style={{display:'flex',alignItems:'center',gap:6,padding:'10px 18px',borderRadius:12,background:'#0088cc',color:'#fff',textDecoration:'none',fontSize:13,fontWeight:700,fontFamily:'Cairo,sans-serif'}}>
+            ✈️ تيليگرام
+          </a>
+          <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(courseUrl)}`}
+            target="_blank" rel="noreferrer"
+            style={{display:'flex',alignItems:'center',gap:6,padding:'10px 18px',borderRadius:12,background:'#1877F2',color:'#fff',textDecoration:'none',fontSize:13,fontWeight:700,fontFamily:'Cairo,sans-serif'}}>
+            📘 فيسبوك
+          </a>
+          <button onClick={copyLink}
+            style={{display:'flex',alignItems:'center',gap:6,padding:'10px 18px',borderRadius:12,background:'#f3f4f6',color:'#444',border:'none',cursor:'pointer',fontSize:13,fontWeight:700,fontFamily:'Cairo,sans-serif'}}>
+            {copied ? '✅ تم النسخ!' : '🔗 نسخ الرابط'}
+          </button>
+        </div>
+      </div>
 
       {/* نموذج التسجيل */}
       {applying && (
