@@ -212,6 +212,7 @@ function MediaManager({ course, onClose }) {
   const [uploadProgress, setUploadProgress] = useState([]) // [{name, status: 'pending'|'uploading'|'done'|'error'}]
   const [dragOverId, setDragOverId] = useState(null)
   const [localImgs, setLocalImgs] = useState([])
+  const [editingVid, setEditingVid] = useState(null) // {id, title}
   const dragItem = useRef(null)
   const fileRef = useRef(null)
   const multiFileRef = useRef(null)
@@ -504,6 +505,7 @@ function MediaManager({ course, onClose }) {
             )}
             {tab === 'video' && (
               vids.length === 0 ? <div style={{textAlign:'center',padding:30,color:'#94a3b8',fontSize:13}}>لا توجد فيديوهات بعد — أضف حتى 10 فيديوهات</div> :
+
               <div style={{display:'flex',flexDirection:'column',gap:16}}>
                 {vids.map(vid => {
                   const getYTId = (url) => {
@@ -521,28 +523,64 @@ function MediaManager({ course, onClose }) {
                     <div key={vid.id} style={{background:'#f8fafc',borderRadius:14,overflow:'hidden',border:'1.5px solid #e5e7eb'}}>
                       {/* YouTube Player */}
                       {ytId ? (
-                        <div style={{position:'relative',paddingBottom:'56.25%',height:0,background:'#000'}}>
-                          <iframe
-                            src={`https://www.youtube.com/embed/${ytId}`}
-                            title={vid.title||'فيديو'}
-                            frameBorder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                            style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}
-                          />
-                        </div>
+                        vid.url.includes('/shorts/') ? (
+                          // Shorts — thumbnail + open button
+                          <a href={`https://www.youtube.com/shorts/${ytId}`} target="_blank" rel="noreferrer" style={{display:'block',textDecoration:'none',position:'relative'}}>
+                            <img src={`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`} alt="" style={{width:'100%',maxHeight:200,objectFit:'cover'}} />
+                            <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.4)'}}>
+                              <div style={{background:'#ff0000',color:'#fff',padding:'8px 20px',borderRadius:20,fontWeight:700,fontSize:13,fontFamily:'Cairo,sans-serif'}}>
+                                ▶ شاهد على يوتيوب
+                              </div>
+                            </div>
+                            <div style={{position:'absolute',top:8,right:8,background:'#ff0000',color:'#fff',fontSize:10,fontWeight:800,padding:'2px 8px',borderRadius:6}}>Shorts</div>
+                          </a>
+                        ) : (
+                          <div style={{position:'relative',paddingBottom:'56.25%',height:0,background:'#000'}}>
+                            <iframe
+                              src={`https://www.youtube.com/embed/${ytId}`}
+                              title={vid.title||'فيديو'}
+                              frameBorder="0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                              style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}
+                            />
+                          </div>
+                        )
                       ) : (
                         <div style={{background:'#1e293b',padding:'20px',textAlign:'center',color:'#94a3b8',fontSize:12}}>
                           ⚠️ رابط غير مدعوم
                         </div>
                       )}
-                      {/* Info + Delete */}
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 12px'}}>
-                        <div>
-                          <div style={{fontWeight:700,fontSize:13,color:'#1e293b'}}>{vid.title||'بدون عنوان'}</div>
-                          <a href={vid.url} target="_blank" rel="noreferrer" style={{fontSize:10,color:'#64748b',wordBreak:'break-all'}}>{vid.url}</a>
-                        </div>
-                        <button onClick={()=>delMedia(vid.id)} style={{background:'#fee2e2',border:'none',color:'#ef4444',borderRadius:8,padding:'6px 12px',cursor:'pointer',fontSize:12,flexShrink:0,marginRight:8}}>🗑️ حذف</button>
+                      {/* Info + Edit + Delete */}
+                      <div style={{padding:'10px 12px'}}>
+                        {editingVid?.id === vid.id ? (
+                          <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                            <input
+                              value={editingVid.title}
+                              onChange={e => setEditingVid(p => ({...p, title: e.target.value}))}
+                              autoFocus
+                              style={{flex:1,padding:'6px 10px',border:'1.5px solid #2C3E6B',borderRadius:8,fontSize:12,fontFamily:'Cairo,sans-serif'}}
+                            />
+                            <button onClick={async () => {
+                              await api.put(`/courses/${course.id}/media/${vid.id}`, {...vid, title: editingVid.title})
+                              setEditingVid(null); load()
+                            }} style={{padding:'6px 12px',background:'#2C3E6B',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',fontSize:12,fontWeight:700}}>✅</button>
+                            <button onClick={() => setEditingVid(null)} style={{padding:'6px 10px',background:'#f1f5f9',border:'none',borderRadius:8,cursor:'pointer',fontSize:12}}>✕</button>
+                          </div>
+                        ) : (
+                          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                            <div style={{flex:1}}>
+                              <div style={{fontWeight:700,fontSize:13,color:'#1e293b'}}>{vid.title||'بدون عنوان'}</div>
+                              <a href={vid.url} target="_blank" rel="noreferrer" style={{fontSize:10,color:'#64748b',wordBreak:'break-all'}}>{vid.url}</a>
+                            </div>
+                            <div style={{display:'flex',gap:6,flexShrink:0}}>
+                              <button onClick={() => setEditingVid({id: vid.id, title: vid.title||''})}
+                                style={{background:'#e0e7ff',border:'none',color:'#4338ca',borderRadius:8,padding:'6px 10px',cursor:'pointer',fontSize:12}}>✏️</button>
+                              <button onClick={()=>delMedia(vid.id)}
+                                style={{background:'#fee2e2',border:'none',color:'#ef4444',borderRadius:8,padding:'6px 10px',cursor:'pointer',fontSize:12}}>🗑️</button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )
