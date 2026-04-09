@@ -7,7 +7,7 @@ function CourseForm({ item, onSave, onClose }) {
   const isEdit = !!item?.id
   const [form, setForm] = useState({
     title: item?.title || '', description: item?.description || '',
-    speaker: item?.speaker || '', speakerTitle: item?.speakerTitle || '',
+    speaker: item?.speaker || '', speakerTitle: item?.speakerTitle || '', speakerImage: item?.speakerImage || '',
     location: item?.location || '',
     startDate: item?.startDate ? item.startDate.split('T')[0] : '',
     endDate: item?.endDate ? item.endDate.split('T')[0] : '',
@@ -48,6 +48,31 @@ function CourseForm({ item, onSave, onClose }) {
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
             <div style={{gridColumn:'1/-1'}}>{inp('عنوان الدورة *','title','text',true)}</div>
             {inp('المحاضر','speaker')} {inp('لقب المحاضر','speakerTitle')}
+            <div style={{gridColumn:'1/-1'}}>
+              <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>صورة المحاضر</label>
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <input type="file" accept="image/*" id="speakerImgFile" style={{display:'none'}}
+                  onChange={async e => {
+                    const file = e.target.files[0]; if (!file) return
+                    const fd = new FormData(); fd.append('file', file); fd.append('folder', 'speakers')
+                    try {
+                      const r = await import('../lib/api').then(m => m.default.post('/upload', fd, { headers: {'Content-Type':'multipart/form-data'}}))
+                      set('speakerImage', r.data.url)
+                    } catch { alert('فشل رفع الصورة') }
+                  }} />
+                <button type="button" onClick={() => document.getElementById('speakerImgFile').click()}
+                  style={{padding:'8px 14px',background:'#e0e7ff',color:'#4338ca',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12}}>
+                  📁 رفع صورة
+                </button>
+                <input value={form.speakerImage} onChange={e => set('speakerImage', e.target.value)}
+                  placeholder="أو رابط الصورة (URL)"
+                  style={{flex:1,padding:'8px 12px',border:'1.5px solid #e5e7eb',borderRadius:8,fontSize:12,fontFamily:'Cairo,sans-serif'}} />
+                {form.speakerImage && (
+                  <img src={form.speakerImage} alt="" style={{width:40,height:40,borderRadius:'50%',objectFit:'cover',border:'2px solid #e5e7eb'}}
+                    onError={e => e.target.style.display='none'} />
+                )}
+              </div>
+            </div>
             {inp('تاريخ البدء *','startDate','date',true)} {inp('تاريخ الانتهاء *','endDate','date',true)}
             {inp('الموقع','location')} {inp('الفئة','category')}
             {inp('عدد المشاركين','maxParticipants','number')}
@@ -201,8 +226,11 @@ function MediaManager({ course, onClose }) {
   // رفع مجموعة صور دفعة واحدة (حتى 10)
   const uploadMultiple = async (files) => {
     const MAX = 10
-    const selected = Array.from(files).slice(0, MAX)
-    if (Array.from(files).length > MAX) setMsg(`⚠️ تم اختيار أول ${MAX} صور فقط (الحد الأقصى ${MAX})`)
+    const remaining = MAX - imgs.length
+    if (remaining <= 0) { setMsg('⚠️ وصلت الحد الأقصى (10 صور)'); return }
+    const selected = Array.from(files).filter(f => f.type.startsWith('image/')).slice(0, remaining)
+    if (selected.length === 0) return
+    if (Array.from(files).length > remaining) setMsg(`⚠️ تم رفع ${selected.length} صورة فقط (الحد المتبقي ${remaining})`)
     else setMsg('')
     if (selected.length === 0) return
 
@@ -257,9 +285,12 @@ function MediaManager({ course, onClose }) {
             <>
               <input type="file" accept="image/*" multiple ref={multiFileRef}
                 onChange={e => uploadMultiple(e.target.files)} style={{display:'none'}} />
-              <button type="button" onClick={()=>multiFileRef.current?.click()} disabled={uploadProgress.length > 0}
-                style={{padding:'7px 16px',background:'linear-gradient(135deg,#059669,#10b981)',color:'#fff',border:'none',borderRadius:20,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12}}>
-                📁 اختر صور
+              <button type="button"
+                onClick={()=> imgs.length >= 10 ? null : multiFileRef.current?.click()}
+                disabled={uploadProgress.length > 0 || imgs.length >= 10}
+                title={imgs.length >= 10 ? 'وصلت الحد الأقصى (10 صور)' : ''}
+                style={{padding:'7px 16px',background: imgs.length >= 10 ? '#e5e7eb' : 'linear-gradient(135deg,#059669,#10b981)',color: imgs.length >= 10 ? '#9ca3af' : '#fff',border:'none',borderRadius:20,cursor: imgs.length >= 10 ? 'not-allowed' : 'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12}}>
+                {imgs.length >= 10 ? '🔒 الحد الأقصى 10 صور' : `📁 اختر صور (${imgs.length}/10)`}
               </button>
             </>
           )}
@@ -336,6 +367,13 @@ function MediaManager({ course, onClose }) {
 
         {/* Drop Zone — اسحب الصور من Windows مباشرة */}
         {tab === 'image' && uploadProgress.length === 0 && (
+          imgs.length >= 10 ? (
+            <div style={{border:'2px dashed #e5e7eb',borderRadius:14,padding:'20px 16px',textAlign:'center',marginBottom:16,background:'#f9fafb'}}>
+              <div style={{fontSize:24,marginBottom:6}}>🔒</div>
+              <div style={{fontWeight:700,fontSize:13,color:'#9ca3af'}}>وصلت الحد الأقصى (10 صور)</div>
+              <div style={{fontSize:11,color:'#d1d5db',marginTop:4}}>احذف صورة لإضافة صورة جديدة</div>
+            </div>
+          ) : (
           <div
             onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor='#2C3E6B'; e.currentTarget.style.background='#eef2ff' }}
             onDragLeave={e => { e.currentTarget.style.borderColor='#cbd5e1'; e.currentTarget.style.background='#f8fafc' }}
@@ -357,9 +395,10 @@ function MediaManager({ course, onClose }) {
               اسحب الصور هنا أو اضغط للاختيار
             </div>
             <div style={{fontSize:11, color:'#94a3b8'}}>
-              الحد الأقصى 10 صور في المرة الواحدة (JPG, PNG, WebP)
+              متبقي {10 - imgs.length} صورة من أصل 10 (JPG, PNG, WebP)
             </div>
           </div>
+          )
         )}
 
         {loading ? <div style={{textAlign:'center',padding:30,color:'#94a3b8'}}>⏳ جارٍ التحميل...</div> : (
@@ -371,7 +410,7 @@ function MediaManager({ course, onClose }) {
                   ✋ اسحب الصور لتغيير الترتيب
                 </div>
                 <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))',gap:10}}>
-                  {imgs.map((img, idx) => (
+                  {imgs.slice(0,10).map((img, idx) => (
                     <div key={img.id}
                       draggable
                       onDragStart={() => onDragStart(img.id)}
@@ -397,6 +436,11 @@ function MediaManager({ course, onClose }) {
                     </div>
                   ))}
                 </div>
+                {imgs.length > 10 && (
+                  <div style={{textAlign:'center',marginTop:10,fontSize:12,color:'#64748b',padding:'8px',background:'#f1f5f9',borderRadius:8}}>
+                    يتم عرض أول 10 صور من أصل {imgs.length} — احذف الزايدة لعرض الكل
+                  </div>
+                )}
               </>
             )}
             {tab === 'video' && (
@@ -445,12 +489,27 @@ function MediaManager({ course, onClose }) {
 
 export default function AdminCourses() {
   const [courses, setCourses] = useState([])
+  const [mediaCounts, setMediaCounts] = useState({}) // {courseId: count}
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(null)
   const [appsModal, setAppsModal] = useState(null)
   const [mediaModal, setMediaModal] = useState(null)
 
-  const load = () => { setLoading(true); api.get('/courses').then(r => setCourses(r.data)).finally(() => setLoading(false)) }
+  const load = () => {
+    setLoading(true)
+    api.get('/courses').then(async r => {
+      setCourses(r.data)
+      // جلب عدد الصور لكل دورة
+      const counts = {}
+      await Promise.all(r.data.map(async c => {
+        try {
+          const mr = await api.get(`/courses/${c.id}/media`)
+          counts[c.id] = (mr.data || []).filter(m => m.type === 'image').length
+        } catch { counts[c.id] = 0 }
+      }))
+      setMediaCounts(counts)
+    }).finally(() => setLoading(false))
+  }
   useEffect(() => { load() }, [])
 
   const del = async (id) => {
@@ -462,7 +521,7 @@ export default function AdminCourses() {
     <div style={{direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
       {modal && <CourseForm item={modal === 'new' ? null : modal} onSave={() => { setModal(null); load() }} onClose={() => setModal(null)} />}
       {appsModal && <ApplicationsModal course={appsModal} onClose={() => setAppsModal(null)} />}
-      {mediaModal && <MediaManager course={mediaModal} onClose={() => setMediaModal(null)} />}
+      {mediaModal && <MediaManager course={mediaModal} onClose={() => { setMediaModal(null); load() }} />}
 
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
         <h2 style={{fontSize:20,fontWeight:800,color:'#2C3E6B'}}>🎓 الدورات الريادية</h2>
@@ -495,7 +554,9 @@ export default function AdminCourses() {
                     <span style={{fontWeight:700,color:c.isFree?'#10b981':'#2C3E6B'}}>💰 {c.isFree ? 'مجانية' : `${c.price?.toLocaleString()} د.ع`}</span>
                   </div>
                   <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                    <button onClick={() => setMediaModal(c)} style={{flex:1,padding:'7px',background:'#f0fdf4',color:'#166534',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>🖼️ الصور</button>
+                    <button onClick={() => setMediaModal(c)} style={{flex:1,padding:'7px',background:'#f0fdf4',color:'#166534',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>
+                      🖼️ الصور {mediaCounts[c.id] > 0 ? `(${mediaCounts[c.id]})` : ''}
+                    </button>
                     <button onClick={() => setAppsModal(c)} style={{flex:1,padding:'7px',background:'#e0e7ff',color:'#4338ca',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>📋 الطلبات ({c.currentParticipants})</button>
                     <button onClick={() => setModal(c)} style={{padding:'7px 12px',background:'#FFC72C20',color:'#92400e',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>✏️</button>
                     <button onClick={() => del(c.id)} style={{padding:'7px 12px',background:'#fee2e2',color:'#ef4444',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>🗑️</button>

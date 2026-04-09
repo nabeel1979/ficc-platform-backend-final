@@ -150,7 +150,10 @@ export default function CourseDetail() {
             {course.description && <p style={{color:'rgba(255,255,255,0.75)',fontSize:14,lineHeight:1.7,margin:'0 0 16px'}}>{course.description}</p>}
             {course.speaker && (
               <div style={{display:'flex',alignItems:'center',gap:10,background:'rgba(255,255,255,0.08)',borderRadius:12,padding:'10px 16px',width:'fit-content'}}>
-                <div style={{width:40,height:40,borderRadius:'50%',background:'rgba(255,199,44,0.3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>👤</div>
+                {course.speakerImage
+                  ? <img src={course.speakerImage} alt={course.speaker} style={{width:44,height:44,borderRadius:'50%',objectFit:'cover',border:'2px solid rgba(255,199,44,0.5)',flexShrink:0}} onError={e=>{e.target.style.display='none'}} />
+                  : <div style={{width:40,height:40,borderRadius:'50%',background:'rgba(255,199,44,0.3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>👤</div>
+                }
                 <div>
                   <div style={{fontWeight:800,fontSize:14}}>{course.speaker}</div>
                   {course.speakerTitle && <div style={{color:'rgba(255,255,255,0.6)',fontSize:11}}>{course.speakerTitle}</div>}
