@@ -510,6 +510,12 @@ export default function Subscribe() {
         {/* اختيار النوع */}
         {step === 1 && !mode && (
           <div style={{background:'#fff',borderRadius:'16px',padding:'28px',boxShadow:'0 4px 16px rgba(44,62,107,0.08)'}}>
+            {/* Header */}
+            <div style={{textAlign:'center',marginBottom:24}}>
+              <div style={{fontSize:48,marginBottom:8}}>🔔</div>
+              <h2 style={{color:'#2C3E6B',fontWeight:900,fontSize:20,margin:'0 0 6px'}}>سجّل متابعاً</h2>
+              <p style={{color:'#64748b',fontSize:13,margin:0}}>ابقَ على اطّلاع بكل أحداث اتحاد الغرف التجارية العراقية</p>
+            </div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px'}}>
               <button onClick={()=>setMode('new')} style={{padding:'24px 16px',borderRadius:'14px',background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',textAlign:'center'}}>
                 <div style={{fontSize:'36px',marginBottom:'8px'}}>✨</div>
@@ -517,9 +523,9 @@ export default function Subscribe() {
                 <div style={{fontSize:'12px',opacity:0.8,marginTop:'4px'}}>أنشئ حساباً جديداً</div>
               </button>
               <button onClick={()=>setMode('existing')} style={{padding:'24px 16px',borderRadius:'14px',background:'linear-gradient(135deg,#059669,#047857)',color:'#fff',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',textAlign:'center'}}>
-                <div style={{fontSize:'36px',marginBottom:'8px'}}>🔑</div>
-                <div style={{fontWeight:'800',fontSize:'15px'}}>مسجّل سابقاً</div>
-                <div style={{fontSize:'12px',opacity:0.8,marginTop:'4px'}}>ادخل وعدّل بياناتك</div>
+                <div style={{fontSize:'36px',marginBottom:'8px'}}>⚙️</div>
+                <div style={{fontWeight:'800',fontSize:'15px'}}>إعداداتي</div>
+                <div style={{fontSize:'12px',opacity:0.8,marginTop:'4px'}}>عدّل بياناتك وأقسامك</div>
               </button>
             </div>
           </div>
