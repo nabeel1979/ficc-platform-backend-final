@@ -8,6 +8,7 @@ public class EntrepreneurCourse {
     public string? SpeakerTitle { get; set; }
     public string? SpeakerImage { get; set; }
     public string? WorkshopType { get; set; } // "online" | "field"
+    public string? SpeakersJson { get; set; } // JSON array: [{name, title, image}]
     public string? Location { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }

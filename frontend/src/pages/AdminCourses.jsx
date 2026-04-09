@@ -9,6 +9,7 @@ function CourseForm({ item, onSave, onClose }) {
     title: item?.title || '', description: item?.description || '',
     speaker: item?.speaker || '', speakerTitle: item?.speakerTitle || '', speakerImage: item?.speakerImage || '',
     workshopType: item?.workshopType || 'field',
+    speakers: item?.speakersJson ? JSON.parse(item.speakersJson) : [{name: item?.speaker||'', title: item?.speakerTitle||'', image: item?.speakerImage||''}],
     location: item?.location || '',
     startDate: item?.startDate ? item.startDate.split('T')[0] : '',
     endDate: item?.endDate ? item.endDate.split('T')[0] : '',
@@ -23,8 +24,16 @@ function CourseForm({ item, onSave, onClose }) {
   const submit = async (e) => {
     e.preventDefault(); setLoading(true); setMsg('')
     try {
-      if (isEdit) await api.put(`/courses/${item.id}`, form)
-      else await api.post('/courses', form)
+      const validSpeakers = form.speakers.filter(s => s.name.trim())
+      const payload = {
+        ...form,
+        speaker: validSpeakers[0]?.name || '',
+        speakerTitle: validSpeakers[0]?.title || '',
+        speakerImage: validSpeakers[0]?.image || '',
+        speakersJson: JSON.stringify(validSpeakers)
+      }
+      if (isEdit) await api.put(`/courses/${item.id}`, payload)
+      else await api.post('/courses', payload)
       onSave()
     } catch(err) { setMsg(err.response?.data?.message || 'حدث خطأ') }
     finally { setLoading(false) }
@@ -48,30 +57,56 @@ function CourseForm({ item, onSave, onClose }) {
         <form onSubmit={submit}>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
             <div style={{gridColumn:'1/-1'}}>{inp('عنوان الدورة *','title','text',true)}</div>
-            {inp('المحاضر','speaker')} {inp('لقب المحاضر','speakerTitle')}
+            {/* المحاضرون — حتى 4 */}
             <div style={{gridColumn:'1/-1'}}>
-              <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>صورة المحاضر</label>
-              <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                <input type="file" accept="image/*" id="speakerImgFile" style={{display:'none'}}
-                  onChange={async e => {
-                    const file = e.target.files[0]; if (!file) return
-                    const fd = new FormData(); fd.append('file', file); fd.append('folder', 'speakers')
-                    try {
-                      const r = await import('../lib/api').then(m => m.default.post('/upload', fd, { headers: {'Content-Type':'multipart/form-data'}}))
-                      set('speakerImage', r.data.url)
-                    } catch { alert('فشل رفع الصورة') }
-                  }} />
-                <button type="button" onClick={() => document.getElementById('speakerImgFile').click()}
-                  style={{padding:'8px 14px',background:'#e0e7ff',color:'#4338ca',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12}}>
-                  📁 رفع صورة
-                </button>
-                <input value={form.speakerImage} onChange={e => set('speakerImage', e.target.value)}
-                  placeholder="أو رابط الصورة (URL)"
-                  style={{flex:1,padding:'8px 12px',border:'1.5px solid #e5e7eb',borderRadius:8,fontSize:12,fontFamily:'Cairo,sans-serif'}} />
-                {form.speakerImage && (
-                  <img src={form.speakerImage} alt="" style={{width:40,height:40,borderRadius:'50%',objectFit:'cover',border:'2px solid #e5e7eb'}}
-                    onError={e => e.target.style.display='none'} />
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                <label style={{fontSize:12,fontWeight:700,color:'#374151'}}>المحاضرون ({form.speakers.length}/4)</label>
+                {form.speakers.length < 4 && (
+                  <button type="button" onClick={() => set('speakers', [...form.speakers, {name:'',title:'',image:''}])}
+                    style={{padding:'4px 12px',background:'#e0e7ff',color:'#4338ca',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>
+                    ➕ إضافة محاضر
+                  </button>
                 )}
+              </div>
+              <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                {form.speakers.map((sp, idx) => (
+                  <div key={idx} style={{background:'#f8fafc',borderRadius:12,padding:12,border:'1.5px solid #e5e7eb'}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                      <span style={{fontSize:11,fontWeight:700,color:'#64748b'}}>محاضر {idx+1}</span>
+                      {idx > 0 && (
+                        <button type="button" onClick={() => set('speakers', form.speakers.filter((_,i)=>i!==idx))}
+                          style={{background:'#fee2e2',border:'none',color:'#ef4444',borderRadius:6,padding:'2px 8px',cursor:'pointer',fontSize:11}}>✕ حذف</button>
+                      )}
+                    </div>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
+                      <input value={sp.name} onChange={e => set('speakers', form.speakers.map((s,i)=>i===idx?{...s,name:e.target.value}:s))}
+                        placeholder="اسم المحاضر *"
+                        style={{padding:'8px 12px',border:'1.5px solid #e5e7eb',borderRadius:8,fontSize:12,fontFamily:'Cairo,sans-serif'}} />
+                      <input value={sp.title} onChange={e => set('speakers', form.speakers.map((s,i)=>i===idx?{...s,title:e.target.value}:s))}
+                        placeholder="اللقب / التخصص"
+                        style={{padding:'8px 12px',border:'1.5px solid #e5e7eb',borderRadius:8,fontSize:12,fontFamily:'Cairo,sans-serif'}} />
+                    </div>
+                    <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                      <input type="file" accept="image/*" id={`spImg_${idx}`} style={{display:'none'}}
+                        onChange={async e => {
+                          const file = e.target.files[0]; if (!file) return
+                          const fd = new FormData(); fd.append('file', file); fd.append('folder', 'speakers')
+                          try {
+                            const r = await api.post('/upload', fd, { headers: {'Content-Type':'multipart/form-data'} })
+                            set('speakers', form.speakers.map((s,i)=>i===idx?{...s,image:r.data.url}:s))
+                          } catch { alert('فشل رفع الصورة') }
+                        }} />
+                      <button type="button" onClick={() => document.getElementById(`spImg_${idx}`).click()}
+                        style={{padding:'6px 12px',background:'#e0e7ff',color:'#4338ca',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>
+                        📁 صورة
+                      </button>
+                      <input value={sp.image} onChange={e => set('speakers', form.speakers.map((s,i)=>i===idx?{...s,image:e.target.value}:s))}
+                        placeholder="أو رابط الصورة"
+                        style={{flex:1,padding:'6px 10px',border:'1.5px solid #e5e7eb',borderRadius:8,fontSize:11,fontFamily:'Cairo,sans-serif'}} />
+                      {sp.image && <img src={sp.image} alt="" style={{width:36,height:36,borderRadius:'50%',objectFit:'cover',border:'2px solid #e5e7eb',flexShrink:0}} onError={e=>e.target.style.display='none'} />}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
             {inp('تاريخ البدء *','startDate','date',true)} {inp('تاريخ الانتهاء *','endDate','date',true)}
