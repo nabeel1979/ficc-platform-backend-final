@@ -523,29 +523,16 @@ function MediaManager({ course, onClose }) {
                     <div key={vid.id} style={{background:'#f8fafc',borderRadius:14,overflow:'hidden',border:'1.5px solid #e5e7eb'}}>
                       {/* YouTube Player */}
                       {ytId ? (
-                        vid.url.includes('/shorts/') ? (
-                          // Shorts — thumbnail + open button
-                          <a href={`https://www.youtube.com/shorts/${ytId}`} target="_blank" rel="noreferrer" style={{display:'block',textDecoration:'none',position:'relative'}}>
-                            <img src={`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`} alt="" style={{width:'100%',maxHeight:200,objectFit:'cover'}} />
-                            <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.4)'}}>
-                              <div style={{background:'#ff0000',color:'#fff',padding:'8px 20px',borderRadius:20,fontWeight:700,fontSize:13,fontFamily:'Cairo,sans-serif'}}>
-                                ▶ شاهد على يوتيوب
-                              </div>
-                            </div>
-                            <div style={{position:'absolute',top:8,right:8,background:'#ff0000',color:'#fff',fontSize:10,fontWeight:800,padding:'2px 8px',borderRadius:6}}>Shorts</div>
-                          </a>
-                        ) : (
-                          <div style={{position:'relative',paddingBottom:'56.25%',height:0,background:'#000'}}>
-                            <iframe
-                              src={`https://www.youtube.com/embed/${ytId}`}
-                              title={vid.title||'فيديو'}
-                              frameBorder="0"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowFullScreen
-                              style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}
-                            />
-                          </div>
-                        )
+                        <div style={{position:'relative',paddingBottom:'56.25%',height:0,background:'#000'}}>
+                          <iframe
+                            src={`https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1`}
+                            title={vid.title||'فيديو'}
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}
+                          />
+                        </div>
                       ) : (
                         <div style={{background:'#1e293b',padding:'20px',textAlign:'center',color:'#94a3b8',fontSize:12}}>
                           ⚠️ رابط غير مدعوم

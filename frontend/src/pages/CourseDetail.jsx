@@ -278,34 +278,15 @@ export default function CourseDetail() {
               const shorts = isShorts(vid.url)
               return (
                 <div key={vid.id}>
-                  {shorts ? (
-                    /* Shorts — ما تدعم embed، نعرض thumbnail + زر يفتح YouTube app */
-                    <a href={`https://www.youtube.com/shorts/${id}`} target="_blank" rel="noreferrer" style={{display:'block',textDecoration:'none'}}>
-                      <div style={{position:'relative',borderRadius:12,overflow:'hidden',background:'#000',aspectRatio:'16/9'}}>
-                        <img src={`https://img.youtube.com/vi/${id}/hqdefault.jpg`} alt={vid.title||'فيديو'}
-                          style={{width:'100%',height:'100%',objectFit:'cover',opacity:0.8}} />
-                        <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:8}}>
-                          <div style={{width:56,height:56,background:'rgba(255,0,0,0.9)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                            <div style={{width:0,height:0,borderTop:'10px solid transparent',borderBottom:'10px solid transparent',borderLeft:'18px solid white',marginRight:-4}} />
-                          </div>
-                          <div style={{background:'rgba(0,0,0,0.7)',color:'#fff',fontSize:11,fontWeight:700,padding:'4px 12px',borderRadius:20}}>
-                            📱 شاهد على يوتيوب
-                          </div>
-                        </div>
-                        <div style={{position:'absolute',top:8,right:8,background:'#ff0000',color:'#fff',fontSize:10,fontWeight:800,padding:'2px 8px',borderRadius:6}}>Shorts</div>
-                      </div>
-                    </a>
-                  ) : (
-                    /* فيديو عادي — embed مباشر */
-                    <div style={{position:'relative',paddingBottom:'56.25%',height:0,overflow:'hidden',borderRadius:12,background:'#000'}}>
-                      <iframe
-                        src={`https://www.youtube.com/embed/${id}?rel=0&modestbranding=1`}
-                        style={{position:'absolute',top:0,left:0,width:'100%',height:'100%',border:'none'}}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen title={vid.title||'فيديو'}
-                      />
-                    </div>
-                  )}
+                  {/* embed مباشر — يشتغل مع Shorts والفيديو العادي */}
+                  <div style={{position:'relative',paddingBottom:'56.25%',height:0,overflow:'hidden',borderRadius:12,background:'#000'}}>
+                    <iframe
+                      src={`https://www.youtube.com/embed/${id}?rel=0&modestbranding=1`}
+                      style={{position:'absolute',top:0,left:0,width:'100%',height:'100%',border:'none'}}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen title={vid.title||'فيديو'}
+                    />
+                  </div>
                   {vid.title && <div style={{fontWeight:700,fontSize:13,color:'#1e293b',marginTop:8,direction:'rtl'}}>{vid.title}</div>}
                   {vid.description && <p style={{fontSize:12,color:'#64748b',marginTop:4,lineHeight:1.5}}>{vid.description}</p>}
                 </div>
