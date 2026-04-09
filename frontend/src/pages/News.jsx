@@ -249,30 +249,17 @@ function NewsDetail({ item: n, onBack }) {
               return m ? m[1] : null
             }
             const vid = getYouTubeId(n.videoUrl)
-            const isShorts = n.videoUrl.includes('/shorts/')
-            const ytLink = isShorts
-              ? `https://www.youtube.com/shorts/${vid}`
-              : `https://www.youtube.com/watch?v=${vid}`
             return vid ? (
               <div style={{padding:'24px 40px 0'}}>
-                <a href={ytLink} target="_blank" rel="noreferrer" style={{display:'block',textDecoration:'none'}}>
-                  <div style={{position:'relative',paddingBottom:'56.25%',height:0,overflow:'hidden',borderRadius:'16px',background:'#000',boxShadow:'0 8px 24px rgba(0,0,0,0.2)'}}>
-                    <img
-                      src={`https://img.youtube.com/vi/${vid}/hqdefault.jpg`}
-                      alt={n.title}
-                      style={{position:'absolute',top:0,left:0,width:'100%',height:'100%',objectFit:'cover',opacity:0.85}}
-                    />
-                    <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                      <div style={{width:64,height:64,background:'rgba(255,0,0,0.9)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 20px rgba(0,0,0,0.5)'}}>
-                        <div style={{width:0,height:0,borderTop:'12px solid transparent',borderBottom:'12px solid transparent',borderLeft:'22px solid white',marginRight:-4}} />
-                      </div>
-                    </div>
-                    {isShorts && <div style={{position:'absolute',top:10,right:10,background:'#ff0000',color:'#fff',fontSize:11,fontWeight:800,padding:'3px 10px',borderRadius:6}}>Shorts</div>}
-                    <div style={{position:'absolute',bottom:10,left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.75)',color:'#fff',fontSize:11,fontWeight:700,padding:'4px 14px',borderRadius:20,whiteSpace:'nowrap'}}>
-                      ▶ شاهد على يوتيوب
-                    </div>
-                  </div>
-                </a>
+                <div style={{position:'relative',paddingBottom:'56.25%',height:0,overflow:'hidden',borderRadius:'16px',background:'#000',boxShadow:'0 8px 24px rgba(0,0,0,0.2)'}}
+                  onClick={e=>e.stopPropagation()}>
+                  <iframe
+                    src={`https://www.youtube.com/embed/${vid}?rel=0&modestbranding=1`}
+                    style={{position:'absolute',top:0,left:0,width:'100%',height:'100%',border:'none'}}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen title={n.title}
+                  />
+                </div>
               </div>
             ) : null
           })()}
