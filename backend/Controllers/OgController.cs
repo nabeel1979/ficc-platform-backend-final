@@ -305,4 +305,27 @@ public class OgController : ControllerBase {
         ), "text/html; charset=utf-8");
     }
 
+    // OG for course
+    [HttpGet("courses/{id}")]
+    public async Task<IActionResult> CourseOg(int id) {
+        var c = await _db.EntrepreneurCourses.FindAsync(id);
+        var host = Request.Host.ToString();
+        var pageUrl = $"https://{host}/courses/{id}";
+        if (c == null) return Redirect(pageUrl);
+
+        var firstImg = await _db.CourseMedia
+            .Where(m => m.CourseId == id && m.Type == "image")
+            .OrderBy(m => m.DisplayOrder)
+            .FirstOrDefaultAsync();
+        var imgUrl = firstImg?.Url ?? $"https://pub-be4a1829a4e84fc0b477dfe8adb915ef.r2.dev/ficc-logo.jpg";
+        var speakerInfo = !string.IsNullOrEmpty(c.Speaker) ? $" | المحاضر: {c.Speaker}" : "";
+        var dateInfo = $" | {c.StartDate:dd/MM/yyyy}";
+
+        return Content(BuildHtml(
+            c.Title,
+            $"{c.Description ?? "دورة ريادية"}{speakerInfo}{dateInfo}",
+            imgUrl, pageUrl, Request.Scheme, host
+        ), "text/html; charset=utf-8");
+    }
+
 }
