@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
+import ShareButtons from '../components/ShareButtons'
 
 const API = ''
 const governorates = ['بغداد','البصرة','نينوى','أربيل','النجف','كربلاء','الأنبار','بابل','ذي قار','واسط','ميسان','المثنى','صلاح الدين','كركوك','السليمانية','دهوك','القادسية']
@@ -100,30 +101,7 @@ function ChamberDetail({ chamber: c, onBack }) {
             </div>
 
             {/* Share Buttons */}
-            <div style={{marginBottom:'24px',background:'#F8F9FA',borderRadius:'14px',padding:'16px 20px'}}>
-              <p style={{color:'#888',fontSize:'13px',fontWeight:'700',margin:'0 0 12px'}}>📤 شارك صفحة الغرفة:</p>
-              <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-                <a href={`https://wa.me/?text=${encodeURIComponent(c.name + '\n' + window.location.origin + '/chambers/' + c.id)}`}
-                  target="_blank" rel="noreferrer"
-                  style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'10px',background:'#25D366',color:'#fff',textDecoration:'none',fontSize:'13px',fontWeight:'700'}}>
-                  💬 واتساب
-                </a>
-                <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/chambers/' + c.id)}`}
-                  target="_blank" rel="noreferrer"
-                  style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'10px',background:'#1877F2',color:'#fff',textDecoration:'none',fontSize:'13px',fontWeight:'700'}}>
-                  📘 فيسبوك
-                </a>
-                <a href={`https://t.me/share/url?url=${encodeURIComponent(window.location.origin + '/chambers/' + c.id)}&text=${encodeURIComponent(c.name)}`}
-                  target="_blank" rel="noreferrer"
-                  style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'10px',background:'#0088cc',color:'#fff',textDecoration:'none',fontSize:'13px',fontWeight:'700'}}>
-                  ✈️ تيليغرام
-                </a>
-                <button onClick={() => { navigator.clipboard.writeText(window.location.origin + '/chambers/' + c.id); alert('تم نسخ الرابط!') }}
-                  style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'10px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',fontSize:'13px',fontWeight:'700',fontFamily:'Cairo,sans-serif'}}>
-                  🔗 نسخ الرابط
-                </button>
-              </div>
-            </div>
+            <ShareButtons url={`${window.location.origin}/chambers/${c.id}`} title={c.name} label="شارك صفحة الغرفة" />
 
             {/* Social Media */}
             {(c.facebook || c.twitter || c.instagram || c.whatsApp || c.telegram || c.youTube || c.linkedIn) && (
