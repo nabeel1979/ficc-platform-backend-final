@@ -581,6 +581,125 @@ function MediaManager({ course, onClose }) {
   )
 }
 
+function BroadcastModal({ course, onClose }) {
+  const [subscribers, setSubscribers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [selected, setSelected] = useState([])
+  const [sending, setSending] = useState(false)
+  const [msg, setMsg] = useState('')
+
+  useEffect(() => {
+    // الريادة = SectorId 1 (الدورات تخص قسم الريادة)
+    api.get('/sectors/1/subscribers')
+      .then(r => {
+        setSubscribers(r.data || [])
+        setSelected((r.data || []).map(s => s.id)) // الافتراضي: اختيار الكل
+      })
+      .finally(() => setLoading(false))
+  }, [])
+
+  const toggleAll = () => {
+    if (selected.length === subscribers.length) setSelected([])
+    else setSelected(subscribers.map(s => s.id))
+  }
+
+  const toggleOne = (id) => {
+    setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
+  }
+
+  const send = async () => {
+    if (selected.length === 0) return
+    setSending(true); setMsg('')
+    const targets = subscribers.filter(s => selected.includes(s.id))
+    try {
+      await api.post('/subscribers/broadcast', {
+        subscriberIds: selected,
+        message: `📢 دورة جديدة: ${course.title}\n📅 ${new Date(course.startDate).toLocaleDateString('ar-IQ')}\n📍 ${course.location||''}\n🔗 ${window.location.origin}/courses/${course.id}`
+      })
+      setMsg(`✅ تم الإرسال لـ ${selected.length} متابع`)
+    } catch {
+      setMsg('❌ حدث خطأ أثناء الإرسال')
+    }
+    setSending(false)
+  }
+
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:2000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}
+      onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:'#fff',borderRadius:20,padding:24,width:'100%',maxWidth:680,maxHeight:'90vh',overflowY:'auto',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
+        {/* Header */}
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+          <div>
+            <h2 style={{fontSize:17,fontWeight:800,color:'#2C3E6B',margin:0}}>📢 تعميم على المتابعين</h2>
+            <p style={{fontSize:12,color:'#64748b',margin:'4px 0 0'}}>{course.title}</p>
+          </div>
+          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#94a3b8'}}>✕</button>
+        </div>
+
+        {loading ? <div style={{textAlign:'center',padding:40,color:'#94a3b8'}}>⏳ جارٍ التحميل...</div> : (
+          <>
+            {/* إحصائيات */}
+            <div style={{display:'flex',gap:10,marginBottom:16}}>
+              <div style={{flex:1,background:'#eef2ff',borderRadius:12,padding:'12px 16px',textAlign:'center'}}>
+                <div style={{fontSize:22,fontWeight:800,color:'#2C3E6B'}}>{subscribers.length}</div>
+                <div style={{fontSize:11,color:'#64748b'}}>إجمالي المتابعين</div>
+              </div>
+              <div style={{flex:1,background:'#f0fdf4',borderRadius:12,padding:'12px 16px',textAlign:'center'}}>
+                <div style={{fontSize:22,fontWeight:800,color:'#059669'}}>{selected.length}</div>
+                <div style={{fontSize:11,color:'#64748b'}}>المحددون للإرسال</div>
+              </div>
+            </div>
+
+            {/* اختيار الكل */}
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+              <span style={{fontSize:13,fontWeight:700,color:'#374151'}}>قائمة المتابعين — قسم الريادة</span>
+              <button onClick={toggleAll}
+                style={{padding:'6px 14px',borderRadius:8,border:'1.5px solid #2C3E6B',background:selected.length===subscribers.length?'#2C3E6B':'#fff',color:selected.length===subscribers.length?'#fff':'#2C3E6B',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>
+                {selected.length === subscribers.length ? '❌ إلغاء الكل' : '✅ اختيار الكل'}
+              </button>
+            </div>
+
+            {/* القائمة */}
+            {subscribers.length === 0 ? (
+              <div style={{textAlign:'center',padding:30,color:'#94a3b8',fontSize:13}}>لا يوجد متابعون لقسم الريادة بعد</div>
+            ) : (
+              <div style={{display:'flex',flexDirection:'column',gap:8,maxHeight:320,overflowY:'auto',marginBottom:16}}>
+                {subscribers.map(s => (
+                  <div key={s.id} onClick={() => toggleOne(s.id)}
+                    style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',borderRadius:12,border:`1.5px solid ${selected.includes(s.id)?'#2C3E6B':'#e5e7eb'}`,background:selected.includes(s.id)?'#eef2ff':'#fafafa',cursor:'pointer',transition:'all 0.15s'}}>
+                    {/* صورة */}
+                    <div style={{width:38,height:38,borderRadius:'50%',overflow:'hidden',background:'#f1f5f9',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>
+                      {s.profileImage ? <img src={s.profileImage} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}} /> : '👤'}
+                    </div>
+                    {/* البيانات */}
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontWeight:700,fontSize:13,color:'#1e293b'}}>{s.fullName}</div>
+                      <div style={{fontSize:11,color:'#64748b',direction:'ltr'}}>{s.phone} {s.email ? `• ${s.email}` : ''}</div>
+                    </div>
+                    {/* checkbox */}
+                    <div style={{width:22,height:22,borderRadius:6,border:`2px solid ${selected.includes(s.id)?'#2C3E6B':'#cbd5e1'}`,background:selected.includes(s.id)?'#2C3E6B':'#fff',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:13,flexShrink:0}}>
+                      {selected.includes(s.id) ? '✓' : ''}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* رسالة النتيجة */}
+            {msg && <div style={{padding:'10px 14px',borderRadius:10,background:msg.includes('✅')?'#f0fdf4':'#fef2f2',color:msg.includes('✅')?'#059669':'#ef4444',fontWeight:700,fontSize:13,marginBottom:12}}>{msg}</div>}
+
+            {/* زر الإرسال */}
+            <button onClick={send} disabled={sending || selected.length === 0}
+              style={{width:'100%',padding:14,background:selected.length===0?'#e5e7eb':'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:selected.length===0?'#9ca3af':'#fff',border:'none',borderRadius:14,cursor:selected.length===0?'not-allowed':'pointer',fontFamily:'Cairo,sans-serif',fontWeight:800,fontSize:15}}>
+              {sending ? '⏳ جارٍ الإرسال...' : `📢 إرسال لـ ${selected.length} متابع`}
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function AdminCourses() {
   const [courses, setCourses] = useState([])
   const [mediaCounts, setMediaCounts] = useState({}) // {courseId: count}
@@ -588,6 +707,7 @@ export default function AdminCourses() {
   const [modal, setModal] = useState(null)
   const [appsModal, setAppsModal] = useState(null)
   const [mediaModal, setMediaModal] = useState(null)
+  const [broadcastModal, setBroadcastModal] = useState(null) // {course, subscribers}
 
   const load = () => {
     setLoading(true)
@@ -616,6 +736,7 @@ export default function AdminCourses() {
       {modal && <CourseForm item={modal === 'new' ? null : modal} onSave={() => { setModal(null); load() }} onClose={() => setModal(null)} />}
       {appsModal && <ApplicationsModal course={appsModal} onClose={() => setAppsModal(null)} />}
       {mediaModal && <MediaManager course={mediaModal} onClose={() => { setMediaModal(null); load() }} />}
+      {broadcastModal && <BroadcastModal course={broadcastModal} onClose={() => setBroadcastModal(null)} />}
 
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
         <h2 style={{fontSize:20,fontWeight:800,color:'#2C3E6B'}}>🎓 الدورات الريادية</h2>
@@ -652,6 +773,7 @@ export default function AdminCourses() {
                       🖼️ الصور {mediaCounts[c.id] > 0 ? `(${mediaCounts[c.id]})` : ''}
                     </button>
                     <button onClick={() => setAppsModal(c)} style={{flex:1,padding:'7px',background:'#e0e7ff',color:'#4338ca',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>📋 الطلبات ({c.currentParticipants})</button>
+                    <button onClick={() => setBroadcastModal(c)} style={{flex:1,padding:'7px',background:'#fff7ed',color:'#c2410c',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>📢 تعميم</button>
                     <button onClick={() => setModal(c)} style={{padding:'7px 12px',background:'#FFC72C20',color:'#92400e',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>✏️</button>
                     <button onClick={() => del(c.id)} style={{padding:'7px 12px',background:'#fee2e2',color:'#ef4444',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>🗑️</button>
                   </div>

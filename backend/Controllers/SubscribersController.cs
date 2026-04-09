@@ -272,6 +272,40 @@ public class SubscribersController : ControllerBase {
         return Ok(sub);
     }
 
+    // POST /api/subscribers/broadcast — إرسال تعميم للمتابعين
+    [HttpPost("broadcast")]
+    [Authorize(Roles = "SuperAdmin,Admin")]
+    public async Task<IActionResult> Broadcast([FromBody] BroadcastDto dto) {
+        if (dto.SubscriberIds == null || dto.SubscriberIds.Count == 0)
+            return BadRequest(new { message = "لا يوجد متابعون محددون" });
+
+        var subscribers = await _db.Subscribers
+            .Where(s => dto.SubscriberIds.Contains(s.Id) && s.IsActive)
+            .ToListAsync();
+
+        int sent = 0;
+        foreach (var sub in subscribers) {
+            // إرسال واتساب
+            if (!string.IsNullOrEmpty(sub.WhatsApp)) {
+                try {
+                    using var http = new System.Net.Http.HttpClient();
+                    var wa = sub.WhatsApp.Replace("+", "").Replace(" ", "");
+                    await http.PostAsync(
+                        "https://api.ultramsg.com/instance167281/messages/chat",
+                        new System.Net.Http.FormUrlEncodedContent(new[] {
+                            new System.Collections.Generic.KeyValuePair<string,string>("token", "4sfgtwxi8b4l46yq"),
+                            new System.Collections.Generic.KeyValuePair<string,string>("to", $"+{wa}"),
+                            new System.Collections.Generic.KeyValuePair<string,string>("body", dto.Message)
+                        })
+                    );
+                    sent++;
+                } catch { }
+            }
+        }
+
+        return Ok(new { message = $"تم الإرسال لـ {sent} متابع", sent, total = subscribers.Count });
+    }
+
     // DELETE /api/subscribers/{id}
     [HttpDelete("{id}"), Authorize]
     public async Task<IActionResult> Delete(int id) {
@@ -289,6 +323,11 @@ public record PhoneDto(string Phone);
 public record VerifyOtpDto(string Phone, string Code);
 public record FieldOtpDto(string Field, string Value);
 public record FieldVerifyDto(string Field, string Value, string Code);
+
+public class BroadcastDto {
+    public List<int> SubscriberIds { get; set; } = new();
+    public string Message { get; set; } = "";
+}
 
 public class SubscriberProfileDto {
     // وثائق
