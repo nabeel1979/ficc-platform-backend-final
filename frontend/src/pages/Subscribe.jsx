@@ -401,12 +401,14 @@ export default function Subscribe() {
     if (!form.fullName) { setErr('الاسم مطلوب'); return }
     if (!form.phone) { setErr('رقم الهاتف مطلوب'); return }
     if (!verified.phone) { setErr('⚠️ رقم الهاتف مطلوب — اضغط 📲 تحقق وأدخل الرمز المرسل على واتساب'); return }
+    if (!form.email?.trim() && !form.whatsApp?.trim()) { setErr('❌ يجب إضافة إيميل أو رقم واتساب على الأقل للإشعارات'); return }
     setErr(''); setStep(2)
   }
 
   // تسجيل جديد - الخطوة 2: حفظ
   const register = async () => {
     if ((form.sectors||[]).length === 0) { setErr('اختر قسماً واحداً على الأقل'); return }
+    if (!form.email?.trim() && !form.whatsApp?.trim()) { setErr('❌ يجب إضافة إيميل أو رقم واتساب على الأقل'); return }
     if (form.notifyBy.length === 0) { setErr('اختر طريقة إشعار واحدة على الأقل'); return }
     setLoading(true); setErr('')
     try {
