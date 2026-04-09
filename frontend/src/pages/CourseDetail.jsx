@@ -151,29 +151,29 @@ export default function CourseDetail() {
               const speakers = course.speakersJson ? (() => { try { return JSON.parse(course.speakersJson) } catch { return null } })() : null
               const list = (speakers && speakers.length > 0) ? speakers : (course.speaker ? [{name:course.speaker, title:course.speakerTitle, image:course.speakerImage}] : [])
               return list.length > 0 ? (
-                <div style={{marginTop:12}}>
+                <div style={{marginTop:16}}>
                   {/* عنوان محاضرو الورشة */}
-                  <div style={{fontSize:11,fontWeight:700,color:'rgba(255,199,44,0.9)',marginBottom:8,letterSpacing:0.5}}>
+                  <div style={{fontSize:12,fontWeight:700,color:'rgba(255,199,44,0.9)',marginBottom:10,letterSpacing:0.5}}>
                     🎤 محاضرو الورشة
                   </div>
-                  <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                  {/* Grid responsive — 2 columns on desktop, 1 on mobile */}
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:10}}>
                     {list.map((sp, i) => (
                       <div key={i} style={{
-                        display:'flex', alignItems:'center', gap:10,
-                        background:'rgba(255,255,255,0.1)', borderRadius:12,
-                        padding:'10px 14px',
-                        width:'100%', boxSizing:'border-box'
+                        display:'flex', alignItems:'center', gap:12,
+                        background:'rgba(255,255,255,0.12)', borderRadius:14,
+                        padding:'12px 16px', boxSizing:'border-box'
                       }}>
-                        {/* صورة ثابتة الحجم */}
-                        <div style={{width:44,height:44,borderRadius:'50%',flexShrink:0,overflow:'hidden',border:'2px solid rgba(255,199,44,0.5)',background:'rgba(255,199,44,0.2)'}}>
+                        {/* صورة أكبر */}
+                        <div style={{width:52,height:52,borderRadius:'50%',flexShrink:0,overflow:'hidden',border:'2px solid rgba(255,199,44,0.6)',background:'rgba(255,199,44,0.2)'}}>
                           {sp.image
                             ? <img src={sp.image} alt={sp.name} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={e=>{e.target.style.display='none'}} />
-                            : <div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>👤</div>
+                            : <div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>👤</div>
                           }
                         </div>
                         <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontWeight:800,fontSize:13,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{sp.name}</div>
-                          {sp.title && <div style={{color:'rgba(255,255,255,0.6)',fontSize:11,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{sp.title}</div>}
+                          <div style={{fontWeight:800,fontSize:14,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{sp.name}</div>
+                          {sp.title && <div style={{color:'rgba(255,255,255,0.65)',fontSize:12,marginTop:2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{sp.title}</div>}
                         </div>
                       </div>
                     ))}
