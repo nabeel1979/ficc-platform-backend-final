@@ -189,6 +189,9 @@ function MediaManager({ course, onClose }) {
 
   const addMedia = async (e) => {
     e.preventDefault(); setMsg('')
+    // تحقق من الحد الأقصى
+    if (tab === 'video' && vids.length >= 10) { setMsg('⚠️ وصلت الحد الأقصى (10 فيديوهات)'); return }
+    if (tab === 'image' && imgs.length >= 10) { setMsg('⚠️ وصلت الحد الأقصى (10 صور)'); return }
     try {
       await api.post(`/courses/${course.id}/media`, { ...form, type: tab })
       setForm({ url:'', title:'', description:'', displayOrder:0 }); setAdding(false); load()
@@ -306,9 +309,18 @@ function MediaManager({ course, onClose }) {
               </button>
             </>
           )}
-          <button onClick={()=>setAdding(p=>!p)} style={{marginRight:'auto',padding:'7px 16px',background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:'#fff',border:'none',borderRadius:20,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12}}>
-            ➕ {tab==='image'?'إضافة صورة':'إضافة فيديو'}
-          </button>
+          {tab === 'video' && (
+            vids.length >= 10
+              ? <button disabled style={{marginRight:'auto',padding:'7px 16px',background:'#e5e7eb',color:'#9ca3af',border:'none',borderRadius:20,fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12,cursor:'not-allowed'}}>🔒 الحد الأقصى 10 فيديوهات</button>
+              : <button onClick={()=>setAdding(p=>!p)} style={{marginRight:'auto',padding:'7px 16px',background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:'#fff',border:'none',borderRadius:20,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12}}>
+                  ➕ إضافة فيديو ({vids.length}/10)
+                </button>
+          )}
+          {tab === 'image' && (
+            <button onClick={()=>setAdding(p=>!p)} style={{marginRight:'auto',padding:'7px 16px',background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:'#fff',border:'none',borderRadius:20,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12}}>
+              ➕ إضافة صورة
+            </button>
+          )}
         </div>
 
         {/* Progress bar للـ multi-upload */}
@@ -456,7 +468,7 @@ function MediaManager({ course, onClose }) {
               </>
             )}
             {tab === 'video' && (
-              vids.length === 0 ? <div style={{textAlign:'center',padding:30,color:'#94a3b8',fontSize:13}}>لا توجد فيديوهات بعد</div> :
+              vids.length === 0 ? <div style={{textAlign:'center',padding:30,color:'#94a3b8',fontSize:13}}>لا توجد فيديوهات بعد — أضف حتى 10 فيديوهات</div> :
               <div style={{display:'flex',flexDirection:'column',gap:16}}>
                 {vids.map(vid => {
                   const ytId = vid.url.match(/(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/watch\?.+&v=|\/shorts\/))([\w-]{11})/)?.[1]
