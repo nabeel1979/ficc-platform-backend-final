@@ -36,7 +36,7 @@ public class SubscribersController : ControllerBase {
         };
         _db.Subscribers.Add(sub);
         await _db.SaveChangesAsync();
-        return Ok(new { id = sub.Id, message = "تم التسجيل بنجاح!" });
+        return Ok(sub);
     }
 
     // دالة مشتركة للتحقق من Rate Limit (5 محاولات خلال 30 دقيقة)
