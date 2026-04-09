@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
+import ShareButtons from '../components/ShareButtons'
 
 const API = ''
 
@@ -136,16 +137,7 @@ function MemberDetail({ m, onBack }) {
             )}
 
             {/* Share */}
-            <div style={{background:'#F8F9FA',borderRadius:'14px',padding:'16px 20px'}}>
-              <p style={{color:'#888',fontSize:'13px',fontWeight:'700',margin:'0 0 12px'}}>📤 شارك:</p>
-              <div style={{display:'flex',gap:'10px'}}>
-                <a href={`https://wa.me/?text=${encodeURIComponent(m.fullName + (m.title?' — '+m.title:'') + '\n' + window.location.origin + '/members/' + m.id)}`}
-                  target="_blank" rel="noreferrer"
-                  style={{flex:'1',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',padding:'12px',borderRadius:'12px',background:'#25D366',color:'#fff',fontSize:'14px',fontWeight:'700',textDecoration:'none',fontFamily:'Cairo,sans-serif'}}>💬 واتساب</a>
-                <button onClick={()=>{navigator.clipboard.writeText(window.location.origin+'/members/'+m.id);alert('✅ تم نسخ الرابط!')}}
-                  style={{flex:'1',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',padding:'12px',borderRadius:'12px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',fontSize:'14px',fontWeight:'700',fontFamily:'Cairo,sans-serif'}}>🔗 نسخ الرابط</button>
-              </div>
-            </div>
+            <ShareButtons url={`${window.location.origin}/members/${m.id}`} title={m.fullName + (m.title?' — '+m.title:'')} label="شارك" />
           </div>
         </div>
       </div>
