@@ -576,8 +576,99 @@ function MultiCheckField({ options, value, onChange }) {
   )
 }
 
+/* ─── Broadcast Modal ─── */
+function DashboardBroadcastModal({ sectorId, itemTitle, itemId, onClose }) {
+  const [subscribers, setSubscribers] = React.useState([])
+  const [loading, setLoading] = React.useState(true)
+  const [selected, setSelected] = React.useState([])
+  const [sending, setSending] = React.useState(false)
+  const [msg, setMsg] = React.useState('')
+
+  const sectorNames = {1:'الريادة', 2:'العلاقات', 3:'المنظمات'}
+
+  React.useEffect(() => {
+    api.get(`/sectors/${sectorId}/subscribers`)
+      .then(r => { setSubscribers(r.data||[]); setSelected((r.data||[]).map(s=>s.id)) })
+      .finally(() => setLoading(false))
+  }, [sectorId])
+
+  const toggleAll = () => { setSelected(selected.length===subscribers.length?[]:subscribers.map(s=>s.id)) }
+  const toggleOne = (id) => { setSelected(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]) }
+
+  const send = async () => {
+    if (!selected.length) return
+    setSending(true); setMsg('')
+    try {
+      const r = await api.post('/subscribers/broadcast', {
+        subscriberIds: selected,
+        message: `📢 ${itemTitle}\n🔗 ${window.location.origin}`
+      })
+      setMsg(`✅ تم الإرسال لـ ${r.data?.sent||selected.length} متابع`)
+    } catch { setMsg('❌ حدث خطأ') }
+    setSending(false)
+  }
+
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:3000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:'#fff',borderRadius:20,padding:24,width:'100%',maxWidth:620,maxHeight:'90vh',overflowY:'auto',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+          <div>
+            <h2 style={{fontSize:17,fontWeight:800,color:'#2C3E6B',margin:0}}>📢 تعميم — {sectorNames[sectorId]}</h2>
+            <p style={{fontSize:12,color:'#64748b',margin:'4px 0 0'}}>{itemTitle}</p>
+          </div>
+          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#94a3b8'}}>✕</button>
+        </div>
+        {loading ? <div style={{textAlign:'center',padding:40,color:'#94a3b8'}}>⏳ جارٍ التحميل...</div> : <>
+          <div style={{display:'flex',gap:10,marginBottom:14}}>
+            <div style={{flex:1,background:'#eef2ff',borderRadius:12,padding:'10px',textAlign:'center'}}>
+              <div style={{fontSize:20,fontWeight:800,color:'#2C3E6B'}}>{subscribers.length}</div>
+              <div style={{fontSize:11,color:'#64748b'}}>إجمالي المتابعين</div>
+            </div>
+            <div style={{flex:1,background:'#f0fdf4',borderRadius:12,padding:'10px',textAlign:'center'}}>
+              <div style={{fontSize:20,fontWeight:800,color:'#059669'}}>{selected.length}</div>
+              <div style={{fontSize:11,color:'#64748b'}}>محددون للإرسال</div>
+            </div>
+          </div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+            <span style={{fontSize:13,fontWeight:700,color:'#374151'}}>المتابعون</span>
+            <button onClick={toggleAll} style={{padding:'5px 12px',borderRadius:8,border:'1.5px solid #2C3E6B',background:selected.length===subscribers.length?'#2C3E6B':'#fff',color:selected.length===subscribers.length?'#fff':'#2C3E6B',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>
+              {selected.length===subscribers.length?'❌ إلغاء الكل':'✅ اختيار الكل'}
+            </button>
+          </div>
+          {subscribers.length === 0 ? (
+            <div style={{textAlign:'center',padding:30,color:'#94a3b8',fontSize:13}}>لا يوجد متابعون لهذا القسم بعد</div>
+          ) : (
+            <div style={{display:'flex',flexDirection:'column',gap:8,maxHeight:280,overflowY:'auto',marginBottom:14}}>
+              {subscribers.map(s => (
+                <div key={s.id} onClick={()=>toggleOne(s.id)}
+                  style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',borderRadius:12,border:`1.5px solid ${selected.includes(s.id)?'#2C3E6B':'#e5e7eb'}`,background:selected.includes(s.id)?'#eef2ff':'#fafafa',cursor:'pointer'}}>
+                  <div style={{width:36,height:36,borderRadius:'50%',background:'#f1f5f9',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,overflow:'hidden'}}>
+                    {s.profileImage ? <img src={s.profileImage} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}} /> : '👤'}
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontWeight:700,fontSize:13}}>{s.fullName}</div>
+                    <div style={{fontSize:11,color:'#64748b',direction:'ltr'}}>{s.phone}{s.email?` • ${s.email}`:''}</div>
+                  </div>
+                  <div style={{width:20,height:20,borderRadius:5,border:`2px solid ${selected.includes(s.id)?'#2C3E6B':'#cbd5e1'}`,background:selected.includes(s.id)?'#2C3E6B':'#fff',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:12,flexShrink:0}}>
+                    {selected.includes(s.id)?'✓':''}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {msg && <div style={{padding:'10px 14px',borderRadius:10,background:msg.includes('✅')?'#f0fdf4':'#fef2f2',color:msg.includes('✅')?'#059669':'#ef4444',fontWeight:700,fontSize:13,marginBottom:12}}>{msg}</div>}
+          <button onClick={send} disabled={sending||!selected.length}
+            style={{width:'100%',padding:13,background:selected.length?'linear-gradient(135deg,#2C3E6B,#4A6FA5)':'#e5e7eb',color:selected.length?'#fff':'#9ca3af',border:'none',borderRadius:14,cursor:selected.length?'pointer':'not-allowed',fontFamily:'Cairo,sans-serif',fontWeight:800,fontSize:14}}>
+            {sending?'⏳ جارٍ الإرسال...':`📢 إرسال لـ ${selected.length} متابع`}
+          </button>
+        </>}
+      </div>
+    </div>
+  )
+}
+
 /* ─── Generic CRUD Table ─── */
-function CrudTable({ title, icon, endpoint, columns, fields: rawFields, addLabel, constants: ctxConstants = {} }) {
+function CrudTable({ title, icon, endpoint, columns, fields: rawFields, addLabel, constants: ctxConstants = {}, broadcastSectorId = null }) {
   const fields = rawFields.map(f =>
     f.constantsKey && ctxConstants[f.constantsKey]?.length
       ? { ...f, options: ctxConstants[f.constantsKey] }
@@ -594,6 +685,7 @@ function CrudTable({ title, icon, endpoint, columns, fields: rawFields, addLabel
   const [verifiedFields, setVerifiedFields] = useState({})
   const [pageSize, setPageSize] = useState(10)
   const [page, setPage]         = useState(1)
+  const [broadcastItem, setBroadcastItem] = useState(null)
 
   const load = async (p = page, ps = pageSize, q = search) => {
     setLoading(true)
@@ -783,6 +875,16 @@ function CrudTable({ title, icon, endpoint, columns, fields: rawFields, addLabel
         </div>
       </div>
 
+      {/* Broadcast Modal */}
+      {broadcastItem !== null && broadcastSectorId && (
+        <DashboardBroadcastModal
+          sectorId={broadcastSectorId}
+          itemTitle={broadcastItem.title || broadcastItem.name || broadcastItem.companyName || ''}
+          itemId={broadcastItem.id}
+          onClose={() => setBroadcastItem(null)}
+        />
+      )}
+
       {msg && <div style={{background: msg.startsWith('✅')?'#f0fdf4':'#fee2e2', color: msg.startsWith('✅')?'#16a34a':'#dc2626', padding:'10px 16px', borderRadius:'10px', marginBottom:'16px', fontSize:'14px'}}>{msg}</div>}
 
       {/* Table */}
@@ -814,7 +916,8 @@ function CrudTable({ title, icon, endpoint, columns, fields: rawFields, addLabel
                     ))}
                     <td style={{...td,textAlign:'center',whiteSpace:'nowrap'}}>
                       <button onClick={()=>openEdit(item)} style={{background:'#EEF2FF',color:'#2C3E6B',border:'none',borderRadius:'7px',padding:'6px 12px',cursor:'pointer',fontSize:'12px',marginLeft:'6px',fontFamily:'Cairo,sans-serif'}}>✏️ تعديل</button>
-                      <button onClick={()=>openDel(item)}  style={{background:'#fee2e2',color:'#dc2626',border:'none',borderRadius:'7px',padding:'6px 12px',cursor:'pointer',fontSize:'12px',fontFamily:'Cairo,sans-serif'}}>🗑️ حذف</button>
+                      <button onClick={()=>openDel(item)}  style={{background:'#fee2e2',color:'#dc2626',border:'none',borderRadius:'7px',padding:'6px 12px',cursor:'pointer',fontSize:'12px',marginLeft:'6px',fontFamily:'Cairo,sans-serif'}}>🗑️ حذف</button>
+                      {broadcastSectorId && <button onClick={()=>setBroadcastItem(item)} style={{background:'#fff7ed',color:'#c2410c',border:'none',borderRadius:'7px',padding:'6px 12px',cursor:'pointer',fontSize:'12px',fontFamily:'Cairo,sans-serif'}}>📢 تعميم</button>}
                     </td>
                   </tr>
                 ))}
@@ -1164,9 +1267,10 @@ export default function AdminDashboard() {
     return f
   })
 
-  const T = (ep, title, icon, addLabel, cols) => (
+  const T = (ep, title, icon, addLabel, cols, broadcastSectorId = null) => (
     <CrudTable title={title} icon={icon} endpoint={ep} addLabel={addLabel}
-      columns={cols} fields={FIELDS[ep]||[]} constants={constants} />
+      columns={cols} fields={FIELDS[ep]||[]} constants={constants}
+      broadcastSectorId={broadcastSectorId} />
   )
 
   return (
@@ -1209,19 +1313,19 @@ export default function AdminDashboard() {
             {key:'author',label:'الكاتب'},
             {key:'publishedAt',label:'التاريخ',render:v=>v?new Date(v).toLocaleDateString('ar-IQ'):'—'},
             {key:'isFeatured',label:'مميز',render:v=>v?'⭐ مميز':'📝 مسودة'},
-          ])} />
+          ], 2)} />{/* 2 = العلاقات */}
           <Route path="exhibitions" element={T('exhibitions','المعارض','🎪','معرض',[
             {key:'name',label:'المعرض'},
             {key:'location',label:'الموقع'},
             {key:'startDate',label:'البدء',render:v=>v?new Date(v).toLocaleDateString('ar-IQ'):'—'},
             {key:'status',label:'الحالة'},
-          ])} />
+          ], 3)} />{/* 3 = المنظمات */}
           <Route path="conferences" element={T('conferences','المؤتمرات','🎤','مؤتمر',[
             {key:'title',label:'المؤتمر'},
             {key:'location',label:'الموقع'},
             {key:'startDate',label:'التاريخ',render:v=>v?new Date(v).toLocaleDateString('ar-IQ'):'—'},
             {key:'status',label:'الحالة'},
-          ])} />
+          ], 3)} />{/* 3 = المنظمات */}
           <Route path="lawyers" element={T('lawyers','المحامون','⚖️','محامٍ',[
             {key:'fullName',label:'الاسم'},
             {key:'specialization',label:'التخصص'},
