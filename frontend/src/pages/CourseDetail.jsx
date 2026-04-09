@@ -76,15 +76,10 @@ export default function CourseDetail() {
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(false)
   const [copied, setCopied] = useState(false)
+  const courseUrl = typeof window !== 'undefined' ? `${window.location.origin}/courses/${id}` : ''
   const copyLink = () => {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      setCopied(true); setTimeout(() => setCopied(false), 2500)
-    })
-  }
-  const shareLink = () => {
-    if (navigator.share) {
-      navigator.share({ title: course?.title, url: window.location.href })
-    } else { copyLink() }
+    navigator.clipboard.writeText(courseUrl)
+    setCopied(true); setTimeout(() => setCopied(false), 2500)
   }
   const [form, setForm] = useState({ fullName:'', phone:'', email:'', company:'', motivation:'' })
   const [msg, setMsg] = useState({ type:'', text:'' })
@@ -216,13 +211,21 @@ export default function CourseDetail() {
                 {msg.text}
               </div>
             )}
-            {/* أزرار المشاركة */}
-            <div style={{display:'flex',gap:6,marginTop:12}}>
-              <button onClick={copyLink} style={{flex:1,padding:'8px',background:'rgba(255,255,255,0.15)',color:'#fff',border:'1px solid rgba(255,255,255,0.2)',borderRadius:10,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11,transition:'all 0.2s'}}>
+            {/* أزرار المشاركة — نفس طريقة الأخبار */}
+            <div style={{display:'flex',flexWrap:'wrap',gap:6,marginTop:12}}>
+              <a href={`https://wa.me/?text=${encodeURIComponent((course?.title||'') + ' ' + courseUrl)}`}
+                target="_blank" rel="noreferrer"
+                style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'8px',borderRadius:10,background:'#25D366',color:'#fff',textDecoration:'none',fontSize:11,fontWeight:700,fontFamily:'Cairo,sans-serif'}}>
+                💬 واتساب
+              </a>
+              <a href={`https://t.me/share/url?url=${encodeURIComponent(courseUrl)}&text=${encodeURIComponent(course?.title||'')}`}
+                target="_blank" rel="noreferrer"
+                style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'8px',borderRadius:10,background:'#0088cc',color:'#fff',textDecoration:'none',fontSize:11,fontWeight:700,fontFamily:'Cairo,sans-serif'}}>
+                ✈️ تيليگرام
+              </a>
+              <button onClick={copyLink}
+                style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'8px',borderRadius:10,background:'rgba(255,255,255,0.15)',color:'#fff',border:'1px solid rgba(255,255,255,0.2)',cursor:'pointer',fontSize:11,fontWeight:700,fontFamily:'Cairo,sans-serif'}}>
                 {copied ? '✅ تم النسخ!' : '🔗 نسخ الرابط'}
-              </button>
-              <button onClick={shareLink} style={{flex:1,padding:'8px',background:'rgba(255,255,255,0.15)',color:'#fff',border:'1px solid rgba(255,255,255,0.2)',borderRadius:10,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>
-                📤 مشاركة
               </button>
             </div>
           </div>
