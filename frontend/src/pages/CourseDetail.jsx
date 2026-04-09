@@ -289,36 +289,18 @@ export default function CourseDetail() {
             {videos.map(vid => {
               const id = getYTId(vid.url)
               if (!id) return null
-              // الرابط المباشر ليوتيوب — يفتح YouTube app على الموبايل
-              const ytLink = isShorts(vid.url)
-                ? `https://www.youtube.com/shorts/${id}`
-                : `https://www.youtube.com/watch?v=${id}`
               return (
                 <div key={vid.id}>
-                  {/* Thumbnail قابل للضغط — يفتح YouTube مباشرة على أي جهاز */}
-                  <a href={ytLink} target="_blank" rel="noreferrer" style={{display:'block',textDecoration:'none'}}>
-                    <div style={{position:'relative',borderRadius:12,overflow:'hidden',background:'#000',aspectRatio:'16/9'}}>
-                      <img
-                        src={`https://img.youtube.com/vi/${id}/hqdefault.jpg`}
-                        alt={vid.title||'فيديو'}
-                        style={{width:'100%',height:'100%',objectFit:'cover',opacity:0.85}}
-                      />
-                      {/* زر تشغيل */}
-                      <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                        <div style={{width:60,height:60,background:'rgba(255,0,0,0.9)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 20px rgba(0,0,0,0.5)'}}>
-                          <div style={{width:0,height:0,borderTop:'11px solid transparent',borderBottom:'11px solid transparent',borderLeft:'20px solid white',marginRight:-4}} />
-                        </div>
-                      </div>
-                      {/* شارة Shorts */}
-                      {isShorts(vid.url) && (
-                        <div style={{position:'absolute',top:8,right:8,background:'#ff0000',color:'#fff',fontSize:10,fontWeight:800,padding:'2px 8px',borderRadius:6}}>Shorts</div>
-                      )}
-                      {/* شارة YouTube */}
-                      <div style={{position:'absolute',bottom:8,left:8,background:'rgba(0,0,0,0.7)',color:'#fff',fontSize:10,fontWeight:700,padding:'3px 10px',borderRadius:6,display:'flex',alignItems:'center',gap:4}}>
-                        ▶ شاهد على يوتيوب
-                      </div>
-                    </div>
-                  </a>
+                  {/* embed مباشر — نفس طريقة صفحة الأخبار */}
+                  <div style={{position:'relative',paddingBottom:'56.25%',height:0,overflow:'hidden',borderRadius:12,background:'#000',boxShadow:'0 4px 16px rgba(0,0,0,0.2)'}}>
+                    <iframe
+                      src={`https://www.youtube.com/embed/${id}?rel=0&modestbranding=1`}
+                      style={{position:'absolute',top:0,left:0,width:'100%',height:'100%',border:'none'}}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title={vid.title||'فيديو'}
+                    />
+                  </div>
                   {vid.title && <div style={{fontWeight:700,fontSize:13,color:'#1e293b',marginTop:8,direction:'rtl'}}>{vid.title}</div>}
                   {vid.description && <p style={{fontSize:12,color:'#64748b',marginTop:4,lineHeight:1.5}}>{vid.description}</p>}
                 </div>
