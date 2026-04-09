@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import api from '../lib/api'
 
 const API = ''
@@ -98,6 +98,44 @@ export default function Subscribe() {
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
+  const [profileTab, setProfileTab] = useState('info') // info | docs | social | interests
+  const [sectors, setSectors] = useState([])
+  const [profileForm, setProfileForm] = useState({})
+  const [profileMsg, setProfileMsg] = useState('')
+  const [uploading, setUploading] = useState({})
+
+  useEffect(() => {
+    api.get('/sectors').then(r => setSectors(r.data)).catch(() => {})
+  }, [])
+
+  const uploadDoc = async (field, file) => {
+    if (!file) return
+    setUploading(p => ({...p, [field]: true}))
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('folder', 'subscribers')
+    try {
+      const r = await api.post('/upload', fd, { headers: {'Content-Type':'multipart/form-data'} })
+      setProfileForm(p => ({...p, [field]: r.data.url}))
+    } catch { alert('فشل رفع الملف') }
+    setUploading(p => ({...p, [field]: false}))
+  }
+
+  const saveProfile = async () => {
+    setProfileMsg('')
+    try {
+      await api.put(`/subscribers/${subscriber.id}/profile`, profileForm)
+      setSubscriber(p => ({...p, ...profileForm}))
+      setProfileMsg('✅ تم حفظ البيانات بنجاح')
+      setTimeout(() => setProfileMsg(''), 3000)
+    } catch { setProfileMsg('❌ حدث خطأ') }
+  }
+
+  const toggleInterest = (id) => {
+    const curr = profileForm.interests || []
+    const updated = curr.includes(id) ? curr.filter(x => x !== id) : [...curr, id]
+    setProfileForm(p => ({...p, interests: updated}))
+  }
 
   const set = (k,v) => setForm(p=>({...p,[k]:v}))
   const setV = (k,v) => setVerified(p=>({...p,[k]:v}))
@@ -331,13 +369,16 @@ export default function Subscribe() {
           </div>
         )}
 
-        {/* مسجّل سابق - خطوة 3: تعديل */}
+        {/* مسجّل سابق - خطوة 3: الملف الشخصي */}
         {mode === 'existing' && step === 3 && (
           <div style={{fontFamily:'Cairo,sans-serif',direction:'rtl'}}>
             {/* Header بروفايل */}
             <div style={{background:'linear-gradient(135deg,#1a1a2e,#2C3E6B)',borderRadius:'20px',padding:'28px',textAlign:'center',marginBottom:'16px',position:'relative'}}>
-              <div style={{width:'72px',height:'72px',borderRadius:'50%',background:'linear-gradient(135deg,#FFC72C,#f59e0b)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'32px',margin:'0 auto 12px',boxShadow:'0 4px 16px rgba(0,0,0,0.3)'}}>
-                {form.fullName?.charAt(0) || '👤'}
+              <div style={{width:'72px',height:'72px',borderRadius:'50%',overflow:'hidden',background:'linear-gradient(135deg,#FFC72C,#f59e0b)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'32px',margin:'0 auto 12px',boxShadow:'0 4px 16px rgba(0,0,0,0.3)'}}>
+                {subscriber?.profileImage
+                  ? <img src={subscriber.profileImage} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}} />
+                  : (form.fullName?.charAt(0) || '👤')
+                }
               </div>
               <h2 style={{color:'#fff',fontWeight:'900',fontSize:'20px',margin:'0 0 4px'}}>{form.fullName}</h2>
               <div style={{display:'inline-flex',alignItems:'center',gap:'6px',background:'rgba(255,255,255,0.1)',padding:'5px 14px',borderRadius:'20px',marginTop:'6px'}}>
@@ -345,6 +386,28 @@ export default function Subscribe() {
                 <span style={{color:'#FFC72C',fontWeight:'700',fontSize:'14px',direction:'ltr'}}>{form.phone}</span>
               </div>
             </div>
+
+            {/* Tabs */}
+            <div style={{display:'flex',gap:6,marginBottom:16,overflowX:'auto',paddingBottom:4}}>
+              {[
+                {key:'info', label:'👤 بياناتي'},
+                {key:'interests', label:'🎯 الأقسام'},
+                {key:'docs', label:'📄 الوثائق'},
+                {key:'social', label:'🌐 التواصل'},
+              ].map(t => (
+                <button key={t.key} onClick={() => setProfileTab(t.key)}
+                  style={{padding:'8px 16px',borderRadius:20,border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12,whiteSpace:'nowrap',
+                    background: profileTab===t.key ? '#2C3E6B' : '#f1f5f9',
+                    color: profileTab===t.key ? '#fff' : '#374151'
+                  }}>{t.label}</button>
+              ))}
+            </div>
+
+            {profileMsg && <div style={{background: profileMsg.includes('✅') ? '#f0fdf4' : '#fef2f2', color: profileMsg.includes('✅') ? '#059669' : '#ef4444', padding:'10px 14px', borderRadius:10, fontSize:13, marginBottom:12, fontWeight:700}}>{profileMsg}</div>}
+
+            {/* Tab: بياناتي */}
+            {profileTab === 'info' && (
+            <div style={{background:'#fff',borderRadius:'16px',padding:'20px',boxShadow:'0 4px 16px rgba(44,62,107,0.08)',marginBottom:'12px'}}>
 
             {/* البيانات */}
             <div style={{background:'#fff',borderRadius:'16px',padding:'20px',boxShadow:'0 4px 16px rgba(44,62,107,0.08)',marginBottom:'12px'}}>
@@ -409,8 +472,102 @@ export default function Subscribe() {
             {err && <div style={{background:'#fee2e2',color:'#dc2626',padding:'12px 16px',borderRadius:'12px',fontSize:'13px',marginBottom:'12px',fontWeight:'700'}}>{err}</div>}
             {msg && <div style={{background:'#d1fae5',color:'#065f46',padding:'12px 16px',borderRadius:'12px',fontSize:'13px',marginBottom:'12px',fontWeight:'700'}}>{msg}</div>}
             <button onClick={update} disabled={loading} style={{...btnPrimary,borderRadius:'14px',fontSize:'16px',padding:'15px'}}>
-              {loading?'⏳ جاري الحفظ...':'💾 حفظ التعديلات'}
+              {loading?'⏳ جاري الحفظ...':'💾 حفظ البيانات الأساسية'}
             </button>
+            </div>)} {/* نهاية tab info */}
+
+            {/* Tab: الأقسام */}
+            {profileTab === 'interests' && (
+            <div style={{background:'#fff',borderRadius:16,padding:20,boxShadow:'0 4px 16px rgba(44,62,107,0.08)',marginBottom:12}}>
+              <h3 style={{color:'#2C3E6B',fontWeight:800,fontSize:15,margin:'0 0 16px',paddingBottom:10,borderBottom:'2px solid #FFC72C'}}>🎯 الأقسام التي تريد متابعتها</h3>
+              <div style={{display:'flex',flexDirection:'column',gap:12}}>
+                {sectors.map(s => {
+                  const selected = (profileForm.interests||[]).includes(s.id)
+                  return (
+                    <div key={s.id} onClick={() => toggleInterest(s.id)}
+                      style={{display:'flex',alignItems:'center',gap:12,padding:'14px 16px',borderRadius:12,border:`2px solid ${selected?'#2C3E6B':'#e5e7eb'}`,background:selected?'#eef2ff':'#fafafa',cursor:'pointer',transition:'all 0.2s'}}>
+                      <div style={{width:40,height:40,borderRadius:'50%',background:selected?'#2C3E6B':'#f1f5f9',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>
+                        {s.icon}
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{fontWeight:800,fontSize:14,color:selected?'#2C3E6B':'#374151'}}>{s.name}</div>
+                        {s.description && <div style={{fontSize:12,color:'#64748b',marginTop:2}}>{s.description}</div>}
+                      </div>
+                      <div style={{width:24,height:24,borderRadius:'50%',background:selected?'#2C3E6B':'#e5e7eb',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:14,flexShrink:0}}>
+                        {selected ? '✓' : ''}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              <button onClick={saveProfile} style={{...btnPrimary,marginTop:16,borderRadius:14}}>💾 حفظ الأقسام</button>
+            </div>
+            )}
+
+            {/* Tab: الوثائق */}
+            {profileTab === 'docs' && (
+            <div style={{background:'#fff',borderRadius:16,padding:20,boxShadow:'0 4px 16px rgba(44,62,107,0.08)',marginBottom:12}}>
+              <h3 style={{color:'#2C3E6B',fontWeight:800,fontSize:15,margin:'0 0 16px',paddingBottom:10,borderBottom:'2px solid #FFC72C'}}>📄 الوثائق والمستندات</h3>
+              <div style={{display:'flex',flexDirection:'column',gap:14}}>
+                {[
+                  {key:'profileImage', label:'الصورة الشخصية', icon:'🤳', accept:'image/*'},
+                  {key:'nationalIdFront', label:'البطاقة الموحدة — أمام', icon:'🪪', accept:'image/*'},
+                  {key:'nationalIdBack', label:'البطاقة الموحدة — خلف', icon:'🪪', accept:'image/*'},
+                  {key:'passport', label:'جواز السفر', icon:'📗', accept:'image/*'},
+                  {key:'tradeIdFront', label:'هوية التجارة — أمام', icon:'🏪', accept:'image/*'},
+                  {key:'tradeIdBack', label:'هوية التجارة — خلف', icon:'🏪', accept:'image/*'},
+                  {key:'cv', label:'السيفي (CV)', icon:'📋', accept:'image/*,application/pdf'},
+                ].map(doc => {
+                  const val = profileForm[doc.key] || subscriber?.[doc.key]
+                  return (
+                    <div key={doc.key} style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px',borderRadius:12,border:'1.5px solid #e5e7eb',background:'#fafafa'}}>
+                      <span style={{fontSize:22,flexShrink:0}}>{doc.icon}</span>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontWeight:700,fontSize:13,color:'#374151',marginBottom:4}}>{doc.label}</div>
+                        {val
+                          ? <a href={val} target="_blank" rel="noreferrer" style={{fontSize:11,color:'#2C3E6B',fontWeight:700}}>✅ مرفوع — اضغط للعرض</a>
+                          : <span style={{fontSize:11,color:'#94a3b8'}}>لم يرفع بعد</span>
+                        }
+                      </div>
+                      <label style={{padding:'6px 12px',background:'#e0e7ff',color:'#4338ca',borderRadius:8,cursor:'pointer',fontSize:11,fontWeight:700,flexShrink:0}}>
+                        {uploading[doc.key] ? '⏳' : '📁 رفع'}
+                        <input type="file" accept={doc.accept} style={{display:'none'}} onChange={e => uploadDoc(doc.key, e.target.files[0])} />
+                      </label>
+                    </div>
+                  )
+                })}
+              </div>
+              <button onClick={saveProfile} style={{...btnPrimary,marginTop:16,borderRadius:14}}>💾 حفظ الوثائق</button>
+            </div>
+            )}
+
+            {/* Tab: التواصل الاجتماعي */}
+            {profileTab === 'social' && (
+            <div style={{background:'#fff',borderRadius:16,padding:20,boxShadow:'0 4px 16px rgba(44,62,107,0.08)',marginBottom:12}}>
+              <h3 style={{color:'#2C3E6B',fontWeight:800,fontSize:15,margin:'0 0 16px',paddingBottom:10,borderBottom:'2px solid #FFC72C'}}>🌐 منصات التواصل الاجتماعي</h3>
+              <div style={{display:'flex',flexDirection:'column',gap:12}}>
+                {[
+                  {key:'facebook', label:'فيسبوك', icon:'📘', placeholder:'https://facebook.com/username'},
+                  {key:'instagram', label:'إنستغرام', icon:'📸', placeholder:'https://instagram.com/username'},
+                  {key:'twitter', label:'تويتر/X', icon:'𝕏', placeholder:'https://x.com/username'},
+                  {key:'linkedIn', label:'لينكدإن', icon:'💼', placeholder:'https://linkedin.com/in/username'},
+                  {key:'tikTok', label:'تيكتوك', icon:'🎵', placeholder:'https://tiktok.com/@username'},
+                ].map(s => (
+                  <div key={s.key}>
+                    <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>{s.icon} {s.label}</label>
+                    <input
+                      value={profileForm[s.key] || subscriber?.[s.key] || ''}
+                      onChange={e => setProfileForm(p => ({...p, [s.key]: e.target.value}))}
+                      placeholder={s.placeholder}
+                      style={{width:'100%',padding:'10px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontSize:13,fontFamily:'Cairo,sans-serif',direction:'ltr',outline:'none',boxSizing:'border-box'}}
+                    />
+                  </div>
+                ))}
+              </div>
+              <button onClick={saveProfile} style={{...btnPrimary,marginTop:16,borderRadius:14}}>💾 حفظ روابط التواصل</button>
+            </div>
+            )}
+
           </div>
         )}
       </div>

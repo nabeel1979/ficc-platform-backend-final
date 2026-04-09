@@ -241,6 +241,37 @@ public class SubscribersController : ControllerBase {
             .Skip((page-1)*pageSize).Take(pageSize).ToListAsync();
         return Ok(new { total, page, pageSize, items });
     }
+    // PUT /api/subscribers/{id}/profile — تحديث الملف الشخصي (وثائق + تواصل + أقسام)
+    [HttpPut("{id}/profile")]
+    public async Task<IActionResult> UpdateProfile(int id, [FromBody] SubscriberProfileDto dto) {
+        var sub = await _db.Subscribers.FindAsync(id);
+        if (sub == null) return NotFound();
+
+        // وثائق
+        if (dto.ProfileImage != null) sub.ProfileImage = dto.ProfileImage;
+        if (dto.NationalIdFront != null) sub.NationalIdFront = dto.NationalIdFront;
+        if (dto.NationalIdBack != null) sub.NationalIdBack = dto.NationalIdBack;
+        if (dto.Passport != null) sub.Passport = dto.Passport;
+        if (dto.TradeIdFront != null) sub.TradeIdFront = dto.TradeIdFront;
+        if (dto.TradeIdBack != null) sub.TradeIdBack = dto.TradeIdBack;
+        if (dto.CV != null) sub.CV = dto.CV;
+
+        // تواصل اجتماعي
+        if (dto.Facebook != null) sub.Facebook = dto.Facebook;
+        if (dto.Instagram != null) sub.Instagram = dto.Instagram;
+        if (dto.Twitter != null) sub.Twitter = dto.Twitter;
+        if (dto.LinkedIn != null) sub.LinkedIn = dto.LinkedIn;
+        if (dto.TikTok != null) sub.TikTok = dto.TikTok;
+
+        // الأقسام (IDs)
+        if (dto.Interests != null)
+            sub.Interests = System.Text.Json.JsonSerializer.Serialize(dto.Interests);
+
+        sub.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        return Ok(sub);
+    }
+
     // DELETE /api/subscribers/{id}
     [HttpDelete("{id}"), Authorize]
     public async Task<IActionResult> Delete(int id) {
@@ -258,3 +289,22 @@ public record PhoneDto(string Phone);
 public record VerifyOtpDto(string Phone, string Code);
 public record FieldOtpDto(string Field, string Value);
 public record FieldVerifyDto(string Field, string Value, string Code);
+
+public class SubscriberProfileDto {
+    // وثائق
+    public string? ProfileImage { get; set; }
+    public string? NationalIdFront { get; set; }
+    public string? NationalIdBack { get; set; }
+    public string? Passport { get; set; }
+    public string? TradeIdFront { get; set; }
+    public string? TradeIdBack { get; set; }
+    public string? CV { get; set; }
+    // تواصل اجتماعي
+    public string? Facebook { get; set; }
+    public string? Instagram { get; set; }
+    public string? Twitter { get; set; }
+    public string? LinkedIn { get; set; }
+    public string? TikTok { get; set; }
+    // الأقسام
+    public List<int>? Interests { get; set; }
+}
