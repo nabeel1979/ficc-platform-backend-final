@@ -197,6 +197,7 @@ export default function CourseDetail() {
           { icon:'🏁', label:'تاريخ الانتهاء', value: new Date(course.endDate).toLocaleDateString('ar-IQ',{year:'numeric',month:'long',day:'numeric'}) },
           course.location && { icon:'📍', label:'الموقع', value: course.location },
           course.category && { icon:'🏷️', label:'الفئة', value: course.category },
+          course.workshopType && { icon: course.workshopType==='online'?'💻':'🏢', label:'نوع الورشة', value: course.workshopType==='online'?'إلكترونية':'ميدانية' },
           course.status === 'upcoming' && daysLeft > 0 && { icon:'⏰', label:'يبدأ بعد', value: `${daysLeft} يوم` },
         ].filter(Boolean).map((item, i) => (
           <div key={i} style={{background:'#fff',borderRadius:14,padding:'16px',boxShadow:'0 2px 8px rgba(44,62,107,0.06)',border:'1px solid #e5e7eb',display:'flex',gap:12,alignItems:'center'}}>

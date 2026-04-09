@@ -7,6 +7,7 @@ public class EntrepreneurCourse {
     public string? Speaker { get; set; }
     public string? SpeakerTitle { get; set; }
     public string? SpeakerImage { get; set; }
+    public string? WorkshopType { get; set; } // "online" | "field"
     public string? Location { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }

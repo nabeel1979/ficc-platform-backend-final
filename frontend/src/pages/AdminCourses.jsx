@@ -8,6 +8,7 @@ function CourseForm({ item, onSave, onClose }) {
   const [form, setForm] = useState({
     title: item?.title || '', description: item?.description || '',
     speaker: item?.speaker || '', speakerTitle: item?.speakerTitle || '', speakerImage: item?.speakerImage || '',
+    workshopType: item?.workshopType || 'field',
     location: item?.location || '',
     startDate: item?.startDate ? item.startDate.split('T')[0] : '',
     endDate: item?.endDate ? item.endDate.split('T')[0] : '',
@@ -75,6 +76,17 @@ function CourseForm({ item, onSave, onClose }) {
             </div>
             {inp('تاريخ البدء *','startDate','date',true)} {inp('تاريخ الانتهاء *','endDate','date',true)}
             {inp('الموقع','location')} {inp('الفئة','category')}
+            <div>
+              <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>نوع الورشة</label>
+              <div style={{display:'flex',gap:8}}>
+                {[{v:'field',l:'🏢 ميدانية'},{v:'online',l:'💻 إلكترونية'}].map(t => (
+                  <label key={t.v} style={{display:'flex',alignItems:'center',gap:6,cursor:'pointer',padding:'8px 14px',border:`1.5px solid ${form.workshopType===t.v?'#2C3E6B':'#e5e7eb'}`,borderRadius:8,background:form.workshopType===t.v?'#eef2ff':'#fff',fontSize:12,fontWeight:700,color:form.workshopType===t.v?'#2C3E6B':'#6b7280',flex:1,justifyContent:'center'}}>
+                    <input type="radio" name="workshopType" value={t.v} checked={form.workshopType===t.v} onChange={()=>set('workshopType',t.v)} style={{display:'none'}} />
+                    {t.l}
+                  </label>
+                ))}
+              </div>
+            </div>
             {inp('عدد المشاركين','maxParticipants','number')}
           </div>
           <div style={{marginBottom:14}}>

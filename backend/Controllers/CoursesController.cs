@@ -48,7 +48,7 @@ public class CoursesController : ControllerBase {
         var c = await _db.EntrepreneurCourses.FindAsync(id);
         if (c == null) return NotFound();
         c.Title = dto.Title; c.Description = dto.Description;
-        c.Speaker = dto.Speaker; c.SpeakerTitle = dto.SpeakerTitle; c.SpeakerImage = dto.SpeakerImage;
+        c.Speaker = dto.Speaker; c.SpeakerTitle = dto.SpeakerTitle; c.SpeakerImage = dto.SpeakerImage; c.WorkshopType = dto.WorkshopType;
         c.Location = dto.Location; c.StartDate = dto.StartDate; c.EndDate = dto.EndDate;
         c.MaxParticipants = dto.MaxParticipants; c.IsFree = dto.IsFree;
         c.Price = dto.Price; c.Category = dto.Category; c.Tags = dto.Tags;
