@@ -411,13 +411,23 @@ export default function Subscribe() {
     if (form.notifyBy.length === 0) { setErr('اختر طريقة إشعار واحدة على الأقل'); return }
     setLoading(true); setErr('')
     try {
-      await api.post(`${API}/subscribers`, {
+      const res = await api.post(`${API}/subscribers`, {
         fullName: form.fullName, phone: form.phone,
         whatsApp: form.whatsApp || form.phone, email: form.email,
         sectors: JSON.stringify(form.sectors), notifyBy: JSON.stringify(form.notifyBy)
       })
-      setMsg('🎉 تم التسجيل بنجاح! سنبلّغك بكل ما هو جديد.')
-      setStep(99)
+      // بعد التسجيل → انتقل لإكمال الملف الشخصي (القطاعات + التواصل + الوثائق)
+      setSubscriber(res.data)
+      setProfileForm({
+        profileImage: '', nationalIdFront: '', nationalIdBack: '',
+        passport: '', tradeIdFront: '', tradeIdBack: '', cv: '',
+        facebook: '', instagram: '', twitter: '', linkedIn: '', tikTok: '',
+        interests: form.sectors || [],
+        traderSectors: []
+      })
+      setMsg('🎉 تم التسجيل! أكمل ملفك الشخصي الآن')
+      setMode('existing')
+      setStep(3)
     } catch(e) { setErr(e?.response?.data?.message || 'حدث خطأ') }
     setLoading(false)
   }
