@@ -252,7 +252,7 @@ function MediaManager({ course, onClose }) {
                 onChange={e => uploadMultiple(e.target.files)} style={{display:'none'}} />
               <button type="button" onClick={()=>multiFileRef.current?.click()} disabled={uploadProgress.length > 0}
                 style={{padding:'7px 16px',background:'linear-gradient(135deg,#059669,#10b981)',color:'#fff',border:'none',borderRadius:20,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12}}>
-                📁 رفع حتى 10 صور
+                📁 اختر صور
               </button>
             </>
           )}
@@ -325,6 +325,34 @@ function MediaManager({ course, onClose }) {
               <button type="button" onClick={()=>setAdding(false)} style={{padding:'8px 16px',background:'#f1f5f9',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12}}>إلغاء</button>
             </div>
           </form>
+        )}
+
+        {/* Drop Zone — اسحب الصور من Windows مباشرة */}
+        {tab === 'image' && uploadProgress.length === 0 && (
+          <div
+            onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor='#2C3E6B'; e.currentTarget.style.background='#eef2ff' }}
+            onDragLeave={e => { e.currentTarget.style.borderColor='#cbd5e1'; e.currentTarget.style.background='#f8fafc' }}
+            onDrop={e => {
+              e.preventDefault()
+              e.currentTarget.style.borderColor='#cbd5e1'
+              e.currentTarget.style.background='#f8fafc'
+              const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
+              if (files.length > 0) uploadMultiple(files)
+            }}
+            onClick={() => multiFileRef.current?.click()}
+            style={{
+              border:'2px dashed #cbd5e1', borderRadius:14, padding:'24px 16px',
+              textAlign:'center', cursor:'pointer', marginBottom:16, background:'#f8fafc',
+              transition:'all 0.2s', userSelect:'none'
+            }}>
+            <div style={{fontSize:28, marginBottom:6}}>🖼️</div>
+            <div style={{fontWeight:700, fontSize:13, color:'#2C3E6B', marginBottom:4}}>
+              اسحب الصور هنا أو اضغط للاختيار
+            </div>
+            <div style={{fontSize:11, color:'#94a3b8'}}>
+              يمكنك اختيار أو سحب حتى 10 صور دفعة واحدة (JPG, PNG, WebP)
+            </div>
+          </div>
         )}
 
         {loading ? <div style={{textAlign:'center',padding:30,color:'#94a3b8'}}>⏳ جارٍ التحميل...</div> : (
