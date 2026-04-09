@@ -400,8 +400,10 @@ public class Subscriber {
     public string? LinkedIn { get; set; }
     public string? TikTok { get; set; }
 
-    // Interests — FK to Sector IDs (stored as JSON for simplicity)
+    // Interests — أقسام المتابعة (الريادة/العلاقات/المنظمات)
     public string? Interests { get; set; } // JSON array of SectorIds: [1,2,3]
+    // TraderSectors — قطاعات التاجر من ثوابت النظام
+    public string? TraderSectors { get; set; } // JSON array of SystemConstant IDs
 }
 
 // جدول الأقسام — Single Source of Truth

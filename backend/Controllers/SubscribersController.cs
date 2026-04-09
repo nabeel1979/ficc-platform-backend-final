@@ -269,6 +269,9 @@ public class SubscribersController : ControllerBase {
         // الأقسام (IDs)
         if (dto.Interests != null)
             sub.Interests = System.Text.Json.JsonSerializer.Serialize(dto.Interests);
+        // القطاعات
+        if (dto.TraderSectors != null)
+            sub.TraderSectors = System.Text.Json.JsonSerializer.Serialize(dto.TraderSectors);
 
         sub.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
@@ -360,6 +363,8 @@ public class SubscriberProfileDto {
     public string? Twitter { get; set; }
     public string? LinkedIn { get; set; }
     public string? TikTok { get; set; }
-    // الأقسام
+    // الأقسام (الريادة/العلاقات/المنظمات)
     public List<int>? Interests { get; set; }
+    // القطاعات (من ثوابت النظام)
+    public List<int>? TraderSectors { get; set; }
 }

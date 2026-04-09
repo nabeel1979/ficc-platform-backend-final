@@ -166,17 +166,27 @@ export default function Subscribe() {
 
   const saveProfile = async () => {
     setProfileMsg('')
-    // التحقق من الحقول الإلزامية
-    if (!form.fullName?.trim())
-      return setProfileMsg('❌ الاسم الكامل مطلوب — راجع تاب بياناتي')
-    if (!form.phone?.trim())
-      return setProfileMsg('❌ رقم الهاتف مطلوب — راجع تاب بياناتي')
-    if (!form.notifyBy?.length)
-      return setProfileMsg('❌ اختر طريقة إشعار واحدة على الأقل — راجع تاب بياناتي')
-    if (!(profileForm.interests||[]).length)
-      return setProfileMsg('❌ اختر قسماً واحداً على الأقل — راجع تاب الأقسام')
-    if (!(profileForm.traderSectors||[]).length)
-      return setProfileMsg('❌ اختر قطاعاً واحداً على الأقل — راجع تاب القطاعات')
+    // التحقق من الحقول الإلزامية مع التوجيه للـ tab الصحيح
+    if (!form.fullName?.trim()) {
+      setProfileTab('info')
+      return setProfileMsg('❌ الاسم الكامل مطلوب')
+    }
+    if (!form.phone?.trim()) {
+      setProfileTab('info')
+      return setProfileMsg('❌ رقم الهاتف مطلوب')
+    }
+    if (!form.notifyBy?.length) {
+      setProfileTab('info')
+      return setProfileMsg('❌ اختر طريقة إشعار واحدة على الأقل')
+    }
+    if (!(profileForm.interests||[]).length) {
+      setProfileTab('interests')
+      return setProfileMsg('❌ اختر قسماً واحداً على الأقل')
+    }
+    if (!(profileForm.traderSectors||[]).length) {
+      setProfileTab('sectors_tab')
+      return setProfileMsg('❌ اختر قطاعاً واحداً على الأقل')
+    }
 
     setProfileMsg('⏳ جارٍ الحفظ...')
     try {
@@ -207,6 +217,8 @@ export default function Subscribe() {
         tikTok:    profileForm.tikTok    || null,
         // الأقسام (IDs للتعميم)
         interests: profileForm.interests || [],
+        // القطاعات من ثوابت النظام
+        traderSectors: profileForm.traderSectors || [],
       }
       await api.put(`/subscribers/${subscriber.id}/profile`, payload)
       setSubscriber(p => ({...p, ...payload}))
@@ -292,7 +304,8 @@ export default function Subscribe() {
         twitter: s.twitter||'',
         linkedIn: s.linkedIn||'',
         tikTok: s.tikTok||'',
-        interests: interests
+        interests: interests,
+        traderSectors: (() => { try { return JSON.parse(s.traderSectors||'[]') } catch { return [] } })()
       })
       setVerified({ phone: true, whatsApp: !!s.whatsApp, email: !!s.email })
       setStep(3); setMsg('')
