@@ -87,6 +87,39 @@ function VerifiedField({ label, value, onChange, placeholder, isLtr, required, f
   )
 }
 
+// Component للقطاعات من ثوابت النظام
+function TraderSectorsTab({ profileForm, setProfileForm }) {
+  const [items, setItems] = React.useState([])
+  React.useEffect(() => {
+    import('../lib/api').then(m => {
+      m.default.get('/constants/trader_sector').then(r => {
+        const data = Array.isArray(r.data) ? r.data : []
+        setItems(data)
+        window._traderSectors = data
+      }).catch(() => {})
+    })
+  }, [])
+  const toggle = (id) => {
+    const curr = profileForm.traderSectors || []
+    setProfileForm(p => ({...p, traderSectors: curr.includes(id) ? curr.filter(x=>x!==id) : [...curr, id]}))
+  }
+  if (items.length === 0) return <div style={{textAlign:'center',padding:20,color:'#94a3b8',fontSize:13}}>⏳ جارٍ التحميل...</div>
+  return (
+    <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+      {items.map(s => {
+        const sel = (profileForm.traderSectors||[]).includes(s.id)
+        return (
+          <button key={s.id} type="button" onClick={()=>toggle(s.id)}
+            style={{padding:'7px 14px',borderRadius:20,border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:12,fontWeight:600,
+              background:sel?'#2C3E6B':'#eef2ff',color:sel?'#fff':'#2C3E6B'}}>
+            {sel?'✓ ':''}{s.label||s.value}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function Subscribe() {
   const [mode, setMode] = useState(null)
   const [step, setStep] = useState(1)
@@ -105,17 +138,18 @@ export default function Subscribe() {
   const [uploading, setUploading] = useState({})
 
   useEffect(() => {
-    // نستخدم ثوابت النظام (trader_sector) — نفس جدول ثوابت الـ admin
-    api.get('/constants/trader_sector')
-      .then(r => {
-        const data = Array.isArray(r.data) ? r.data : []
-        setSectors(data.map(s => ({ id: s.id, name: s.label || s.value, icon: '🏭', description: null })))
-      })
-      .catch(() => {
-        // fallback للأقسام الجديدة
-        api.get('/sectors').then(r => setSectors(r.data)).catch(() => {})
-      })
+    api.get('/sectors').then(r => {
+      console.log('[sectors]', r.data)
+      setSectors(r.data || [])
+    }).catch(e => console.error('[sectors error]', e))
   }, [])
+
+  // إعادة تحميل الأقسام عند تغيّر الـ step
+  useEffect(() => {
+    if (step === 3 && sectors.length === 0) {
+      api.get('/sectors').then(r => setSectors(r.data || [])).catch(() => {})
+    }
+  }, [step])
 
   const uploadDoc = async (field, file) => {
     if (!file) return
@@ -429,16 +463,17 @@ export default function Subscribe() {
               </div>
             </div>
 
-            {/* Tabs */}
-            <div style={{display:'flex',gap:6,marginBottom:16,overflowX:'auto',paddingBottom:4}}>
+            {/* Tabs — 5 صفحات */}
+            <div style={{display:'flex',gap:6,marginBottom:16,overflowX:'auto',paddingBottom:4,flexWrap:'wrap'}}>
               {[
-                {key:'info', label:'👤 بياناتي'},
+                {key:'info',      label:'👤 بياناتي'},
                 {key:'interests', label:'🎯 الأقسام'},
-                {key:'docs', label:'📄 الوثائق'},
-                {key:'social', label:'🌐 التواصل'},
+                {key:'sectors_tab', label:'🏭 القطاعات'},
+                {key:'social',    label:'🌐 التواصل'},
+                {key:'docs',      label:'📄 الوثائق'},
               ].map(t => (
                 <button key={t.key} onClick={() => setProfileTab(t.key)}
-                  style={{padding:'8px 16px',borderRadius:20,border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12,whiteSpace:'nowrap',
+                  style={{padding:'7px 14px',borderRadius:20,border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11,whiteSpace:'nowrap',
                     background: profileTab===t.key ? '#2C3E6B' : '#f1f5f9',
                     color: profileTab===t.key ? '#fff' : '#374151'
                   }}>{t.label}</button>
@@ -466,32 +501,6 @@ export default function Subscribe() {
                 <VerifiedField label="البريد الإلكتروني" value={form.email} onChange={v=>set('email',v)}
                   placeholder="email@example.com — لغاية إرسال التبليغات" isLtr field="email"
                   verified={verified.email} onVerified={v=>setV('email',v)}/>
-              </div>
-            </div>
-
-            {/* الأقسام — من الـ DB */}
-            <div style={{background:'#fff',borderRadius:'16px',padding:'20px',boxShadow:'0 4px 16px rgba(44,62,107,0.08)',marginBottom:'12px'}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px',paddingBottom:'10px',borderBottom:'2px solid #FFC72C'}}>
-                <h3 style={{color:'#2C3E6B',fontWeight:'800',fontSize:'15px',margin:0}}>🎯 الأقسام</h3>
-                <button type="button" onClick={()=>set('sectors', (form.sectors||[]).length===sectors.length ? [] : sectors.map(s=>s.id))}
-                  style={{padding:'5px 12px',borderRadius:'8px',background:'#FFF8E7',color:'#B8860B',border:'1px solid #fde68a',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:'11px',fontWeight:'700'}}>
-                  {(form.sectors||[]).length===sectors.length ? '❌ إلغاء الكل' : '✅ اختر الكل'}
-                </button>
-              </div>
-              <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                {sectors.map(s=>(
-                  <div key={s.id} onClick={()=>{
-                    const curr = form.sectors||[]
-                    set('sectors', curr.includes(s.id) ? curr.filter(x=>x!==s.id) : [...curr, s.id])
-                  }}
-                    style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',borderRadius:12,border:`1.5px solid ${(form.sectors||[]).includes(s.id)?'#2C3E6B':'#e5e7eb'}`,background:(form.sectors||[]).includes(s.id)?'#eef2ff':'#fafafa',cursor:'pointer'}}>
-                    <span style={{fontSize:18}}>{s.icon}</span>
-                    <div style={{flex:1,fontWeight:700,fontSize:13,color:(form.sectors||[]).includes(s.id)?'#2C3E6B':'#374151'}}>{s.name}</div>
-                    <div style={{width:20,height:20,borderRadius:5,border:`2px solid ${(form.sectors||[]).includes(s.id)?'#2C3E6B':'#cbd5e1'}`,background:(form.sectors||[]).includes(s.id)?'#2C3E6B':'#fff',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:12}}>
-                      {(form.sectors||[]).includes(s.id)?'✓':''}
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
 
@@ -554,7 +563,48 @@ export default function Subscribe() {
                   )
                 })}
               </div>
+              {/* التواصل — في نفس الـ tab */}
               <button onClick={saveProfile} style={{...btnPrimary,marginTop:16,borderRadius:14}}>💾 حفظ الأقسام</button>
+            </div>
+            )}
+
+            {/* Tab: القطاعات (trader_sector من ثوابت النظام) */}
+            {profileTab === 'sectors_tab' && (
+            <div style={{background:'#fff',borderRadius:16,padding:20,boxShadow:'0 4px 16px rgba(44,62,107,0.08)',marginBottom:12}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,paddingBottom:10,borderBottom:'2px solid #FFC72C'}}>
+                <h3 style={{color:'#2C3E6B',fontWeight:800,fontSize:15,margin:0}}>🏭 القطاعات</h3>
+                <button type="button" onClick={()=>{
+                  const allIds = (window._traderSectors||[]).map(s=>s.id)
+                  setProfileForm(p=>({...p, traderSectors: (p.traderSectors||[]).length===allIds.length ? [] : allIds}))
+                }} style={{padding:'5px 12px',borderRadius:8,background:'#FFF8E7',color:'#B8860B',border:'1px solid #fde68a',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:11,fontWeight:700}}>
+                  {(profileForm.traderSectors||[]).length===(window._traderSectors||[]).length ? '❌ إلغاء الكل' : '✅ اختيار الكل'}
+                </button>
+              </div>
+              <TraderSectorsTab profileForm={profileForm} setProfileForm={setProfileForm} />
+              <button onClick={saveProfile} style={{...btnPrimary,marginTop:16,borderRadius:14}}>💾 حفظ القطاعات</button>
+            </div>
+            )}
+
+            {/* Tab: التواصل */}
+            {profileTab === 'social' && (
+            <div style={{background:'#fff',borderRadius:16,padding:20,boxShadow:'0 4px 16px rgba(44,62,107,0.08)',marginBottom:12}}>
+              <h3 style={{color:'#2C3E6B',fontWeight:800,fontSize:15,margin:'0 0 16px',paddingBottom:10,borderBottom:'2px solid #FFC72C'}}>🌐 منصات التواصل الاجتماعي</h3>
+              <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                {[
+                  {key:'facebook', label:'فيسبوك', icon:'📘', placeholder:'https://facebook.com/username'},
+                  {key:'instagram', label:'إنستغرام', icon:'📸', placeholder:'https://instagram.com/username'},
+                  {key:'twitter', label:'تويتر/X', icon:'𝕏', placeholder:'https://x.com/username'},
+                  {key:'linkedIn', label:'لينكدإن', icon:'💼', placeholder:'https://linkedin.com/in/username'},
+                  {key:'tikTok', label:'تيكتوك', icon:'🎵', placeholder:'https://tiktok.com/@username'},
+                ].map(s => (
+                  <div key={s.key}>
+                    <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:3}}>{s.icon} {s.label}</label>
+                    <input value={profileForm[s.key] || subscriber?.[s.key] || ''} onChange={e => setProfileForm(p => ({...p, [s.key]: e.target.value}))}
+                      placeholder={s.placeholder} style={{width:'100%',padding:'9px 12px',border:'1.5px solid #e5e7eb',borderRadius:9,fontSize:12,fontFamily:'Cairo,sans-serif',direction:'ltr',outline:'none',boxSizing:'border-box'}} />
+                  </div>
+                ))}
+              </div>
+              <button onClick={saveProfile} style={{...btnPrimary,marginTop:16,borderRadius:14}}>💾 حفظ التواصل</button>
             </div>
             )}
 
@@ -591,36 +641,11 @@ export default function Subscribe() {
                   )
                 })}
               </div>
-              <button onClick={saveProfile} style={{...btnPrimary,marginTop:16,borderRadius:14}}>💾 حفظ الوثائق</button>
+              <button onClick={saveProfile} style={{...btnPrimary,marginTop:16,borderRadius:14}}>💾 حفظ</button>
             </div>
             )}
 
-            {/* Tab: التواصل الاجتماعي */}
-            {profileTab === 'social' && (
-            <div style={{background:'#fff',borderRadius:16,padding:20,boxShadow:'0 4px 16px rgba(44,62,107,0.08)',marginBottom:12}}>
-              <h3 style={{color:'#2C3E6B',fontWeight:800,fontSize:15,margin:'0 0 16px',paddingBottom:10,borderBottom:'2px solid #FFC72C'}}>🌐 منصات التواصل الاجتماعي</h3>
-              <div style={{display:'flex',flexDirection:'column',gap:12}}>
-                {[
-                  {key:'facebook', label:'فيسبوك', icon:'📘', placeholder:'https://facebook.com/username'},
-                  {key:'instagram', label:'إنستغرام', icon:'📸', placeholder:'https://instagram.com/username'},
-                  {key:'twitter', label:'تويتر/X', icon:'𝕏', placeholder:'https://x.com/username'},
-                  {key:'linkedIn', label:'لينكدإن', icon:'💼', placeholder:'https://linkedin.com/in/username'},
-                  {key:'tikTok', label:'تيكتوك', icon:'🎵', placeholder:'https://tiktok.com/@username'},
-                ].map(s => (
-                  <div key={s.key}>
-                    <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>{s.icon} {s.label}</label>
-                    <input
-                      value={profileForm[s.key] || subscriber?.[s.key] || ''}
-                      onChange={e => setProfileForm(p => ({...p, [s.key]: e.target.value}))}
-                      placeholder={s.placeholder}
-                      style={{width:'100%',padding:'10px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontSize:13,fontFamily:'Cairo,sans-serif',direction:'ltr',outline:'none',boxSizing:'border-box'}}
-                    />
-                  </div>
-                ))}
-              </div>
-              <button onClick={saveProfile} style={{...btnPrimary,marginTop:16,borderRadius:14}}>💾 حفظ روابط التواصل</button>
-            </div>
-            )}
+
 
           </div>
         )}
