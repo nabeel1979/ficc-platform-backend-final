@@ -506,7 +506,17 @@ function MediaManager({ course, onClose }) {
               vids.length === 0 ? <div style={{textAlign:'center',padding:30,color:'#94a3b8',fontSize:13}}>لا توجد فيديوهات بعد — أضف حتى 10 فيديوهات</div> :
               <div style={{display:'flex',flexDirection:'column',gap:16}}>
                 {vids.map(vid => {
-                  const ytId = vid.url.match(/(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/watch\?.+&v=|\/shorts\/))([\w-]{11})/)?.[1]
+                  const getYTId = (url) => {
+                    try {
+                      const u = new URL(url)
+                      if (u.searchParams.get('v')) return u.searchParams.get('v').slice(0,11)
+                      const m = u.pathname.match(/\/(?:shorts|embed|v)\/([\w-]{11})/) || u.pathname.match(/^\/([\w-]{11})$/)
+                      if (m) return m[1]
+                    } catch {}
+                    const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:shorts|embed|v)\/)([^?&\s]{11})/)
+                    return m ? m[1] : null
+                  }
+                  const ytId = getYTId(vid.url)
                   return (
                     <div key={vid.id} style={{background:'#f8fafc',borderRadius:14,overflow:'hidden',border:'1.5px solid #e5e7eb'}}>
                       {/* YouTube Player */}

@@ -8,7 +8,17 @@ const STATUS_COLOR = { upcoming:'#10b981', ongoing:'#ef4444', completed:'#6b7280
 // استخراج YouTube video ID
 function getYTId(url) {
   if (!url) return null
-  const m = url.match(/(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/watch\?.+&v=|\/shorts\/))([\w-]{11})/)
+  try {
+    const u = new URL(url)
+    // watch?v=ID
+    if (u.searchParams.get('v')) return u.searchParams.get('v').slice(0,11)
+    // /shorts/ID, /embed/ID, /v/ID, youtu.be/ID
+    const m = u.pathname.match(/\/(?:shorts|embed|v)\/([\w-]{11})/) ||
+              u.pathname.match(/^\/([\w-]{11})$/)
+    if (m) return m[1]
+  } catch {}
+  // fallback regex
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:shorts|embed|v)\/)([^?&\s]{11})/)
   return m ? m[1] : null
 }
 
@@ -78,6 +88,17 @@ export default function CourseDetail() {
   const [media, setMedia] = useState([])
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const copyLink = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true); setTimeout(() => setCopied(false), 2500)
+    })
+  }
+  const shareLink = () => {
+    if (navigator.share) {
+      navigator.share({ title: course?.title, url: window.location.href })
+    } else { copyLink() }
+  }
   const [form, setForm] = useState({ fullName:'', phone:'', email:'', company:'', motivation:'' })
   const [msg, setMsg] = useState({ type:'', text:'' })
   const [submitting, setSubmitting] = useState(false)
@@ -194,6 +215,15 @@ export default function CourseDetail() {
                 {msg.text}
               </div>
             )}
+            {/* أزرار المشاركة */}
+            <div style={{display:'flex',gap:6,marginTop:12}}>
+              <button onClick={copyLink} style={{flex:1,padding:'8px',background:'rgba(255,255,255,0.15)',color:'#fff',border:'1px solid rgba(255,255,255,0.2)',borderRadius:10,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11,transition:'all 0.2s'}}>
+                {copied ? '✅ تم النسخ!' : '🔗 نسخ الرابط'}
+              </button>
+              <button onClick={shareLink} style={{flex:1,padding:'8px',background:'rgba(255,255,255,0.15)',color:'#fff',border:'1px solid rgba(255,255,255,0.2)',borderRadius:10,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>
+                📤 مشاركة
+              </button>
+            </div>
           </div>
         </div>
       </div>
