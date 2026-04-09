@@ -8,7 +8,7 @@ const STATUS_COLOR = { upcoming:'#10b981', ongoing:'#ef4444', completed:'#6b7280
 // استخراج YouTube video ID
 function getYTId(url) {
   if (!url) return null
-  const m = url.match(/(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/watch\?.+&v=))([\w-]{11})/)
+  const m = url.match(/(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/watch\?.+&v=|\/shorts\/))([\w-]{11})/)
   return m ? m[1] : null
 }
 
@@ -206,6 +206,16 @@ export default function CourseDetail() {
         ))}
       </div>
 
+      {/* وصف الدورة */}
+      {course.description && (
+        <div style={{background:'#fff',borderRadius:20,padding:24,marginBottom:24,boxShadow:'0 2px 12px rgba(44,62,107,0.07)'}}>
+          <h2 style={{fontSize:18,fontWeight:800,color:'#2C3E6B',marginBottom:14,display:'flex',alignItems:'center',gap:8}}>
+            📋 عن الدورة
+          </h2>
+          <p style={{fontSize:14,lineHeight:2,color:'#374151',whiteSpace:'pre-line'}}>{course.description}</p>
+        </div>
+      )}
+
       {/* الصور */}
       {images.length > 0 && (
         <div style={{background:'#fff',borderRadius:20,padding:24,marginBottom:24,boxShadow:'0 2px 12px rgba(44,62,107,0.07)'}}>
@@ -213,7 +223,7 @@ export default function CourseDetail() {
             🖼️ صور الدورة <span style={{fontSize:12,color:'#94a3b8',fontWeight:600}}>({images.length})</span>
           </h2>
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:10}}>
-            {images.map((img, i) => (
+            {images.slice(0,10).map((img, i) => (
               <div key={img.id} onClick={() => setImageModal(i)}
                 style={{cursor:'pointer',borderRadius:12,overflow:'hidden',aspectRatio:'4/3',background:'#f1f5f9',position:'relative',boxShadow:'0 2px 8px rgba(0,0,0,0.08)',transition:'transform 0.2s'}}
                 onMouseEnter={e=>e.currentTarget.style.transform='scale(1.02)'}

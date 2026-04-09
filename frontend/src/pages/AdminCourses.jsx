@@ -202,6 +202,8 @@ function MediaManager({ course, onClose }) {
   const uploadMultiple = async (files) => {
     const MAX = 10
     const selected = Array.from(files).slice(0, MAX)
+    if (Array.from(files).length > MAX) setMsg(`⚠️ تم اختيار أول ${MAX} صور فقط (الحد الأقصى ${MAX})`)
+    else setMsg('')
     if (selected.length === 0) return
 
     setUploadProgress(selected.map(f => ({ name: f.name, status: 'pending' })))
@@ -215,19 +217,24 @@ function MediaManager({ course, onClose }) {
         const fd = new FormData()
         fd.append('file', file)
         fd.append('folder', 'courses')
+        console.log(`[Upload] Uploading file ${i+1}/${selected.length}: ${file.name}`)
         const r = await api.post('/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+        console.log(`[Upload] File uploaded: ${r.data.url}`)
         await api.post(`/courses/${course.id}/media`, { url: r.data.url, type: 'image', title: '', displayOrder: i })
+        console.log(`[Upload] Media saved for course ${course.id}`)
         setUploadProgress(p => p.map((x, idx) => idx === i ? { ...x, status: 'done' } : x))
         done++
-      } catch {
+      } catch(err) {
+        console.error(`[Upload] Error:`, err?.response?.data || err?.message || err)
         setUploadProgress(p => p.map((x, idx) => idx === i ? { ...x, status: 'error' } : x))
       }
     }
 
+    console.log(`[Upload] All done: ${done}/${selected.length} succeeded`)
+    load() // reload immediately
     setTimeout(() => {
       setUploadProgress([])
-      load()
-    }, 2000)
+    }, 3000) // keep progress visible for 3 seconds
   }
 
   return (
@@ -350,7 +357,7 @@ function MediaManager({ course, onClose }) {
               اسحب الصور هنا أو اضغط للاختيار
             </div>
             <div style={{fontSize:11, color:'#94a3b8'}}>
-              يمكنك اختيار أو سحب حتى 10 صور دفعة واحدة (JPG, PNG, WebP)
+              الحد الأقصى 10 صور في المرة الواحدة (JPG, PNG, WebP)
             </div>
           </div>
         )}
@@ -394,17 +401,36 @@ function MediaManager({ course, onClose }) {
             )}
             {tab === 'video' && (
               vids.length === 0 ? <div style={{textAlign:'center',padding:30,color:'#94a3b8',fontSize:13}}>لا توجد فيديوهات بعد</div> :
-              <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              <div style={{display:'flex',flexDirection:'column',gap:16}}>
                 {vids.map(vid => {
-                  const ytId = vid.url.match(/(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/watch\?.+&v=))([\w-]{11})/)?.[1]
+                  const ytId = vid.url.match(/(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/watch\?.+&v=|\/shorts\/))([\w-]{11})/)?.[1]
                   return (
-                    <div key={vid.id} style={{display:'flex',gap:12,alignItems:'center',background:'#f8fafc',borderRadius:12,padding:10}}>
-                      {ytId && <img src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt="" style={{width:100,height:60,objectFit:'cover',borderRadius:8,flexShrink:0}} />}
-                      <div style={{flex:1}}>
-                        <div style={{fontWeight:700,fontSize:13,color:'#1e293b'}}>{vid.title||'بدون عنوان'}</div>
-                        <div style={{fontSize:11,color:'#64748b',wordBreak:'break-all'}}>{vid.url}</div>
+                    <div key={vid.id} style={{background:'#f8fafc',borderRadius:14,overflow:'hidden',border:'1.5px solid #e5e7eb'}}>
+                      {/* YouTube Player */}
+                      {ytId ? (
+                        <div style={{position:'relative',paddingBottom:'56.25%',height:0,background:'#000'}}>
+                          <iframe
+                            src={`https://www.youtube.com/embed/${ytId}`}
+                            title={vid.title||'فيديو'}
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            style={{position:'absolute',top:0,left:0,width:'100%',height:'100%'}}
+                          />
+                        </div>
+                      ) : (
+                        <div style={{background:'#1e293b',padding:'20px',textAlign:'center',color:'#94a3b8',fontSize:12}}>
+                          ⚠️ رابط غير مدعوم
+                        </div>
+                      )}
+                      {/* Info + Delete */}
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 12px'}}>
+                        <div>
+                          <div style={{fontWeight:700,fontSize:13,color:'#1e293b'}}>{vid.title||'بدون عنوان'}</div>
+                          <a href={vid.url} target="_blank" rel="noreferrer" style={{fontSize:10,color:'#64748b',wordBreak:'break-all'}}>{vid.url}</a>
+                        </div>
+                        <button onClick={()=>delMedia(vid.id)} style={{background:'#fee2e2',border:'none',color:'#ef4444',borderRadius:8,padding:'6px 12px',cursor:'pointer',fontSize:12,flexShrink:0,marginRight:8}}>🗑️ حذف</button>
                       </div>
-                      <button onClick={()=>delMedia(vid.id)} style={{background:'#fee2e2',border:'none',color:'#ef4444',borderRadius:8,padding:'6px 10px',cursor:'pointer',fontSize:12}}>🗑️</button>
                     </div>
                   )
                 })}
