@@ -160,25 +160,39 @@ export default function CourseDetail() {
               const speakers = course.speakersJson ? (() => { try { return JSON.parse(course.speakersJson) } catch { return null } })() : null
               const list = (speakers && speakers.length > 0) ? speakers : (course.speaker ? [{name:course.speaker, title:course.speakerTitle, image:course.speakerImage}] : [])
               return list.length > 0 ? (
-                <div style={{display:'flex',flexWrap:'wrap',gap:8,marginTop:4}}>
-                  {list.map((sp, i) => (
-                    <div key={i} style={{display:'flex',alignItems:'center',gap:8,background:'rgba(255,255,255,0.08)',borderRadius:12,padding:'8px 14px'}}>
-                      {sp.image
-                        ? <img src={sp.image} alt={sp.name} style={{width:38,height:38,borderRadius:'50%',objectFit:'cover',border:'2px solid rgba(255,199,44,0.5)',flexShrink:0}} onError={e=>{e.target.style.display='none'}} />
-                        : <div style={{width:36,height:36,borderRadius:'50%',background:'rgba(255,199,44,0.3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>👤</div>
-                      }
-                      <div>
-                        <div style={{fontWeight:800,fontSize:13}}>{sp.name}</div>
-                        {sp.title && <div style={{color:'rgba(255,255,255,0.6)',fontSize:11}}>{sp.title}</div>}
+                <div style={{marginTop:12}}>
+                  {/* عنوان محاضرو الورشة */}
+                  <div style={{fontSize:11,fontWeight:700,color:'rgba(255,199,44,0.9)',marginBottom:8,letterSpacing:0.5}}>
+                    🎤 محاضرو الورشة
+                  </div>
+                  <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                    {list.map((sp, i) => (
+                      <div key={i} style={{
+                        display:'flex', alignItems:'center', gap:10,
+                        background:'rgba(255,255,255,0.1)', borderRadius:12,
+                        padding:'10px 14px',
+                        width:'100%', boxSizing:'border-box'
+                      }}>
+                        {/* صورة ثابتة الحجم */}
+                        <div style={{width:44,height:44,borderRadius:'50%',flexShrink:0,overflow:'hidden',border:'2px solid rgba(255,199,44,0.5)',background:'rgba(255,199,44,0.2)'}}>
+                          {sp.image
+                            ? <img src={sp.image} alt={sp.name} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={e=>{e.target.style.display='none'}} />
+                            : <div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>👤</div>
+                          }
+                        </div>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontWeight:800,fontSize:13,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{sp.name}</div>
+                          {sp.title && <div style={{color:'rgba(255,255,255,0.6)',fontSize:11,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{sp.title}</div>}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               ) : null
             })()}
           </div>
           {/* التسجيل */}
-          <div style={{background:'rgba(255,255,255,0.1)',borderRadius:16,padding:'20px',minWidth:220,backdropFilter:'blur(10px)'}}>
+          <div style={{background:'rgba(255,255,255,0.1)',borderRadius:16,padding:'20px',minWidth:220,flex:'0 0 auto',width:'100%',maxWidth:280,backdropFilter:'blur(10px)'}}>
             <div style={{fontSize:12,color:'rgba(255,255,255,0.6)',marginBottom:6}}>المقاعد المتاحة</div>
             <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
               <span style={{fontWeight:800,fontSize:20}}>{course.currentParticipants}</span>
