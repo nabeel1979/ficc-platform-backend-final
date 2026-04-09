@@ -162,9 +162,31 @@ export default function Subscribe() {
   }
 
   const saveProfile = async () => {
+    setProfileMsg('')
+    // التحقق من الحقول الإلزامية
+    if (!form.fullName?.trim())
+      return setProfileMsg('❌ الاسم الكامل مطلوب — راجع تاب بياناتي')
+    if (!form.phone?.trim())
+      return setProfileMsg('❌ رقم الهاتف مطلوب — راجع تاب بياناتي')
+    if (!form.notifyBy?.length)
+      return setProfileMsg('❌ اختر طريقة إشعار واحدة على الأقل — راجع تاب بياناتي')
+    if (!(profileForm.interests||[]).length)
+      return setProfileMsg('❌ اختر قسماً واحداً على الأقل — راجع تاب الأقسام')
+    if (!(profileForm.traderSectors||[]).length)
+      return setProfileMsg('❌ اختر قطاعاً واحداً على الأقل — راجع تاب القطاعات')
+
     setProfileMsg('⏳ جارٍ الحفظ...')
     try {
-      // يجمع بيانات جميع الـ tabs ويحفظها دفعة واحدة
+      // أولاً: حفظ البيانات الأساسية (update)
+      await api.put(`${API}/subscribers/${subscriber.id}`, {
+        fullName: form.fullName,
+        whatsApp: form.whatsApp,
+        email: form.email,
+        sectors: JSON.stringify(form.sectors || []),
+        notifyBy: JSON.stringify(form.notifyBy || [])
+      })
+
+      // ثانياً: حفظ الملف الشخصي (profile)
       const payload = {
         // وثائق
         profileImage:    profileForm.profileImage    || null,
@@ -537,9 +559,6 @@ export default function Subscribe() {
 
             {err && <div style={{background:'#fee2e2',color:'#dc2626',padding:'12px 16px',borderRadius:'12px',fontSize:'13px',marginBottom:'12px',fontWeight:'700'}}>{err}</div>}
             {msg && <div style={{background:'#d1fae5',color:'#065f46',padding:'12px 16px',borderRadius:'12px',fontSize:'13px',marginBottom:'12px',fontWeight:'700'}}>{msg}</div>}
-            <button onClick={update} disabled={loading} style={{...btnPrimary,borderRadius:'14px',fontSize:'16px',padding:'15px'}}>
-              {loading?'⏳ جاري الحفظ...':'💾 حفظ'}
-            </button>
             </div>)} {/* نهاية tab info */}
 
             {/* Tab: الأقسام */}
