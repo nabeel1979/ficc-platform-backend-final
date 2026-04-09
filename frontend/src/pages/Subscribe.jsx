@@ -88,15 +88,163 @@ function VerifiedField({ label, value, onChange, placeholder, isLtr, required, f
   )
 }
 
+// Component لتعديل حقل مع OTP
+function ChangeFieldRow({ label, icon, currentValue, field, subscriberId, onUpdated, canDelete = false }) {
+  const [editing, setEditing] = useState(false)
+  const [newVal, setNewVal] = useState('')
+  const [otp, setOtp] = useState('')
+  const [step, setStep] = useState(1) // 1=input 2=otp
+  const [loading, setLoading] = useState(false)
+  const [msg, setMsg] = useState('')
+  const [deleting, setDeleting] = useState(false)
+
+  const sendOtp = async () => {
+    if (!newVal.trim()) return setMsg('أدخل القيمة الجديدة')
+    setLoading(true); setMsg('')
+    try {
+      await api.post('/subscribers/send-field-otp', { field, value: newVal })
+      setStep(2)
+    } catch(e) { setMsg(e?.response?.data?.message || 'حدث خطأ') }
+    setLoading(false)
+  }
+
+  const verify = async () => {
+    if (!otp) return setMsg('أدخل رمز التأكيد')
+    setLoading(true); setMsg('')
+    try {
+      await api.post('/subscribers/verify-field-otp', { field, value: newVal, code: otp })
+      // حدّث الحقل في الـ backend
+      await api.put(`/subscribers/${subscriberId}`, { [field === 'phone' ? 'phone' : 'email']: newVal })
+      onUpdated(newVal)
+      setEditing(false); setStep(1); setNewVal(''); setOtp('')
+      setMsg('')
+    } catch(e) { setMsg(e?.response?.data?.message || 'رمز خاطئ') }
+    setLoading(false)
+  }
+
+  const deleteField = async () => {
+    if (!confirm(`هل تريد حذف ${label}؟`)) return
+    setDeleting(true)
+    try {
+      await api.put(`/subscribers/${subscriberId}`, { email: null })
+      onUpdated('')
+    } catch { }
+    setDeleting(false)
+  }
+
+  if (editing) return (
+    <div style={{background:'#fff',borderRadius:12,padding:12,border:'1.5px solid #2C3E6B'}}>
+      <div style={{fontWeight:700,fontSize:12,color:'#2C3E6B',marginBottom:8}}>{icon} تعديل {label}</div>
+      {step === 1 ? (
+        <>
+          <input value={newVal} onChange={e=>setNewVal(e.target.value)} placeholder={`أدخل ${label} الجديد`}
+            style={{width:'100%',padding:'8px 12px',border:'1.5px solid #e5e7eb',borderRadius:8,fontSize:12,fontFamily:'Cairo,sans-serif',direction: field==='email'?'ltr':'ltr',outline:'none',boxSizing:'border-box',marginBottom:8}} />
+          {msg && <div style={{color:'#ef4444',fontSize:11,marginBottom:8}}>{msg}</div>}
+          <div style={{display:'flex',gap:6}}>
+            <button onClick={sendOtp} disabled={loading} style={{flex:1,padding:'7px',background:'#2C3E6B',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>
+              {loading?'⏳...':'📤 أرسل رمز'}
+            </button>
+            <button onClick={()=>{setEditing(false);setMsg('')}} style={{padding:'7px 12px',background:'#f1f5f9',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>✕</button>
+          </div>
+        </>
+      ) : (
+        <>
+          <div style={{fontSize:11,color:'#059669',marginBottom:8}}>✅ تم إرسال رمز التأكيد</div>
+          <input value={otp} onChange={e=>setOtp(e.target.value.replace(/\D/g,'').slice(0,6))} placeholder="000000"
+            maxLength={6} inputMode="numeric"
+            style={{width:'100%',padding:'8px 12px',border:'1.5px solid #e5e7eb',borderRadius:8,fontSize:18,fontFamily:'monospace',letterSpacing:6,textAlign:'center',outline:'none',boxSizing:'border-box',marginBottom:8}} />
+          {msg && <div style={{color:'#ef4444',fontSize:11,marginBottom:8}}>{msg}</div>}
+          <div style={{display:'flex',gap:6}}>
+            <button onClick={verify} disabled={loading} style={{flex:1,padding:'7px',background:'#059669',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>
+              {loading?'⏳...':'✅ تأكيد'}
+            </button>
+            <button onClick={()=>{setStep(1);setOtp('');setMsg('')}} style={{padding:'7px 12px',background:'#f1f5f9',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>← رجوع</button>
+          </div>
+        </>
+      )}
+    </div>
+  )
+
+  return (
+    <div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',background:'#fff',borderRadius:10,border:'1px solid #e5e7eb'}}>
+      <span style={{fontSize:16}}>{icon}</span>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:11,color:'#94a3b8',fontWeight:600}}>{label}</div>
+        <div style={{fontSize:13,fontWeight:700,color: currentValue ? '#1e293b' : '#94a3b8'}}>{currentValue || 'غير محدد'}</div>
+      </div>
+      <button onClick={()=>{setEditing(true);setNewVal(currentValue||'');setStep(1)}}
+        style={{padding:'5px 10px',background:'#e0e7ff',color:'#4338ca',border:'none',borderRadius:7,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>✏️ تعديل</button>
+      {canDelete && currentValue && (
+        <button onClick={deleteField} disabled={deleting}
+          style={{padding:'5px 10px',background:'#fee2e2',color:'#ef4444',border:'none',borderRadius:7,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>🗑️</button>
+      )}
+    </div>
+  )
+}
+
+// Component لتجميد/تنشيط الحساب
+function AccountStatusRow({ isActive, subscriberId, onToggle }) {
+  const [loading, setLoading] = useState(false)
+  const [confirm, setConfirm] = useState(false)
+
+  const toggle = async () => {
+    setLoading(true)
+    try {
+      await api.put(`/subscribers/${subscriberId}`, { isActive: !isActive })
+      onToggle(!isActive)
+      setConfirm(false)
+    } catch { }
+    setLoading(false)
+  }
+
+  if (confirm) return (
+    <div style={{background: isActive ? '#fef2f2' : '#f0fdf4', borderRadius:10, padding:'10px 12px', border:`1px solid ${isActive?'#fecaca':'#bbf7d0'}`}}>
+      <div style={{fontWeight:700,fontSize:12,color: isActive?'#ef4444':'#059669',marginBottom:8}}>
+        {isActive ? '⚠️ تأكيد تجميد الحساب' : '✅ تأكيد تنشيط الحساب'}
+      </div>
+      <div style={{fontSize:11,color:'#64748b',marginBottom:8}}>
+        {isActive ? 'لن تستطيع تسجيل الدخول بعد التجميد' : 'سيصبح حسابك نشطاً مجدداً'}
+      </div>
+      <div style={{display:'flex',gap:6}}>
+        <button onClick={toggle} disabled={loading}
+          style={{flex:1,padding:'7px',background: isActive?'#ef4444':'#059669',color:'#fff',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>
+          {loading ? '⏳...' : isActive ? '🔒 تجميد' : '✅ تنشيط'}
+        </button>
+        <button onClick={()=>setConfirm(false)} style={{padding:'7px 12px',background:'#f1f5f9',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>إلغاء</button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',background:'#fff',borderRadius:10,border:'1px solid #e5e7eb'}}>
+      <span style={{fontSize:16}}>{isActive ? '✅' : '🔒'}</span>
+      <div style={{flex:1}}>
+        <div style={{fontSize:11,color:'#94a3b8',fontWeight:600}}>حالة الحساب</div>
+        <div style={{fontSize:13,fontWeight:700,color: isActive?'#059669':'#ef4444'}}>
+          {isActive ? 'نشط' : 'مجمّد'}
+        </div>
+      </div>
+      <button onClick={()=>setConfirm(true)}
+        style={{padding:'5px 10px',background: isActive?'#fef2f2':'#f0fdf4',color: isActive?'#ef4444':'#059669',border:`1px solid ${isActive?'#fecaca':'#bbf7d0'}`,borderRadius:7,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>
+        {isActive ? '🔒 تجميد' : '✅ تنشيط'}
+      </button>
+    </div>
+  )
+}
+
 // Component للقطاعات من ثوابت النظام
-function TraderSectorsTab({ profileForm, setProfileForm }) {
+function TraderSectorsTab({ profileForm, setProfileForm, externalItems }) {
   const [items, setItems] = useState([])
   useEffect(() => {
+    if (externalItems && externalItems.length > 0) {
+      setItems(externalItems)
+      return
+    }
     api.get('/constants/trader_sector').then(r => {
       const data = Array.isArray(r.data) ? r.data : []
       setItems(data)
     }).catch(() => {})
-  }, [])
+  }, [externalItems])
   const toggle = (id) => {
     const curr = profileForm.traderSectors || []
     setProfileForm(p => ({...p, traderSectors: curr.includes(id) ? curr.filter(x=>x!==id) : [...curr, id]}))
@@ -133,6 +281,7 @@ export default function Subscribe() {
   const [err, setErr] = useState('')
   const [profileTab, setProfileTab] = useState('info') // info | docs | social | interests
   const [sectors, setSectors] = useState([])
+  const [traderSectorsList, setTraderSectorsList] = useState([]) // قائمة القطاعات من ثوابت النظام
   const [profileForm, setProfileForm] = useState({})
   const [profileMsg, setProfileMsg] = useState('')
   const [uploading, setUploading] = useState({})
@@ -148,6 +297,12 @@ export default function Subscribe() {
   useEffect(() => {
     if (step === 3 && sectors.length === 0) {
       api.get('/sectors').then(r => setSectors(r.data || [])).catch(() => {})
+    }
+    // تحميل القطاعات من ثوابت النظام
+    if (step === 3 && traderSectorsList.length === 0) {
+      api.get('/constants/trader_sector').then(r => {
+        setTraderSectorsList(Array.isArray(r.data) ? r.data : [])
+      }).catch(() => {})
     }
   }, [step])
 
@@ -223,8 +378,12 @@ export default function Subscribe() {
       await api.put(`/subscribers/${subscriber.id}/profile`, payload)
       setSubscriber(p => ({...p, ...payload}))
       setProfileMsg('✅ تم حفظ جميع البيانات بنجاح')
-      // إغلاق الصفحة والرجوع للرئيسية بعد ثانيتين
-      setTimeout(() => navigate('/'), 2000)
+      // الرجوع لصفحة سجّل متابعاً بعد ثانيتين
+      setTimeout(() => {
+        setMode(null)
+        setStep(1)
+        setSubscriber(null)
+      }, 2000)
     } catch(err) {
       setProfileMsg('❌ حدث خطأ: ' + (err?.response?.data?.message || err?.message || 'تأكد من تسجيل الدخول'))
     }
@@ -591,6 +750,29 @@ export default function Subscribe() {
 
             {err && <div style={{background:'#fee2e2',color:'#dc2626',padding:'12px 16px',borderRadius:'12px',fontSize:'13px',marginBottom:'12px',fontWeight:'700'}}>{err}</div>}
             {msg && <div style={{background:'#d1fae5',color:'#065f46',padding:'12px 16px',borderRadius:'12px',fontSize:'13px',marginBottom:'12px',fontWeight:'700'}}>{msg}</div>}
+
+            {/* تعديل الهاتف + الإيميل + تجميد/تنشيط */}
+            <div style={{background:'#f8fafc',borderRadius:14,padding:16,marginTop:8}}>
+              <h4 style={{color:'#374151',fontWeight:800,fontSize:13,margin:'0 0 12px'}}>⚙️ إعدادات الحساب</h4>
+              <div style={{display:'flex',flexDirection:'column',gap:8}}>
+
+                {/* تعديل رقم الهاتف */}
+                <ChangeFieldRow label="رقم الهاتف" icon="📱" currentValue={form.phone} field="phone"
+                  subscriberId={subscriber?.id} onUpdated={v => { setForm(p=>({...p, phone:v})); setSubscriber(p=>({...p, phone:v})) }} />
+
+                {/* تعديل الإيميل */}
+                <ChangeFieldRow label="البريد الإلكتروني" icon="📧" currentValue={form.email} field="email"
+                  subscriberId={subscriber?.id} onUpdated={v => { setForm(p=>({...p, email:v})); setSubscriber(p=>({...p, email:v})) }} canDelete />
+
+                {/* تجميد / تنشيط */}
+                <AccountStatusRow
+                  isActive={subscriber?.isActive !== false}
+                  subscriberId={subscriber?.id}
+                  onToggle={(active) => setSubscriber(p=>({...p, isActive: active}))}
+                />
+              </div>
+            </div>
+
             </div>)} {/* نهاية tab info */}
 
             {/* Tab: الأقسام */}
@@ -634,13 +816,13 @@ export default function Subscribe() {
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,paddingBottom:10,borderBottom:'2px solid #FFC72C'}}>
                 <h3 style={{color:'#2C3E6B',fontWeight:800,fontSize:15,margin:0}}>🏭 القطاعات</h3>
                 <button type="button" onClick={()=>{
-                  const allIds = (window._traderSectors||[]).map(s=>s.id)
+                  const allIds = traderSectorsList.map(s=>s.id)
                   setProfileForm(p=>({...p, traderSectors: (p.traderSectors||[]).length===allIds.length ? [] : allIds}))
                 }} style={{padding:'5px 12px',borderRadius:8,background:'#FFF8E7',color:'#B8860B',border:'1px solid #fde68a',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:11,fontWeight:700}}>
-                  {(profileForm.traderSectors||[]).length===(window._traderSectors||[]).length ? '❌ إلغاء الكل' : '✅ اختيار الكل'}
+                  {(profileForm.traderSectors||[]).length===traderSectorsList.length && traderSectorsList.length > 0 ? '❌ إلغاء الكل' : '✅ اختيار الكل'}
                 </button>
               </div>
-              <TraderSectorsTab profileForm={profileForm} setProfileForm={setProfileForm} />
+              <TraderSectorsTab profileForm={profileForm} setProfileForm={setProfileForm} externalItems={traderSectorsList} />
             </div>
             )}
 
