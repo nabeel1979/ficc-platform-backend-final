@@ -2,24 +2,18 @@ import { useEffect, useState, useRef } from 'react'
 import api from '../lib/api'
 
 const STATUS = { upcoming:'📅 قادمة', ongoing:'🔴 جارية', completed:'✅ منتهية' }
-const STATUS_COLOR = { upcoming:'#10b981', ongoing:'#ef4444', completed:'#6b7280' }
 
 function CourseForm({ item, onSave, onClose }) {
   const isEdit = !!item?.id
   const [form, setForm] = useState({
-    title: item?.title || '',
-    description: item?.description || '',
-    speaker: item?.speaker || '',
-    speakerTitle: item?.speakerTitle || '',
+    title: item?.title || '', description: item?.description || '',
+    speaker: item?.speaker || '', speakerTitle: item?.speakerTitle || '',
     location: item?.location || '',
     startDate: item?.startDate ? item.startDate.split('T')[0] : '',
     endDate: item?.endDate ? item.endDate.split('T')[0] : '',
     maxParticipants: item?.maxParticipants || 50,
-    isFree: item?.isFree !== false,
-    price: item?.price || 0,
-    category: item?.category || '',
-    status: item?.status || 'upcoming',
-    isActive: item?.isActive !== false,
+    isFree: item?.isFree !== false, price: item?.price || 0,
+    category: item?.category || '', status: item?.status || 'upcoming', isActive: item?.isActive !== false,
   })
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
@@ -31,44 +25,38 @@ function CourseForm({ item, onSave, onClose }) {
       if (isEdit) await api.put(`/courses/${item.id}`, form)
       else await api.post('/courses', form)
       onSave()
-    } catch(err) {
-      setMsg(err.response?.data?.message || 'حدث خطأ')
-    } finally { setLoading(false) }
+    } catch(err) { setMsg(err.response?.data?.message || 'حدث خطأ') }
+    finally { setLoading(false) }
   }
 
-  const inp = (label, k, type='text', required=false) => (
+  const inp = (label, k, type='text', req=false) => (
     <div style={{marginBottom:14}}>
-      <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>{label}{required&&<span style={{color:'#ef4444'}}>*</span>}</label>
-      <input type={type} required={required} value={form[k]} onChange={e => set(k, type==='number' ? +e.target.value : e.target.value)}
+      <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>{label}{req&&<span style={{color:'#ef4444'}}>*</span>}</label>
+      <input type={type} required={req} value={form[k]} onChange={e => set(k, type==='number' ? +e.target.value : e.target.value)}
         style={{width:'100%',padding:'10px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontSize:13,fontFamily:'Cairo,sans-serif',outline:'none',boxSizing:'border-box'}} />
     </div>
   )
 
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{background:'#fff',borderRadius:20,padding:'28px 24px',width:'100%',maxWidth:580,maxHeight:'90vh',overflowY:'auto',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
+      <div style={{background:'#fff',borderRadius:20,padding:'28px 24px',width:'100%',maxWidth:560,maxHeight:'90vh',overflowY:'auto',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
-          <h2 style={{fontSize:18,fontWeight:800,color:'#2C3E6B'}}>{isEdit ? '✏️ تعديل دورة' : '➕ إضافة دورة جديدة'}</h2>
+          <h2 style={{fontSize:18,fontWeight:800,color:'#2C3E6B'}}>{isEdit ? '✏️ تعديل دورة' : '➕ إضافة دورة'}</h2>
           <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#94a3b8'}}>✕</button>
         </div>
         <form onSubmit={submit}>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
             <div style={{gridColumn:'1/-1'}}>{inp('عنوان الدورة *','title','text',true)}</div>
-            {inp('المحاضر','speaker')}
-            {inp('لقب المحاضر','speakerTitle')}
-            {inp('تاريخ البدء *','startDate','date',true)}
-            {inp('تاريخ الانتهاء *','endDate','date',true)}
-            {inp('الموقع','location')}
-            {inp('الفئة','category')}
+            {inp('المحاضر','speaker')} {inp('لقب المحاضر','speakerTitle')}
+            {inp('تاريخ البدء *','startDate','date',true)} {inp('تاريخ الانتهاء *','endDate','date',true)}
+            {inp('الموقع','location')} {inp('الفئة','category')}
             {inp('عدد المشاركين','maxParticipants','number')}
           </div>
-
           <div style={{marginBottom:14}}>
             <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>الوصف</label>
-            <textarea value={form.description} onChange={e=>set('description',e.target.value)}
-              style={{width:'100%',padding:'10px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontSize:13,fontFamily:'Cairo,sans-serif',outline:'none',boxSizing:'border-box',height:80,resize:'vertical'}} />
+            <textarea value={form.description} onChange={e=>set('description',e.target.value)} rows={3}
+              style={{width:'100%',padding:'10px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontSize:13,fontFamily:'Cairo,sans-serif',outline:'none',boxSizing:'border-box',resize:'vertical'}} />
           </div>
-
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14}}>
             <div>
               <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>الحالة</label>
@@ -80,17 +68,14 @@ function CourseForm({ item, onSave, onClose }) {
             </div>
             <div style={{display:'flex',flexDirection:'column',gap:10,justifyContent:'center',marginTop:20}}>
               <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:13}}>
-                <input type="checkbox" checked={form.isFree} onChange={e=>set('isFree',e.target.checked)} />
-                <span>مجانية</span>
+                <input type="checkbox" checked={form.isFree} onChange={e=>set('isFree',e.target.checked)} />مجانية
               </label>
-              {!form.isFree && <div>{inp('السعر (د.ع)','price','number')}</div>}
               <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:13}}>
-                <input type="checkbox" checked={form.isActive} onChange={e=>set('isActive',e.target.checked)} />
-                <span>نشطة</span>
+                <input type="checkbox" checked={form.isActive} onChange={e=>set('isActive',e.target.checked)} />نشطة
               </label>
             </div>
           </div>
-
+          {!form.isFree && inp('السعر (د.ع)','price','number')}
           {msg && <div style={{background:'#fef2f2',border:'1px solid #fecaca',borderRadius:8,padding:'8px 14px',color:'#ef4444',fontSize:13,marginBottom:12}}>{msg}</div>}
           <div style={{display:'flex',gap:10}}>
             <button type="submit" disabled={loading} style={{flex:1,padding:'12px',background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:'#fff',border:'none',borderRadius:12,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:800,fontSize:14}}>
@@ -107,55 +92,42 @@ function CourseForm({ item, onSave, onClose }) {
 function ApplicationsModal({ course, onClose }) {
   const [apps, setApps] = useState([])
   const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    api.get(`/courses/${course.id}/applications`).then(r => setApps(r.data)).finally(() => setLoading(false))
-  }, [course.id])
-
+  useEffect(() => { api.get(`/courses/${course.id}/applications`).then(r => setApps(r.data)).finally(() => setLoading(false)) }, [course.id])
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{background:'#fff',borderRadius:20,padding:'28px 24px',width:'100%',maxWidth:700,maxHeight:'90vh',overflowY:'auto',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+      <div style={{background:'#fff',borderRadius:20,padding:'24px',width:'100%',maxWidth:700,maxHeight:'90vh',overflowY:'auto',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
           <div>
-            <h2 style={{fontSize:17,fontWeight:800,color:'#2C3E6B'}}>📋 طلبات التسجيل</h2>
-            <p style={{fontSize:12,color:'#64748b',marginTop:2}}>{course.title}</p>
+            <h2 style={{fontSize:17,fontWeight:800,color:'#2C3E6B',margin:0}}>📋 طلبات التسجيل</h2>
+            <p style={{fontSize:12,color:'#64748b',margin:'4px 0 0'}}>{course.title}</p>
           </div>
           <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#94a3b8'}}>✕</button>
         </div>
-        {loading ? (
-          <div style={{textAlign:'center',padding:40,color:'#94a3b8'}}>⏳ جارٍ التحميل...</div>
-        ) : apps.length === 0 ? (
-          <div style={{textAlign:'center',padding:40,color:'#94a3b8'}}>لا توجد طلبات بعد</div>
-        ) : (
-          <>
-            <div style={{marginBottom:12,fontSize:13,color:'#64748b',fontWeight:600}}>إجمالي الطلبات: {apps.length}</div>
-            <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
-              <thead>
-                <tr style={{background:'#2C3E6B',color:'#fff'}}>
-                  {['الاسم','الهاتف','الإيميل','الشركة','التاريخ'].map(h=>(
-                    <th key={h} style={{padding:'10px 12px',textAlign:'right',fontWeight:700}}>{h}</th>
-                  ))}
+        {loading ? <div style={{textAlign:'center',padding:40,color:'#94a3b8'}}>⏳ جارٍ التحميل...</div>
+        : apps.length === 0 ? <div style={{textAlign:'center',padding:40,color:'#94a3b8'}}>لا توجد طلبات بعد</div>
+        : <>
+          <div style={{marginBottom:12,fontSize:13,color:'#64748b',fontWeight:600}}>إجمالي الطلبات: {apps.length}</div>
+          <div style={{overflowX:'auto'}}>
+            <table style={{width:'100%',borderCollapse:'collapse',fontSize:13,minWidth:500}}>
+              <thead><tr style={{background:'#2C3E6B',color:'#fff'}}>
+                {['الاسم','الهاتف','الإيميل','الشركة','التاريخ'].map(h=><th key={h} style={{padding:'10px 12px',textAlign:'right',fontWeight:700}}>{h}</th>)}
+              </tr></thead>
+              <tbody>{apps.map((a,i)=>(
+                <tr key={a.id} style={{borderBottom:'1px solid #f1f5f9',background:i%2===0?'#fff':'#fafbfc'}}>
+                  <td style={{padding:'10px 12px',fontWeight:700}}>{a.fullName}</td>
+                  <td style={{padding:'10px 12px'}}><a href={`tel:${a.phone}`} style={{color:'#2C3E6B',fontWeight:700}}>{a.phone}</a></td>
+                  <td style={{padding:'10px 12px',color:'#64748b'}}>{a.email||'—'}</td>
+                  <td style={{padding:'10px 12px'}}>{a.company||'—'}</td>
+                  <td style={{padding:'10px 12px',color:'#94a3b8',fontSize:11}}>{new Date(a.createdAt).toLocaleDateString('ar-IQ')}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {apps.map((a,i)=>(
-                  <tr key={a.id} style={{borderBottom:'1px solid #f1f5f9',background:i%2===0?'#fff':'#fafbfc'}}>
-                    <td style={{padding:'10px 12px',fontWeight:700}}>{a.fullName}</td>
-                    <td style={{padding:'10px 12px'}}><a href={`tel:${a.phone}`} style={{color:'#2C3E6B',fontWeight:700}}>{a.phone}</a></td>
-                    <td style={{padding:'10px 12px',color:'#64748b'}}>{a.email||'—'}</td>
-                    <td style={{padding:'10px 12px'}}>{a.company||'—'}</td>
-                    <td style={{padding:'10px 12px',color:'#94a3b8',fontSize:11}}>{new Date(a.createdAt).toLocaleDateString('ar-IQ')}</td>
-                  </tr>
-                ))}
-              </tbody>
+              ))}</tbody>
             </table>
-          </>
-        )}
+          </div>
+        </>}
       </div>
     </div>
   )
 }
-
 
 function MediaManager({ course, onClose }) {
   const [media, setMedia] = useState([])
@@ -165,12 +137,11 @@ function MediaManager({ course, onClose }) {
   const [form, setForm] = useState({ url:'', title:'', description:'', displayOrder:0 })
   const [msg, setMsg] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState([]) // [{name, status: 'pending'|'uploading'|'done'|'error'}]
   const fileRef = useRef(null)
+  const multiFileRef = useRef(null)
 
-  const load = () => {
-    setLoading(true)
-    api.get(`/courses/${course.id}/media`).then(r => setMedia(r.data || [])).finally(() => setLoading(false))
-  }
+  const load = () => { setLoading(true); api.get(`/courses/${course.id}/media`).then(r => setMedia(r.data||[])).finally(() => setLoading(false)) }
   useEffect(() => { load() }, [course.id])
 
   const imgs = media.filter(m => m.type === 'image')
@@ -180,26 +151,55 @@ function MediaManager({ course, onClose }) {
     e.preventDefault(); setMsg('')
     try {
       await api.post(`/courses/${course.id}/media`, { ...form, type: tab })
-      setForm({ url:'', title:'', description:'', displayOrder:0 })
-      setAdding(false); load()
+      setForm({ url:'', title:'', description:'', displayOrder:0 }); setAdding(false); load()
     } catch(err) { setMsg(err.response?.data?.message || 'خطأ') }
   }
 
   const delMedia = async (id) => {
     if (!confirm('حذف؟')) return
-    await api.delete(`/courses/${course.id}/media/${id}`)
-    load()
+    await api.delete(`/courses/${course.id}/media/${id}`); load()
   }
 
   const uploadImage = async (file) => {
-    if (!file) return
-    setUploading(true)
+    if (!file) return; setUploading(true)
     const fd = new FormData(); fd.append('file', file); fd.append('folder', 'courses')
     try {
       const r = await api.post('/upload', fd, { headers: { 'Content-Type':'multipart/form-data' } })
       setForm(p => ({ ...p, url: r.data.url }))
     } catch { setMsg('فشل رفع الصورة') }
     setUploading(false)
+  }
+
+  // رفع مجموعة صور دفعة واحدة (حتى 10)
+  const uploadMultiple = async (files) => {
+    const MAX = 10
+    const selected = Array.from(files).slice(0, MAX)
+    if (selected.length === 0) return
+
+    setUploadProgress(selected.map(f => ({ name: f.name, status: 'pending' })))
+    setAdding(false)
+    let done = 0
+
+    for (let i = 0; i < selected.length; i++) {
+      const file = selected[i]
+      setUploadProgress(p => p.map((x, idx) => idx === i ? { ...x, status: 'uploading' } : x))
+      try {
+        const fd = new FormData()
+        fd.append('file', file)
+        fd.append('folder', 'courses')
+        const r = await api.post('/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+        await api.post(`/courses/${course.id}/media`, { url: r.data.url, type: 'image', title: '', displayOrder: i })
+        setUploadProgress(p => p.map((x, idx) => idx === i ? { ...x, status: 'done' } : x))
+        done++
+      } catch {
+        setUploadProgress(p => p.map((x, idx) => idx === i ? { ...x, status: 'error' } : x))
+      }
+    }
+
+    setTimeout(() => {
+      setUploadProgress([])
+      load()
+    }, 2000)
   }
 
   return (
@@ -212,32 +212,64 @@ function MediaManager({ course, onClose }) {
           </div>
           <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#94a3b8'}}>✕</button>
         </div>
-
-        {/* Tabs */}
         <div style={{display:'flex',gap:8,marginBottom:16}}>
           {[{k:'image',l:'🖼️ الصور',c:imgs.length},{k:'video',l:'🎥 الفيديوهات',c:vids.length}].map(t=>(
             <button key={t.k} onClick={()=>{setTab(t.k);setAdding(false)}} style={{padding:'7px 16px',borderRadius:20,border:'1.5px solid',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12,borderColor:tab===t.k?'#2C3E6B':'#e5e7eb',background:tab===t.k?'#2C3E6B':'#fff',color:tab===t.k?'#fff':'#374151'}}>
               {t.l} ({t.c})
             </button>
           ))}
+          {tab === 'image' && (
+            <>
+              <input type="file" accept="image/*" multiple ref={multiFileRef}
+                onChange={e => uploadMultiple(e.target.files)} style={{display:'none'}} />
+              <button type="button" onClick={()=>multiFileRef.current?.click()} disabled={uploadProgress.length > 0}
+                style={{padding:'7px 16px',background:'linear-gradient(135deg,#059669,#10b981)',color:'#fff',border:'none',borderRadius:20,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12}}>
+                📁 رفع حتى 10 صور
+              </button>
+            </>
+          )}
           <button onClick={()=>setAdding(p=>!p)} style={{marginRight:'auto',padding:'7px 16px',background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:'#fff',border:'none',borderRadius:20,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12}}>
             ➕ {tab==='image'?'إضافة صورة':'إضافة فيديو'}
           </button>
         </div>
 
-        {/* Add Form */}
+        {/* Progress bar للـ multi-upload */}
+        {uploadProgress.length > 0 && (
+          <div style={{background:'#f8fafc',borderRadius:14,padding:16,marginBottom:16}}>
+            <div style={{fontWeight:700,fontSize:13,color:'#2C3E6B',marginBottom:10}}>
+              ⏳ جارٍ رفع {uploadProgress.length} صورة...
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:6}}>
+              {uploadProgress.map((f, i) => (
+                <div key={i} style={{display:'flex',alignItems:'center',gap:8,fontSize:12}}>
+                  <span style={{
+                    width:20, height:20, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center',
+                    background: f.status==='done' ? '#d1fae5' : f.status==='error' ? '#fee2e2' : f.status==='uploading' ? '#dbeafe' : '#f1f5f9',
+                    fontSize:11
+                  }}>
+                    {f.status==='done' ? '✅' : f.status==='error' ? '❌' : f.status==='uploading' ? '⏳' : '○'}
+                  </span>
+                  <span style={{color:'#374151',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{f.name}</span>
+                  <span style={{color: f.status==='done'?'#059669': f.status==='error'?'#ef4444':'#64748b', fontWeight:600}}>
+                    {f.status==='done'?'تم':f.status==='error'?'فشل':f.status==='uploading'?'يرفع...':'انتظار'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {adding && (
           <form onSubmit={addMedia} style={{background:'#f8fafc',borderRadius:14,padding:16,marginBottom:16}}>
             {tab === 'image' ? (
               <div style={{marginBottom:12}}>
-                <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>رفع صورة أو إدخال رابط</label>
-                <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>رفع صورة أو رابط</label>
+                <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
                   <input type="file" accept="image/*" ref={fileRef} onChange={e=>uploadImage(e.target.files[0])} style={{display:'none'}} />
                   <button type="button" onClick={()=>fileRef.current?.click()} disabled={uploading} style={{padding:'8px 14px',background:'#e0e7ff',color:'#4338ca',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12}}>
                     {uploading ? '⏳ جارٍ الرفع...' : '📁 رفع صورة'}
                   </button>
-                  <span style={{color:'#94a3b8',fontSize:12}}>أو</span>
-                  <input value={form.url} onChange={e=>setForm(p=>({...p,url:e.target.value}))} placeholder="رابط الصورة (URL)" required
+                  <input value={form.url} onChange={e=>setForm(p=>({...p,url:e.target.value}))} placeholder="أو رابط الصورة (URL)" required
                     style={{flex:1,padding:'8px 12px',border:'1.5px solid #e5e7eb',borderRadius:8,fontSize:12,fontFamily:'Cairo,sans-serif'}} />
                 </div>
                 {form.url && <img src={form.url} alt="" style={{marginTop:8,height:80,borderRadius:8,objectFit:'cover'}} onError={e=>e.target.style.display='none'} />}
@@ -249,16 +281,14 @@ function MediaManager({ course, onClose }) {
                   style={{width:'100%',padding:'8px 12px',border:'1.5px solid #e5e7eb',borderRadius:8,fontSize:12,fontFamily:'Cairo,sans-serif',boxSizing:'border-box'}} />
               </div>
             )}
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 80px',gap:10}}>
               <div>
                 <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>العنوان</label>
-                <input value={form.title} onChange={e=>setForm(p=>({...p,title:e.target.value}))}
-                  style={{width:'100%',padding:'8px 12px',border:'1.5px solid #e5e7eb',borderRadius:8,fontSize:12,fontFamily:'Cairo,sans-serif',boxSizing:'border-box'}} />
+                <input value={form.title} onChange={e=>setForm(p=>({...p,title:e.target.value}))} style={{width:'100%',padding:'8px 12px',border:'1.5px solid #e5e7eb',borderRadius:8,fontSize:12,fontFamily:'Cairo,sans-serif',boxSizing:'border-box'}} />
               </div>
               <div>
                 <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>الترتيب</label>
-                <input type="number" value={form.displayOrder} onChange={e=>setForm(p=>({...p,displayOrder:+e.target.value}))}
-                  style={{width:'100%',padding:'8px 12px',border:'1.5px solid #e5e7eb',borderRadius:8,fontSize:12,fontFamily:'Cairo,sans-serif',boxSizing:'border-box'}} />
+                <input type="number" value={form.displayOrder} onChange={e=>setForm(p=>({...p,displayOrder:+e.target.value}))} style={{width:'100%',padding:'8px 12px',border:'1.5px solid #e5e7eb',borderRadius:8,fontSize:12,fontFamily:'Cairo,sans-serif',boxSizing:'border-box'}} />
               </div>
             </div>
             {msg && <div style={{color:'#ef4444',fontSize:12,marginTop:8}}>{msg}</div>}
@@ -273,7 +303,7 @@ function MediaManager({ course, onClose }) {
           <div>
             {tab === 'image' && (
               imgs.length === 0 ? <div style={{textAlign:'center',padding:30,color:'#94a3b8',fontSize:13}}>لا توجد صور بعد</div> :
-              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))',gap:10}}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))',gap:10}}>
                 {imgs.map(img => (
                   <div key={img.id} style={{position:'relative',borderRadius:12,overflow:'hidden',aspectRatio:'4/3',background:'#f1f5f9'}}>
                     <img src={img.url} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}} />
@@ -313,21 +343,16 @@ function MediaManager({ course, onClose }) {
 export default function AdminCourses() {
   const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(true)
-  const [modal, setModal] = useState(null) // null | 'new' | course object
+  const [modal, setModal] = useState(null)
   const [appsModal, setAppsModal] = useState(null)
   const [mediaModal, setMediaModal] = useState(null)
 
-  const load = () => {
-    setLoading(true)
-    api.get('/courses').then(r => setCourses(r.data)).finally(() => setLoading(false))
-  }
-
+  const load = () => { setLoading(true); api.get('/courses').then(r => setCourses(r.data)).finally(() => setLoading(false)) }
   useEffect(() => { load() }, [])
 
   const del = async (id) => {
     if (!confirm('هل تريد حذف هذه الدورة؟')) return
-    await api.delete(`/courses/${id}`)
-    load()
+    await api.delete(`/courses/${id}`); load()
   }
 
   return (
@@ -343,37 +368,39 @@ export default function AdminCourses() {
         </button>
       </div>
 
-      {loading ? (
-        <div style={{textAlign:'center',padding:60,color:'#94a3b8'}}>⏳ جارٍ التحميل...</div>
-      ) : (
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))',gap:16}}>
-          {courses.map(c => (
-            <div key={c.id} style={{background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:'0 2px 10px rgba(44,62,107,0.07)',border:'1px solid #e5e7eb'}}>
-              <div style={{background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',padding:'16px',position:'relative'}}>
-                <span style={{position:'absolute',top:10,left:10,padding:'3px 10px',borderRadius:20,fontSize:11,fontWeight:800,background:'rgba(255,255,255,0.2)',color:'#fff'}}>
-                  {STATUS[c.status]||c.status}
-                </span>
-                <h3 style={{color:'#fff',fontSize:14,fontWeight:800,marginTop:20,lineHeight:1.4}}>{c.title}</h3>
-                {c.speaker && <div style={{color:'rgba(255,255,255,0.75)',fontSize:11,marginTop:4}}>👤 {c.speaker}</div>}
-              </div>
-              <div style={{padding:'14px 16px'}}>
-                <div style={{display:'flex',flexDirection:'column',gap:6,fontSize:12,color:'#64748b',marginBottom:12}}>
-                  <span>📅 {new Date(c.startDate).toLocaleDateString('ar-IQ')} — {new Date(c.endDate).toLocaleDateString('ar-IQ')}</span>
-                  {c.location && <span>📍 {c.location}</span>}
-                  <span>👥 {c.currentParticipants} / {c.maxParticipants} مشارك</span>
-                  <span style={{fontWeight:700,color:c.isFree?'#10b981':'#2C3E6B'}}>💰 {c.isFree ? 'مجانية' : `${c.price?.toLocaleString()} د.ع`}</span>
+      {loading ? <div style={{textAlign:'center',padding:60,color:'#94a3b8'}}>⏳ جارٍ التحميل...</div> : (
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:16}}>
+          {courses.map(c => {
+            const pct = c.maxParticipants > 0 ? Math.round((c.currentParticipants / c.maxParticipants) * 100) : 0
+            return (
+              <div key={c.id} style={{background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:'0 2px 10px rgba(44,62,107,0.07)',border:'1px solid #e5e7eb'}}>
+                <div style={{background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',padding:'16px',position:'relative'}}>
+                  <span style={{position:'absolute',top:10,left:10,padding:'3px 10px',borderRadius:20,fontSize:11,fontWeight:800,background:'rgba(255,255,255,0.2)',color:'#fff'}}>
+                    {STATUS[c.status]||c.status}
+                  </span>
+                  <h3 style={{color:'#fff',fontSize:14,fontWeight:800,marginTop:20,lineHeight:1.4}}>{c.title}</h3>
+                  {c.speaker && <div style={{color:'rgba(255,255,255,0.75)',fontSize:11,marginTop:4}}>👤 {c.speaker}</div>}
                 </div>
-                <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-                  <button onClick={() => setMediaModal(c)} style={{flex:1,padding:'8px',background:'#f0fdf4',color:'#166534',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12}}>🖼️ الصور والفيديو</button>
-                  <button onClick={() => setAppsModal(c)} style={{flex:1,padding:'8px',background:'#e0e7ff',color:'#4338ca',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12}}>
-                    📋 الطلبات ({c.currentParticipants})
-                  </button>
-                  <button onClick={() => setModal(c)} style={{padding:'8px 14px',background:'#FFC72C20',color:'#92400e',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12}}>✏️</button>
-                  <button onClick={() => del(c.id)} style={{padding:'8px 14px',background:'#fee2e2',color:'#ef4444',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12}}>🗑️</button>
+                <div style={{padding:'14px 16px'}}>
+                  <div style={{display:'flex',flexDirection:'column',gap:6,fontSize:12,color:'#64748b',marginBottom:12}}>
+                    <span>📅 {new Date(c.startDate).toLocaleDateString('ar-IQ')} — {new Date(c.endDate).toLocaleDateString('ar-IQ')}</span>
+                    {c.location && <span>📍 {c.location}</span>}
+                    <span>👥 {c.currentParticipants} / {c.maxParticipants} مشارك</span>
+                    <div style={{background:'#e5e7eb',borderRadius:10,height:6,overflow:'hidden'}}>
+                      <div style={{height:'100%',width:`${pct}%`,background:pct>=90?'#ef4444':'#2C3E6B',borderRadius:10}} />
+                    </div>
+                    <span style={{fontWeight:700,color:c.isFree?'#10b981':'#2C3E6B'}}>💰 {c.isFree ? 'مجانية' : `${c.price?.toLocaleString()} د.ع`}</span>
+                  </div>
+                  <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                    <button onClick={() => setMediaModal(c)} style={{flex:1,padding:'7px',background:'#f0fdf4',color:'#166534',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>🖼️ الصور</button>
+                    <button onClick={() => setAppsModal(c)} style={{flex:1,padding:'7px',background:'#e0e7ff',color:'#4338ca',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>📋 الطلبات ({c.currentParticipants})</button>
+                    <button onClick={() => setModal(c)} style={{padding:'7px 12px',background:'#FFC72C20',color:'#92400e',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>✏️</button>
+                    <button onClick={() => del(c.id)} style={{padding:'7px 12px',background:'#fee2e2',color:'#ef4444',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>🗑️</button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
