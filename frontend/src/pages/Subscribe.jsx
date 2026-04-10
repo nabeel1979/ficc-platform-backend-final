@@ -426,8 +426,9 @@ export default function Subscribe() {
         interests: form.sectors || [],
         traderSectors: []
       })
-      setMsg('🎉 تم التسجيل! أكمل ملفك الشخصي الآن')
+      setMsg('🎉 تم التسجيل! اختر قطاعاتك الآن لإكمال ملفك')
       setMode('existing')
+      setProfileTab('sectors_tab')
       setStep(3)
     } catch(e) { setErr(e?.response?.data?.message || 'حدث خطأ') }
     setLoading(false)
@@ -894,8 +895,8 @@ export default function Subscribe() {
                         <div style={{fontWeight:700,fontSize:13,color:'#374151',marginBottom:4}}>{doc.label}</div>
                         {val ? (
                           isPdf
-                            ? <a href={val} target="_blank" rel="noreferrer" style={{fontSize:11,color:'#dc2626',fontWeight:700}}>📄 PDF — اضغط للفتح</a>
-                            : <a href={val} target="_blank" rel="noreferrer" style={{fontSize:11,color:'#2C3E6B',fontWeight:700}}>✅ مرفوع — اضغط للعرض</a>
+                            ? <a href={val} target="_blank" rel="noreferrer" style={{fontSize:11,color:'#2563eb',fontWeight:700}}>📄 PDF — اضغط للفتح</a>
+                            : <a href={val} target="_blank" rel="noreferrer" style={{fontSize:11,color:'#2563eb',fontWeight:700}}>✅ مرفوع — اضغط للعرض</a>
                         ) : <span style={{fontSize:11,color:'#94a3b8'}}>لم يرفع بعد</span>}
                       </div>
                       <label style={{padding:'6px 12px',background:'#e0e7ff',color:'#4338ca',borderRadius:8,cursor:'pointer',fontSize:11,fontWeight:700,flexShrink:0}}>
