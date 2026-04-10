@@ -99,9 +99,13 @@ tbody td { padding: 10px 14px; color: #374151; vertical-align: middle; }
   flex-shrink: 0;
   overflow: hidden;
   border: 0.3px dashed #bbb;
+  position: relative;
 }
-/* الصف السفلي — الأرباع مقلوبة للطي */
-.print-row.flipped .print-quarter { transform: rotate(180deg); }
+/* الصف السفلي — المحتوى الداخلي مقلوب */
+.print-row.flipped .print-quarter > * {
+  transform: rotate(180deg);
+  transform-origin: center center;
+}
 
 /* ===== الوجه ===== */
 .top-bar {
