@@ -295,6 +295,10 @@ function ApplicationsModal({ course, onClose }) {
                       <td style={{padding:'8px 10px',color:'#94a3b8',whiteSpace:'nowrap',fontSize:10}}>{fmt(a.createdAt)}</td>
                       <td style={{padding:'6px 10px'}}>
                         <div style={{display:'flex',gap:3,flexWrap:'wrap'}}>
+                          <button onClick={() => window.open(`/badges.html?course=${course.id}&member=${a.id}`, '_blank')}
+                            style={{padding:'3px 7px',background:'#eef2ff',color:'#1e40af',border:'none',borderRadius:5,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:10}}>
+                            🪪
+                          </button>
                           <button onClick={() => toggleAttendance(a.id)}
                             style={{padding:'3px 7px',background:isAttended?'#dcfce7':'#f1f5f9',color:isAttended?'#16a34a':'#6b7280',border:`1px solid ${isAttended?'#86efac':'#e5e7eb'}`,borderRadius:5,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:10}}>
                             {isAttended ? '✅' : '⬜'}
