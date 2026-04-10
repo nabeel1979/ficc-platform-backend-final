@@ -74,16 +74,19 @@ tbody td { padding: 10px 14px; color: #374151; vertical-align: middle; }
   .print-page { display: flex !important; }
 }
 
-/* صفحة الطباعة (مخفية في العرض العادي) */
+/* صفحة الطباعة — وجه + خلف جنب بعض في A4 */
 .print-page {
   display: none;
-  width: 105mm;
+  width: 210mm;
   height: 148mm;
   background: white;
-  flex-direction: column;
+  flex-direction: row;
   overflow: hidden;
   page-break-after: always;
 }
+/* فاصل بين الوجه والخلف */
+.print-page .front-side { width: 105mm; height: 148mm; flex-shrink: 0; border-left: 1px dashed #ccc; }
+.print-page .back-side  { width: 105mm; height: 148mm; flex-shrink: 0; }
 
 /* ===== الوجه ===== */
 .top-bar {
@@ -136,7 +139,7 @@ tbody td { padding: 10px 14px; color: #374151; vertical-align: middle; }
 /* ===== الخلف ===== */
 .fold-line { border-top: 1.5px dashed #aaa; flex-shrink: 0; }
 .back-wrap { width: 105mm; height: 148mm; display: flex; flex-direction: column;
-  overflow: hidden; transform: rotate(180deg); flex-shrink: 0; }
+  overflow: hidden; flex-shrink: 0; }
 .back-top { background: linear-gradient(135deg,#1a2a5e,#2C3E6B); height: 18mm; display: flex;
   align-items: center; justify-content: center; gap: 3mm; flex-shrink: 0; }
 .back-top img { height: 12mm; border-radius: 2mm; background: rgba(255,255,255,0.9); padding: 1mm; object-fit: contain; }
@@ -247,9 +250,7 @@ function makePrintPage(app) {
         <span>${new Date().getFullYear()}</span>
       </div>
     </div>
-    <!-- خط الطي -->
-    <div class="fold-line"></div>
-    <!-- الخلف -->
+    <!-- الخلف جنب الوجه -->
     <div class="back-wrap">
       <div class="back-top">
         <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
@@ -374,7 +375,7 @@ load()
   .print-page { page-break-after: always; break-after: page; }
   body { margin: 0; padding: 0; background: white; }
 }
-@page { size: A6 portrait; margin: 0; }
+@page { size: A4 landscape; margin: 0; }
 </style>
 </body>
 </html>
