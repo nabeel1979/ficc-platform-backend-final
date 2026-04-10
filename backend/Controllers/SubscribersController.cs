@@ -349,12 +349,28 @@ public class SubscribersController : ControllerBase {
             if (dto.Channel == "email" || dto.Channel == "both") {
                 if (!string.IsNullOrEmpty(sub.Email)) {
                     try {
-                        var htmlBody = $"<div dir='rtl' style='font-family:Cairo,sans-serif;padding:20px;max-width:600px;margin:0 auto'>" +
-                            (string.IsNullOrEmpty(dto.ImageUrl) ? "" : $"<img src='{dto.ImageUrl}' style='width:100%;border-radius:12px;margin-bottom:16px' />") +
-                            $"<p style='font-size:15px;line-height:1.8;color:#1e293b'>{dto.Message.Replace("\n","<br/>")}</p>" +
-                            $"<hr style='border:none;border-top:1px solid #e5e7eb;margin:16px 0'/>" +
-                            $"<p style='font-size:11px;color:#94a3b8'>اتحاد الغرف التجارية العراقية — ficc.iq</p></div>";
-                        await _notify.SendEmail(sub.Email, "📢 تعميم من اتحاد الغرف التجارية العراقية", htmlBody);
+                        // استخرج عنوان الرسالة (السطر الأول)
+                        var lines = dto.Message.Split('\n');
+                        var title = lines.Length > 0 ? lines[0] : dto.Message;
+                        var bodyLines = lines.Length > 1 ? string.Join("<br/>", lines[1..]) : "";
+                        var imageTag = string.IsNullOrEmpty(dto.ImageUrl) ? "" :
+                            $"<img src='{dto.ImageUrl}' style='width:100%;border-radius:12px;margin-bottom:16px;display:block' />";
+
+                        var htmlBody = $@"
+<div dir='rtl' style='font-family:Cairo,sans-serif;max-width:600px;margin:0 auto;background:#f5f7fa;padding:16px;border-radius:16px'>
+  <div style='background:linear-gradient(135deg,#2C3E6B,#4A6FA5);padding:24px 20px;border-radius:12px;text-align:center;margin-bottom:16px'>
+    <img src='https://ficc.iq/ficc-logo.png' style='height:48px;margin-bottom:12px' onerror='this.style.display=&quot;none&quot;' />
+    <h2 style='color:#fff;margin:0;font-size:18px'>{System.Web.HttpUtility.HtmlEncode(title)}</h2>
+    <p style='color:#FFC72C;margin:6px 0 0;font-size:12px'>اتحاد الغرف التجارية العراقية</p>
+  </div>
+  {imageTag}
+  {(bodyLines.Length > 0 ? $"<div style='background:#fff;border-radius:12px;padding:16px;margin-bottom:12px'><p style='color:#374151;font-size:14px;line-height:2;margin:0'>{bodyLines}</p></div>" : "")}
+  <a href='https://ficc.iq' style='display:block;text-align:center;background:linear-gradient(135deg,#2C3E6B,#4A6FA5);color:#fff;padding:13px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;margin-bottom:12px'>زيارة الموقع ←</a>
+  <p style='color:#aaa;font-size:11px;text-align:center;margin:0'>
+    <a href='https://ficc.iq' style='color:#4A6FA5;text-decoration:none'>ficc.iq</a> — اتحاد الغرف التجارية العراقية
+  </p>
+</div>";
+                        await _notify.SendEmail(sub.Email, $"📢 {title} | اتحاد الغرف التجارية العراقية", htmlBody);
                         sentThis = true;
                     } catch { }
                 }

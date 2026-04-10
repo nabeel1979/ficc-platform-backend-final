@@ -654,6 +654,7 @@ function BroadcastModal({ course, onClose }) {
         channel
       })
       setMsg(`✅ تم الإرسال لـ ${selected.length} متابع`)
+      setTimeout(() => onClose(), 2000)
     } catch {
       setMsg('❌ حدث خطأ أثناء الإرسال')
     }
