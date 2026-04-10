@@ -164,46 +164,100 @@ function CourseForm({ item, onSave, onClose }) {
 function ApplicationsModal({ course, onClose }) {
   const [apps, setApps] = useState([])
   const [loading, setLoading] = useState(true)
-  const [attendance, setAttendance] = useState({}) // {appId: true/false}
+  const [attendance, setAttendance] = useState({})
+  const [search, setSearch] = useState('')
+  const [deleting, setDeleting] = useState(null)
 
-  useEffect(() => {
+  const load = () => {
+    setLoading(true)
     api.get(`/courses/${course.id}/applications`).then(r => {
-      setApps(r.data)
-      // تحميل حالة الحضور المحفوظة
+      setApps(r.data || [])
       const saved = {}
       ;(r.data||[]).forEach(a => { if (a.status === 'attended') saved[a.id] = true })
       setAttendance(saved)
     }).finally(() => setLoading(false))
-  }, [course.id])
+  }
+  useEffect(() => { load() }, [course.id])
 
   const toggleAttendance = async (appId) => {
     const newVal = !attendance[appId]
     setAttendance(p => ({...p, [appId]: newVal}))
+    try { await api.put(`/courses/${course.id}/applications/${appId}`, { status: newVal ? 'attended' : 'pending' }) }
+    catch { setAttendance(p => ({...p, [appId]: !newVal})) }
+  }
+
+  const deleteApp = async (appId) => {
+    if (!confirm('هل تريد حذف هذا الطلب؟')) return
+    setDeleting(appId)
     try {
-      await api.put(`/courses/${course.id}/applications/${appId}`, { status: newVal ? 'attended' : 'pending' })
-    } catch { setAttendance(p => ({...p, [appId]: !newVal})) }
+      await api.delete(`/courses/${course.id}/applications/${appId}`)
+      setApps(p => p.filter(a => a.id !== appId))
+    } catch { alert('حدث خطأ') }
+    setDeleting(null)
+  }
+
+  const exportCSV = () => {
+    const headers = ['#', 'الاسم', 'الهاتف', 'الإيميل', 'الشركة', 'التاريخ', 'الحضور']
+    const rows = filtered.map((a, i) => [
+      i+1, a.fullName, a.phone, a.email||'', a.company||'',
+      fmt(a.createdAt), attendance[a.id] ? 'حضر' : 'غائب'
+    ])
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
+    const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = `${course.title}-طلبات.csv`; a.click()
   }
 
   const fmt = d => d ? new Date(d).toLocaleDateString('ar-IQ',{timeZone:'Asia/Baghdad'}) : '—'
   const sub = a => a.subscriber || {}
 
+  const filtered = apps.filter(a => {
+    if (!search) return true
+    const q = search.toLowerCase()
+    return a.fullName?.toLowerCase().includes(q) || a.phone?.includes(q) || a.email?.toLowerCase().includes(q)
+  })
+
+  const stats = {
+    total: apps.length,
+    attended: Object.values(attendance).filter(Boolean).length,
+    absent: apps.length - Object.values(attendance).filter(Boolean).length
+  }
+
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:12}} onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div style={{background:'#fff',borderRadius:20,width:'100%',maxWidth:900,maxHeight:'92vh',display:'flex',flexDirection:'column',direction:'rtl',fontFamily:'Cairo,sans-serif',overflow:'hidden'}}>
         {/* Header */}
-        <div style={{background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',padding:'16px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
-          <div>
-            <h2 style={{fontSize:16,fontWeight:800,color:'#fff',margin:0}}>📋 طلبات التسجيل</h2>
-            <p style={{fontSize:12,color:'rgba(255,255,255,0.7)',margin:'3px 0 0'}}>{course.title}</p>
+        <div style={{background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',padding:'14px 18px',flexShrink:0}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+            <div>
+              <h2 style={{fontSize:15,fontWeight:800,color:'#fff',margin:0}}>📋 إدارة المسجلين</h2>
+              <p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:'2px 0 0'}}>{course.title}</p>
+            </div>
+            <div style={{display:'flex',gap:6,alignItems:'center'}}>
+              <button onClick={() => window.open(`/badges.html?course=${course.id}`, '_blank')}
+                style={{padding:'5px 10px',background:'rgba(255,199,44,0.2)',color:'#FFC72C',border:'1px solid rgba(255,199,44,0.4)',borderRadius:7,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:10}}>
+                🪪 Badges
+              </button>
+              <button onClick={exportCSV}
+                style={{padding:'5px 10px',background:'rgba(255,255,255,0.12)',color:'#fff',border:'1px solid rgba(255,255,255,0.2)',borderRadius:7,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:10}}>
+                📊 CSV
+              </button>
+              <button onClick={onClose} style={{background:'rgba(255,255,255,0.15)',border:'none',color:'#fff',width:28,height:28,borderRadius:7,cursor:'pointer',fontSize:15,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+            </div>
           </div>
-          <div style={{display:'flex',gap:8,alignItems:'center'}}>
-            <span style={{color:'#FFC72C',fontSize:12,fontWeight:700}}>{apps.length} طلب</span>
-            <button onClick={() => window.open(`/badges.html?course=${course.id}`, '_blank')}
-              style={{padding:'6px 12px',background:'rgba(255,199,44,0.2)',color:'#FFC72C',border:'1.5px solid rgba(255,199,44,0.4)',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>
-              🪪 Badges
-            </button>
-            <button onClick={onClose} style={{background:'rgba(255,255,255,0.15)',border:'none',color:'#fff',width:30,height:30,borderRadius:8,cursor:'pointer',fontSize:16}}>✕</button>
+          {/* إحصائيات */}
+          <div style={{display:'flex',gap:8}}>
+            {[{l:'📚 إجمالي',v:stats.total,c:'#FFC72C'},{l:'✅ حضر',v:stats.attended,c:'#4ade80'},{l:'❌ غائب',v:stats.absent,c:'#f87171'}].map(s=>(
+              <div key={s.l} style={{background:'rgba(255,255,255,0.12)',borderRadius:8,padding:'5px 10px',textAlign:'center',flex:1}}>
+                <div style={{color:s.c,fontWeight:800,fontSize:16}}>{s.v}</div>
+                <div style={{color:'rgba(255,255,255,0.7)',fontSize:10}}>{s.l}</div>
+              </div>
+            ))}
           </div>
+          {/* بحث */}
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 بحث بالاسم أو الهاتف أو الإيميل"
+            style={{width:'100%',marginTop:10,padding:'7px 12px',borderRadius:8,border:'none',fontFamily:'Cairo,sans-serif',fontSize:12,outline:'none',boxSizing:'border-box'}} />
         </div>
 
         {/* Table */}
@@ -213,13 +267,13 @@ function ApplicationsModal({ course, onClose }) {
           : <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
               <thead>
                 <tr style={{background:'#f8fafc',borderBottom:'2px solid #e5e7eb'}}>
-                  {['الاسم','الهاتف','الإيميل','الشركة','التاريخ','الإجراءات'].map(h=>(
-                    <th key={h} style={{padding:'10px 12px',textAlign:'right',fontWeight:800,color:'#374151',fontSize:11}}>{h}</th>
+                  {['#','الاسم','الهاتف','الإيميل','الشركة','التاريخ','الإجراءات'].map(h=>(
+                    <th key={h} style={{padding:'8px 10px',textAlign:'right',fontWeight:800,color:'#374151',fontSize:11}}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {apps.map((a,i) => {
+                {filtered.map((a,i) => {
                   const s = sub(a)
                   const photo = s.profileImage || s.ProfileImage || ''
                   const code = s.subscriberCode || s.SubscriberCode || ''
@@ -238,24 +292,24 @@ function ApplicationsModal({ course, onClose }) {
                           </div>
                         </div>
                       </td>
-                      <td style={{padding:'10px 12px'}}><a href={`tel:${a.phone}`} style={{color:'#2C3E6B',fontWeight:700,direction:'ltr',display:'block'}}>{a.phone}</a></td>
-                      <td style={{padding:'10px 12px',color:'#64748b'}}>{a.email||'—'}</td>
-                      <td style={{padding:'10px 12px',color:'#374151'}}>{a.company||'—'}</td>
-                      <td style={{padding:'10px 12px',color:'#94a3b8',whiteSpace:'nowrap'}}>{fmt(a.createdAt)}</td>
-                      {/* الإجراءات */}
-                      <td style={{padding:'8px 12px'}}>
-                        <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                      <td style={{padding:'8px 10px',color:'#374151',fontWeight:600,fontSize:11}}>{i+1}</td>
+                      <td style={{padding:'8px 10px'}}><a href={`tel:${a.phone}`} style={{color:'#2C3E6B',fontWeight:700,direction:'ltr',display:'block',fontSize:11}}>{a.phone}</a></td>
+                      <td style={{padding:'8px 10px',color:'#64748b',fontSize:11}}>{a.email||'—'}</td>
+                      <td style={{padding:'8px 10px',color:'#374151',fontSize:11}}>{a.company||'—'}</td>
+                      <td style={{padding:'8px 10px',color:'#94a3b8',whiteSpace:'nowrap',fontSize:10}}>{fmt(a.createdAt)}</td>
+                      <td style={{padding:'6px 10px'}}>
+                        <div style={{display:'flex',gap:3,flexWrap:'wrap'}}>
                           <button onClick={() => window.open(`/badges.html?course=${course.id}`, '_blank')}
-                            style={{padding:'4px 8px',background:'#eef2ff',color:'#1e40af',border:'none',borderRadius:6,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:10}}>
-                            🪪 Badge
-                          </button>
-                          <button onClick={() => alert('شهادة — قريباً')}
-                            style={{padding:'4px 8px',background:'#fef3c7',color:'#92400e',border:'none',borderRadius:6,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:10}}>
-                            📜 شهادة
+                            style={{padding:'3px 7px',background:'#eef2ff',color:'#1e40af',border:'none',borderRadius:5,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:10}}>
+                            🪪
                           </button>
                           <button onClick={() => toggleAttendance(a.id)}
-                            style={{padding:'4px 8px',background:isAttended?'#dcfce7':'#f1f5f9',color:isAttended?'#16a34a':'#6b7280',border:`1.5px solid ${isAttended?'#86efac':'#e5e7eb'}`,borderRadius:6,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:10}}>
-                            {isAttended ? '✅ حضر' : '⬜ غائب'}
+                            style={{padding:'3px 7px',background:isAttended?'#dcfce7':'#f1f5f9',color:isAttended?'#16a34a':'#6b7280',border:`1px solid ${isAttended?'#86efac':'#e5e7eb'}`,borderRadius:5,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:10}}>
+                            {isAttended ? '✅' : '⬜'}
+                          </button>
+                          <button onClick={() => deleteApp(a.id)} disabled={deleting===a.id}
+                            style={{padding:'3px 7px',background:'#fee2e2',color:'#ef4444',border:'none',borderRadius:5,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:10}}>
+                            {deleting===a.id ? '⏳' : '🗑️'}
                           </button>
                         </div>
                       </td>

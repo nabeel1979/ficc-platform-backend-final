@@ -145,6 +145,19 @@ public class CoursesController : ControllerBase {
         return Ok(result);
     }
 
+    // DELETE /api/courses/{id}/applications/{appId}
+    [HttpDelete("{id}/applications/{appId}")]
+    [Authorize(Roles = "SuperAdmin,Admin")]
+    public async Task<IActionResult> DeleteApplication(int id, int appId) {
+        var app = await _db.CourseApplications.FirstOrDefaultAsync(a => a.Id == appId && a.CourseId == id);
+        if (app == null) return NotFound();
+        _db.CourseApplications.Remove(app);
+        var course = await _db.EntrepreneurCourses.FindAsync(id);
+        if (course != null && course.CurrentParticipants > 0) course.CurrentParticipants--;
+        await _db.SaveChangesAsync();
+        return Ok(new { message = "تم الحذف" });
+    }
+
     // PUT /api/courses/{id}/applications/{appId} — تحديث حالة الطلب (حضور/غياب)
     [HttpPut("{id}/applications/{appId}")]
     [Authorize(Roles = "SuperAdmin,Admin")]
