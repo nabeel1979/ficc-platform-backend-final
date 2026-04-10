@@ -175,6 +175,22 @@ tbody td { padding: 10px 14px; color: #374151; vertical-align: middle; }
   border-top: 1px solid #e5e7eb; padding-top: 3mm; }
 .back-foot img { height: 7mm; border-radius: 2mm; background: #f3f4f6; padding: 1mm; object-fit: contain; }
 .back-foot .url { font-size: 7pt; color: #1e40af; font-weight: 700; direction: ltr; }
+
+/* نبذة عن الاتحاد */
+.about-box {
+  background: linear-gradient(135deg, #1a2a5e, #2C3E6B);
+  border-radius: 4mm;
+  padding: 5mm;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3mm;
+}
+.about-title { color: #FFC72C; font-size: 9pt; font-weight: 900; border-bottom: 1px solid rgba(255,199,44,0.3); padding-bottom: 2mm; }
+.about-text { color: rgba(255,255,255,0.85); font-size: 7pt; line-height: 1.8; }
+.about-contacts { display: flex; flex-direction: column; gap: 1.5mm; }
+.about-contact { display: flex; align-items: center; gap: 2mm; color: rgba(255,255,255,0.7); font-size: 6.5pt; }
+.about-contact span:first-child { color: #FFC72C; }
 </style>
 </head>
 <body>
@@ -223,6 +239,40 @@ function fmt(d) {
   try { return new Date(d).toLocaleDateString('ar-IQ',{year:'numeric',month:'long',day:'numeric',timeZone:'Asia/Baghdad'}) } catch { return d }
 }
 function qr(url) { return 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=4&color=1e40af&data=' + encodeURIComponent(url) }
+
+function makeBackBody(c, dates) {
+  return `
+  <div class="back-body">
+    <!-- تفاصيل الدورة -->
+    <div class="back-course">
+      <div class="back-course-name">🎓 ${c?.title||''}</div>
+      <span class="back-course-type">TRAINING COURSE</span>
+    </div>
+    <div class="back-details">
+      ${dates?`<div class="back-detail"><span class="icon">📅</span><span>${dates}</span></div>`:''}
+      ${c?.location?`<div class="back-detail"><span class="icon">📍</span><span>${c.location}</span></div>`:''}
+      ${c?.speaker?`<div class="back-detail"><span class="icon">👤</span><span>${c.speaker}</span></div>`:''}
+    </div>
+    <!-- نبذة عن الاتحاد -->
+    <div class="about-box">
+      <div class="about-title">🏛️ اتحاد الغرف التجارية العراقية</div>
+      <div class="about-text">
+        يمثّل اتحاد الغرف التجارية العراقية المظلة التنظيمية لجميع الغرف التجارية في العراق،
+        ويعمل على تطوير القطاع الخاص وتعزيز بيئة الأعمال.
+      </div>
+      <div class="about-contacts">
+        <div class="about-contact"><span>🌐</span><span>www.ficc.iq</span></div>
+        <div class="about-contact"><span>📧</span><span>info@ficc.iq</span></div>
+        <div class="about-contact"><span>📞</span><span>5366 (الرقم المختصر)</span></div>
+      </div>
+    </div>
+    <!-- Footer -->
+    <div class="back-foot">
+      <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
+      <span class="url">www.ficc.iq</span>
+    </div>
+  </div>`
+}
 
 function makePrintPage(app) {
   const sub   = app.subscriber || {}
@@ -277,25 +327,7 @@ function makePrintPage(app) {
         <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
         <span>اتحاد الغرف التجارية العراقية</span>
       </div>
-      <div class="back-body">
-        <div class="back-course">
-          <div class="back-course-name">🎓 ${course?.title||''}</div>
-          <span class="back-course-type">TRAINING COURSE</span>
-        </div>
-        <div class="back-details">
-          ${dates?`<div class="back-detail"><span class="icon">📅</span><span>${dates}</span></div>`:''}
-          ${course?.location?`<div class="back-detail"><span class="icon">📍</span><span>${course.location}</span></div>`:''}
-          ${course?.speaker?`<div class="back-detail"><span class="icon">👤</span><span>${course.speaker}</span></div>`:''}
-        </div>
-        <div class="back-welcome">
-          <div class="wt">🎉 أهلاً وسهلاً بك!</div>
-          <div class="wb">يسعدنا مشاركتك في هذه الدورة التدريبية المميزة.<br>نتمنى لك تجربة تعليمية ثرية ومثمرة.</div>
-        </div>
-        <div class="back-foot">
-          <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
-          <span class="url">www.ficc.iq</span>
-        </div>
-      </div>
+      ${makeBackBody(course, dates)}</div>
     </div></div><!-- /ربع 2 -->
     </div><!-- /الصف العلوي -->
 
@@ -308,25 +340,7 @@ function makePrintPage(app) {
         <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
         <span>اتحاد الغرف التجارية العراقية</span>
       </div>
-      <div class="back-body">
-        <div class="back-course">
-          <div class="back-course-name">🎓 ${course?.title||''}</div>
-          <span class="back-course-type">TRAINING COURSE</span>
-        </div>
-        <div class="back-details">
-          ${dates?`<div class="back-detail"><span class="icon">📅</span><span>${dates}</span></div>`:''}
-          ${course?.location?`<div class="back-detail"><span class="icon">📍</span><span>${course.location}</span></div>`:''}
-          ${course?.speaker?`<div class="back-detail"><span class="icon">👤</span><span>${course.speaker}</span></div>`:''}
-        </div>
-        <div class="back-welcome">
-          <div class="wt">🎉 أهلاً وسهلاً بك!</div>
-          <div class="wb">يسعدنا مشاركتك في هذه الدورة التدريبية المميزة.<br>نتمنى لك تجربة تعليمية ثرية ومثمرة.</div>
-        </div>
-        <div class="back-foot">
-          <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
-          <span class="url">www.ficc.iq</span>
-        </div>
-      </div>
+      ${makeBackBody(course, dates)}
     </div>
     </div><!-- /ربع 3 -->
       <!-- ربع 4: الوجه مقلوب -->
