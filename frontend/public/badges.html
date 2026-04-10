@@ -66,6 +66,31 @@ tbody td { padding: 10px 14px; color: #374151; vertical-align: middle; }
   cursor: pointer; font-family: 'Cairo',sans-serif; font-weight: 700; font-size: 11px; white-space: nowrap; }
 .btn-print-row:hover { background: #2C3E6B; }
 
+/* Print page orientation modes */
+.print-page.portrait-mode {
+  width: 210mm !important;
+  height: 297mm !important;
+  flex-direction: column !important;
+}
+.print-page.landscape-mode {
+  width: 297mm !important;
+  height: 210mm !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+}
+.landscape-mode .print-row {
+  width: 105mm !important;
+  height: 105mm !important;
+  flex-direction: column !important;
+}
+.landscape-mode .print-quarter {
+  width: 105mm !important;
+  height: 105mm !important;
+}
+.landscape-mode .fold-line-separator {
+  display: none !important;
+}
+
 /* Orientation controls */
 .orientation-controls {
   display: flex; gap: 12px; align-items: center; margin-left: 20px;
@@ -334,7 +359,7 @@ function makePrintPage(app) {
   const dates = course?.startDate ? (course.endDate ? `${fmt(course.startDate)} — ${fmt(course.endDate)}` : fmt(course.startDate)) : ''
 
   return `
-  <div class="print-page" id="page-${app.id}">
+  <div class="print-page portrait-mode" id="page-${app.id}">
     <!-- الصف العلوي: وجه يمين + خلف يسار -->
     <div class="print-row">
       <!-- ربع 1: الوجه -->
@@ -469,16 +494,12 @@ function onOrientationChange() {
   document.querySelectorAll('.print-page').forEach(page => {
     if (orientation === 'landscape') {
       // Landscape: 4 badges in a row (A6 size each)
-      page.style.width = '297mm'
-      page.style.height = '210mm'
-      page.style.flexDirection = 'row'
-      page.style.flexWrap = 'wrap'
+      page.classList.add('landscape-mode')
+      page.classList.remove('portrait-mode')
     } else {
       // Portrait: original design with fold line
-      page.style.width = '210mm'
-      page.style.height = '297mm'
-      page.style.flexDirection = 'column'
-      page.style.flexWrap = 'nowrap'
+      page.classList.remove('landscape-mode')
+      page.classList.add('portrait-mode')
     }
   })
 }
