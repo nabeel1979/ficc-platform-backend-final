@@ -590,8 +590,9 @@ function BroadcastModal({ course, onClose }) {
   // فلاتر
   const [channelFilter, setChannelFilter] = useState('all') // all | whatsapp | email | both
   const [searchText, setSearchText] = useState('')
-  const [sectorFilter, setSectorFilter] = useState('')
+  const [selectedSectors, setSelectedSectors] = useState([]) // قطاعات مختارة للفلتر
   const [traderSectorsList, setTraderSectorsList] = useState([])
+  const [showSectors, setShowSectors] = useState(false)
 
   useEffect(() => {
     api.get('/sectors/1/subscribers')
@@ -609,11 +610,11 @@ function BroadcastModal({ course, onClose }) {
     if (channelFilter === 'whatsapp' && !s.phone && !s.whatsApp) return false
     if (channelFilter === 'email' && !s.email) return false
     if (channelFilter === 'both' && (!s.email || (!s.phone && !s.whatsApp))) return false
-    // فلتر القطاع
-    if (sectorFilter) {
+    // فلتر القطاعات — يشمل المتابع إذا عنده أي قطاع من المختارة
+    if (selectedSectors.length > 0) {
       try {
-        const sectors = JSON.parse(s.traderSectors || '[]')
-        if (!sectors.includes(Number(sectorFilter))) return false
+        const sub_sectors = JSON.parse(s.traderSectors || '[]')
+        if (!selectedSectors.some(id => sub_sectors.includes(id))) return false
       } catch { return false }
     }
     // بحث نصي
@@ -699,16 +700,34 @@ function BroadcastModal({ course, onClose }) {
                   </button>
                 ))}
               </div>
-              {/* بحث + قطاع */}
-              <div style={{display:'flex',gap:6}}>
-                <input value={searchText} onChange={e=>setSearchText(e.target.value)}
-                  placeholder="🔍 اسم أو هاتف أو إيميل"
-                  style={{flex:2,padding:'7px 10px',borderRadius:7,border:'1.5px solid #e5e7eb',fontFamily:'Cairo,sans-serif',fontSize:12,outline:'none'}} />
-                <select value={sectorFilter} onChange={e=>setSectorFilter(e.target.value)}
-                  style={{flex:1,padding:'7px 8px',borderRadius:7,border:'1.5px solid #e5e7eb',fontFamily:'Cairo,sans-serif',fontSize:11,outline:'none'}}>
-                  <option value=''>📂 كل القطاعات</option>
-                  {traderSectorsList.map(s=><option key={s.id} value={s.id}>{s.value}</option>)}
-                </select>
+              {/* بحث */}
+              <input value={searchText} onChange={e=>setSearchText(e.target.value)}
+                placeholder="🔍 اسم أو هاتف أو إيميل"
+                style={{width:'100%',padding:'7px 10px',borderRadius:7,border:'1.5px solid #e5e7eb',fontFamily:'Cairo,sans-serif',fontSize:12,outline:'none',boxSizing:'border-box'}} />
+              {/* فلتر القطاعات */}
+              <div>
+                <button onClick={()=>setShowSectors(p=>!p)}
+                  style={{width:'100%',padding:'7px 12px',borderRadius:7,border:'1.5px solid #e5e7eb',background:'#fff',fontFamily:'Cairo,sans-serif',fontSize:12,fontWeight:700,cursor:'pointer',textAlign:'right',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <span>📂 القطاعات {selectedSectors.length>0?`(${selectedSectors.length} مختار)`:''}</span>
+                  <span>{showSectors?'▲':'▼'}</span>
+                </button>
+                {showSectors && (
+                  <div style={{background:'#fff',border:'1.5px solid #e5e7eb',borderRadius:8,padding:10,marginTop:4,maxHeight:200,overflowY:'auto',display:'flex',flexDirection:'column',gap:4}}>
+                    <div style={{display:'flex',gap:6,marginBottom:4}}>
+                      <button onClick={()=>setSelectedSectors(traderSectorsList.map(s=>s.id))}
+                        style={{fontSize:11,padding:'3px 8px',borderRadius:5,border:'none',background:'#e0e7ff',color:'#4338ca',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700}}>✅ كل</button>
+                      <button onClick={()=>setSelectedSectors([])}
+                        style={{fontSize:11,padding:'3px 8px',borderRadius:5,border:'none',background:'#fee2e2',color:'#dc2626',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700}}>✕ مسح</button>
+                    </div>
+                    {traderSectorsList.map(s=>(
+                      <label key={s.id} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 8px',borderRadius:6,background:selectedSectors.includes(s.id)?'#eef2ff':'#fff',cursor:'pointer',fontSize:12}}>
+                        <input type="checkbox" checked={selectedSectors.includes(s.id)}
+                          onChange={()=>setSelectedSectors(p=>p.includes(s.id)?p.filter(x=>x!==s.id):[...p,s.id])} />
+                        {s.value}
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
