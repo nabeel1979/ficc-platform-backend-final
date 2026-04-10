@@ -440,7 +440,7 @@ export default function Subscribe() {
     setLoading(true); setErr('')
     try {
       await api.post(`${API}/subscribers/send-otp`, loginChannel === 'email' ? { email: loginPhone } : { phone: loginPhone })
-      setStep(2); setLoginOtp(''); setMsg('💬 سيصل الرمز عبر الواتساب')
+      setStep(2); setLoginOtp(''); setMsg(loginChannel === 'email' ? '📧 سيصل الرمز عبر البريد الإلكتروني' : '💬 سيصل الرمز عبر الواتساب')
     } catch(e) { setErr(e?.response?.data?.message || 'الرقم غير مسجّل') }
     setLoading(false)
   }
@@ -690,8 +690,10 @@ export default function Subscribe() {
               </div>
               <h2 style={{color:'#fff',fontWeight:'900',fontSize:'20px',margin:'0 0 4px'}}>{form.fullName}</h2>
               <div style={{display:'inline-flex',alignItems:'center',gap:'6px',background:'rgba(255,255,255,0.1)',padding:'5px 14px',borderRadius:'20px',marginTop:'6px'}}>
-                <span style={{fontSize:'14px'}}>📱</span>
-                <span style={{color:'#FFC72C',fontWeight:'700',fontSize:'14px',direction:'ltr'}}>{form.phone}</span>
+                <span style={{fontSize:'14px'}}>🪪</span>
+                <span style={{color:'#FFC72C',fontWeight:'800',fontSize:'14px',letterSpacing:'1px',direction:'ltr'}}>
+                  FICC-{String(subscriber?.id || '').padStart(5,'0')}
+                </span>
               </div>
             </div>
 
