@@ -105,22 +105,25 @@ tbody td { padding: 10px 14px; color: #374151; vertical-align: middle; }
   border: 0.3px dashed #ccc;
 }
 /* المنطقة السفلية الفارغة — تعليمات الطي */
-.fold-instructions {
+.fold-line-separator {
   width: 210mm;
-  height: 148.5mm;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f8fafc;
+  height: 1px;
   border-top: 1.5px dashed #aaa;
+  flex-shrink: 0;
+  position: relative;
 }
-.fold-instructions-text {
-  text-align: center;
-  color: #94a3b8;
-  font-size: 9pt;
-  line-height: 2;
-  direction: rtl;
+.fold-line-separator::before {
+  content: '✂ اطوِ هنا';
+  position: absolute;
+  left: 50%;
+  top: -9px;
+  transform: translateX(-50%);
+  background: #f1f5f9;
+  padding: 0 8px;
+  font-size: 7pt;
+  color: #aaa;
   font-family: 'Cairo', sans-serif;
+  white-space: nowrap;
 }
 
 /* ===== الوجه ===== */
@@ -354,15 +357,52 @@ function makePrintPage(app) {
     </div></div><!-- /ربع 2 -->
     </div><!-- /الصف العلوي -->
 
-    <!-- النصف السفلي — تعليمات الطي -->
-    <div class="fold-instructions">
-      <div class="fold-instructions-text">
-        ✂️ <strong>تعليمات الاستخدام</strong><br>
-        اطوِ الورقة من خط الطي المنقط أعلاه<br>
-        الوجه الأمامي: بطاقة العضو<br>
-        الوجه الخلفي: تفاصيل الدورة<br><br>
-        🏛️ اتحاد الغرف التجارية العراقية<br>
-        <span style="color:#4A6FA5">ficc.iq</span>
+    <!-- خط الطي -->
+    <div class="fold-line-separator"></div>
+    <!-- النصف السفلي = نفس الباجات مقلوبة للطي -->
+    <div class="print-row" style="transform:rotate(180deg);transform-origin:center center">
+      <div class="print-quarter">
+    <div class="back-wrap">
+      <div class="back-top">
+        <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
+        <span>اتحاد الغرف التجارية العراقية</span>
+      </div>
+      \${makeBackBody(course, dates)}
+    </div>
+      </div>
+      <div class="print-quarter">
+    <div style="width:105mm;height:148.5mm;display:flex;flex-direction:column;overflow:hidden">
+      <div class="top-bar">
+        <div style="display:flex;align-items:center;gap:4mm">
+          <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
+          <div class="top-bar-org">
+            <div class="org-ar">اتحاد الغرف التجارية العراقية</div>
+            <div class="org-en">Federation of Iraqi Chambers of Commerce</div>
+          </div>
+        </div>
+        <div class="top-bar-badge">ATTENDEE</div>
+      </div>
+      <div class="photo-section">
+        <div class="photo-circle">
+          \${photo ? \`<img src="\${photo}" onerror="this.parentElement.textContent='👤'">\` : '👤'}
+        </div>
+      </div>
+      <div class="info-section">
+        <div class="type-badge">PARTICIPANT</div>
+        <div class="print-name">\${name}</div>
+        <div class="print-org">اتحاد الغرف التجارية العراقية</div>
+        \${code ? \`<div class="code-box"><span style="font-size:8pt">🪪</span><span class="code-text">\${code}</span></div>\` : ''}
+        <div class="qr-wrap">
+          <img src="\${qr(url)}" alt="QR">
+          <div class="qr-label">امسح لعرض الدورة</div>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <span class="site">ficc.iq</span>
+        <span class="member-badge">✓ عضو مشارك</span>
+        <span>\${new Date().getFullYear()}</span>
+      </div>
+    </div>
       </div>
     </div>
   </div>`
@@ -472,16 +512,26 @@ async function load() {
 load()
 </script>
 
-<!-- A4 size fix -->
-<style>
-html, body { width: 210mm; margin: 0 auto; }
-@media screen { body { width: auto; min-width: 210mm; } }
-</style>
+
 <style>
 @media print {
-  .print-page { page-break-after: always !important; break-after: page !important; }
+  .print-page {
+    page-break-after: always !important;
+    break-after: page !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    margin: 0 !important;
+  }
+  .print-row {
+    width: 210mm !important;
+    height: 148.5mm !important;
+  }
+  .print-quarter {
+    width: 105mm !important;
+    height: 148.5mm !important;
+  }
 }
-@page { size: A4 portrait; margin: 0mm; }
+@page { size: 210mm 297mm; margin: 0; }
 </style>
 </body>
 </html>
