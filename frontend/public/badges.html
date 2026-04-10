@@ -27,42 +27,23 @@ body { font-family: 'Cairo', sans-serif; background: #d1d5db; }
 .btn-mode   { background: rgba(255,255,255,0.1); color: #fff; }
 .btn-mode.active { background: #3b82f6; color: #fff; }
 
-/* A4 صفحة — 4 بطاقات */
+/* A4 صفحة — عضو واحد كامل */
 .a4-page {
   width: 210mm;
   height: 297mm;
   background: #fff;
   margin: 16px auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
   page-break-after: always;
   position: relative;
 }
 
-/* خطوط القص */
-.a4-page::before {
-  content: '';
-  position: absolute;
-  top: 0; bottom: 0; left: 50%;
-  width: 0.3px;
-  background: repeating-linear-gradient(to bottom, #ccc 0, #ccc 4px, transparent 4px, transparent 8px);
-  z-index: 10;
-}
-.a4-page::after {
-  content: '';
-  position: absolute;
-  left: 0; right: 0; top: 50%;
-  height: 0.3px;
-  background: repeating-linear-gradient(to right, #ccc 0, #ccc 4px, transparent 4px, transparent 8px);
-  z-index: 10;
-}
-
-/* البطاقة A6 عمودي */
+/* البطاقة تملأ A4 كاملاً */
 .badge {
-  width: 105mm;
-  height: 148.5mm;
+  width: 210mm;
+  height: 297mm;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -77,11 +58,11 @@ body { font-family: 'Cairo', sans-serif; background: #d1d5db; }
 /* شريط اللون العلوي */
 .badge-top-bar {
   background: linear-gradient(135deg, #1a2a5e 0%, #2C3E6B 100%);
-  height: 20mm;
+  height: 38mm;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 5mm;
+  padding: 0 14mm;
   flex-shrink: 0;
 }
 .badge-top-bar .logo-wrap {
@@ -90,57 +71,57 @@ body { font-family: 'Cairo', sans-serif; background: #d1d5db; }
   gap: 3mm;
 }
 .badge-top-bar img {
-  height: 11mm;
-  border-radius: 2mm;
+  height: 22mm;
+  border-radius: 4mm;
   background: rgba(255,255,255,0.9);
-  padding: 1mm;
+  padding: 2mm;
   object-fit: contain;
 }
 .badge-top-bar .org-name {
   color: #FFC72C;
-  font-size: 7pt;
-  font-weight: 800;
+  font-size: 14pt;
+  font-weight: 900;
   line-height: 1.4;
 }
 .badge-top-bar .org-name-en {
   color: rgba(255,255,255,0.6);
-  font-size: 5pt;
+  font-size: 9pt;
   font-weight: 400;
 }
 .badge-top-bar .event-label {
   color: #fff;
-  font-size: 6pt;
+  font-size: 10pt;
   font-weight: 900;
   text-align: left;
   direction: ltr;
   white-space: nowrap;
-  border: 1.5px solid rgba(255,199,44,0.6);
-  padding: 1mm 3mm;
-  border-radius: 5mm;
+  border: 2px solid rgba(255,199,44,0.6);
+  padding: 2mm 6mm;
+  border-radius: 8mm;
   background: rgba(255,199,44,0.15);
 }
 
 /* منطقة الصورة */
 .badge-photo-section {
-  background: linear-gradient(180deg, #1a2a5e 0%, #fff 40%);
+  background: linear-gradient(180deg, #1a2a5e 0%, #f8fafc 35%);
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 5mm 0 4mm;
+  padding: 10mm 0 8mm;
   flex-shrink: 0;
 }
 .badge-photo-circle {
-  width: 34mm;
-  height: 34mm;
+  width: 65mm;
+  height: 65mm;
   border-radius: 50%;
   overflow: hidden;
-  border: 3px solid #FFC72C;
-  box-shadow: 0 3px 16px rgba(255,199,44,0.3), 0 2px 8px rgba(0,0,0,0.15);
+  border: 5px solid #FFC72C;
+  box-shadow: 0 6px 30px rgba(255,199,44,0.4), 0 4px 16px rgba(0,0,0,0.2);
   background: #e5e7eb;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26pt;
+  font-size: 50pt;
 }
 .badge-photo-circle img {
   width: 100%;
@@ -151,34 +132,34 @@ body { font-family: 'Cairo', sans-serif; background: #d1d5db; }
 /* معلومات العضو */
 .badge-info-section {
   background: #fff;
-  padding: 4mm 6mm;
+  padding: 8mm 14mm;
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2.5mm;
+  gap: 5mm;
 }
 .badge-attendee-type {
   background: linear-gradient(135deg, #FFC72C, #f59e0b);
   color: #1a2a5e;
-  font-size: 6.5pt;
+  font-size: 10pt;
   font-weight: 900;
-  padding: 1.5mm 7mm;
+  padding: 2.5mm 12mm;
   border-radius: 20mm;
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
   text-transform: uppercase;
   font-family: 'Inter', sans-serif;
-  box-shadow: 0 2px 8px rgba(245,158,11,0.4);
+  box-shadow: 0 3px 12px rgba(245,158,11,0.5);
 }
 .badge-name {
-  font-size: 15pt;
+  font-size: 28pt;
   font-weight: 900;
   color: #111827;
   text-align: center;
   line-height: 1.2;
 }
 .badge-org-label {
-  font-size: 7.5pt;
+  font-size: 11pt;
   color: #6b7280;
   text-align: center;
   font-weight: 600;
@@ -189,19 +170,19 @@ body { font-family: 'Cairo', sans-serif; background: #d1d5db; }
 .badge-code-wrap {
   display: flex;
   align-items: center;
-  gap: 2mm;
+  gap: 3mm;
   background: linear-gradient(135deg, #eef2ff, #dbeafe);
-  border: 1.5px solid #1a2a5e;
-  border-radius: 8mm;
-  padding: 2mm 6mm;
+  border: 2px solid #1a2a5e;
+  border-radius: 12mm;
+  padding: 3mm 10mm;
 }
-.badge-code-icon { font-size: 9pt; }
+.badge-code-icon { font-size: 14pt; }
 .badge-code-text {
   font-family: 'Inter', 'Courier New', monospace;
-  font-size: 10pt;
+  font-size: 16pt;
   font-weight: 900;
   color: #1a2a5e;
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
   direction: ltr;
 }
 
@@ -214,11 +195,11 @@ body { font-family: 'Cairo', sans-serif; background: #d1d5db; }
   padding: 2mm 0;
 }
 .badge-qr-section img {
-  width: 22mm;
-  height: 22mm;
-  border-radius: 2mm;
-  border: 1.5px solid #e5e7eb;
-  padding: 1.5mm;
+  width: 38mm;
+  height: 38mm;
+  border-radius: 4mm;
+  border: 2px solid #e5e7eb;
+  padding: 2mm;
   background: #fff;
 }
 .badge-qr-label {
@@ -229,21 +210,21 @@ body { font-family: 'Cairo', sans-serif; background: #d1d5db; }
 /* الشريط السفلي */
 .badge-bottom-bar {
   background: linear-gradient(135deg, #1a2a5e, #2C3E6B);
-  height: 9mm;
+  height: 16mm;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 5mm;
+  padding: 0 14mm;
   flex-shrink: 0;
 }
 .badge-bottom-bar span {
   color: rgba(255,255,255,0.5);
-  font-size: 6pt;
+  font-size: 9pt;
 }
 .badge-bottom-bar .site {
   color: #FFC72C;
   font-weight: 700;
-  font-size: 7pt;
+  font-size: 11pt;
 }
 
 /* ===== الخلف ===== */
@@ -521,26 +502,15 @@ function render() {
 
   let html = ''
 
-  // 4 بطاقات في كل صفحة — وجه
-  for (let i = 0; i < apps.length; i += 4) {
-    const grp = apps.slice(i, i + 4)
-    html += `<div class="a4-page">`
-    grp.forEach(a => html += makeFront(a))
-    for (let j = grp.length; j < 4; j++) html += `<div class="badge"></div>`
-    html += `</div>`
-  }
-
-  // 4 بطاقات في كل صفحة — خلف (ترتيب معكوس للطباعة على الوجهين)
+  // صفحة وجه لكل عضو
+  apps.forEach(app => {
+    html += `<div class="a4-page">${makeFront(app)}</div>`
+  })
+  // صفحة خلف لكل عضو (بعد الوجوه)
   if (showBack) {
-    for (let i = 0; i < apps.length; i += 4) {
-      const grp = apps.slice(i, i + 4)
-      html += `<div class="a4-page">`
-      ;[1,0,3,2].forEach(idx => {
-        if (idx < grp.length) html += makeBack()
-        else html += `<div class="badge"></div>`
-      })
-      html += `</div>`
-    }
+    apps.forEach(() => {
+      html += `<div class="a4-page">${makeBack()}</div>`
+    })
   }
 
   el.innerHTML = html
