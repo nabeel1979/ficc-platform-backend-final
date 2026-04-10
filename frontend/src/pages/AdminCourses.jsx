@@ -587,25 +587,57 @@ function BroadcastModal({ course, onClose }) {
   const [selected, setSelected] = useState([])
   const [sending, setSending] = useState(false)
   const [msg, setMsg] = useState('')
+  // فلاتر
+  const [channelFilter, setChannelFilter] = useState('all') // all | whatsapp | email | both
+  const [searchText, setSearchText] = useState('')
+  const [sectorFilter, setSectorFilter] = useState('')
+  const [traderSectorsList, setTraderSectorsList] = useState([])
 
   useEffect(() => {
-    // الريادة = SectorId 1 (الدورات تخص قسم الريادة)
     api.get('/sectors/1/subscribers')
       .then(r => {
         setSubscribers(r.data || [])
-        setSelected((r.data || []).map(s => s.id)) // الافتراضي: اختيار الكل
+        setSelected((r.data || []).map(s => s.id))
       })
       .finally(() => setLoading(false))
+    api.get('/constants/trader_sector').then(r => setTraderSectorsList(r.data || [])).catch(()=>{})
   }, [])
 
+  // فلترة المتابعين
+  const filtered = subscribers.filter(s => {
+    // فلتر القناة
+    if (channelFilter === 'whatsapp' && !s.phone && !s.whatsApp) return false
+    if (channelFilter === 'email' && !s.email) return false
+    if (channelFilter === 'both' && (!s.email || (!s.phone && !s.whatsApp))) return false
+    // فلتر القطاع
+    if (sectorFilter) {
+      try {
+        const sectors = JSON.parse(s.traderSectors || '[]')
+        if (!sectors.includes(Number(sectorFilter))) return false
+      } catch { return false }
+    }
+    // بحث نصي
+    if (searchText) {
+      const q = searchText.toLowerCase()
+      if (!s.fullName?.toLowerCase().includes(q) &&
+          !s.phone?.includes(q) &&
+          !s.whatsApp?.includes(q) &&
+          !s.email?.toLowerCase().includes(q)) return false
+    }
+    return true
+  })
+
   const toggleAll = () => {
-    if (selected.length === subscribers.length) setSelected([])
-    else setSelected(subscribers.map(s => s.id))
+    if (selected.length === filtered.length && filtered.every(s => selected.includes(s.id)))
+      setSelected(p => p.filter(id => !filtered.map(s=>s.id).includes(id)))
+    else setSelected(p => [...new Set([...p, ...filtered.map(s=>s.id)])])
   }
 
   const toggleOne = (id) => {
     setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
   }
+
+  const allFilteredSelected = filtered.length > 0 && filtered.every(s => selected.includes(s.id))
 
   const send = async () => {
     if (selected.length === 0) return
@@ -641,32 +673,62 @@ function BroadcastModal({ course, onClose }) {
         {loading ? <div style={{textAlign:'center',padding:40,color:'#94a3b8'}}>⏳ جارٍ التحميل...</div> : (
           <>
             {/* إحصائيات */}
-            <div style={{display:'flex',gap:10,marginBottom:16}}>
-              <div style={{flex:1,background:'#eef2ff',borderRadius:12,padding:'12px 16px',textAlign:'center'}}>
-                <div style={{fontSize:22,fontWeight:800,color:'#2C3E6B'}}>{subscribers.length}</div>
+            <div style={{display:'flex',gap:10,marginBottom:12}}>
+              <div style={{flex:1,background:'#eef2ff',borderRadius:12,padding:'10px 16px',textAlign:'center'}}>
+                <div style={{fontSize:20,fontWeight:800,color:'#2C3E6B'}}>{subscribers.length}</div>
                 <div style={{fontSize:11,color:'#64748b'}}>إجمالي المتابعين</div>
               </div>
-              <div style={{flex:1,background:'#f0fdf4',borderRadius:12,padding:'12px 16px',textAlign:'center'}}>
-                <div style={{fontSize:22,fontWeight:800,color:'#059669'}}>{selected.length}</div>
-                <div style={{fontSize:11,color:'#64748b'}}>المحددون للإرسال</div>
+              <div style={{flex:1,background:'#fefce8',borderRadius:12,padding:'10px 16px',textAlign:'center'}}>
+                <div style={{fontSize:20,fontWeight:800,color:'#ca8a04'}}>{filtered.length}</div>
+                <div style={{fontSize:11,color:'#64748b'}}>بعد الفلتر</div>
+              </div>
+              <div style={{flex:1,background:'#f0fdf4',borderRadius:12,padding:'10px 16px',textAlign:'center'}}>
+                <div style={{fontSize:20,fontWeight:800,color:'#059669'}}>{selected.length}</div>
+                <div style={{fontSize:11,color:'#64748b'}}>المحددون</div>
+              </div>
+            </div>
+
+            {/* فلاتر */}
+            <div style={{background:'#f8fafc',borderRadius:12,padding:12,marginBottom:12,display:'flex',flexDirection:'column',gap:8}}>
+              {/* فلتر القناة */}
+              <div style={{display:'flex',gap:6}}>
+                {[{k:'all',l:'الكل'},{k:'whatsapp',l:'📱 هاتف'},{k:'email',l:'📧 إيميل'},{k:'both',l:'✅ كلاهما'}].map(c=>(
+                  <button key={c.k} onClick={()=>setChannelFilter(c.k)}
+                    style={{flex:1,padding:'6px 4px',borderRadius:7,border:`1.5px solid ${channelFilter===c.k?'#2C3E6B':'#e5e7eb'}`,background:channelFilter===c.k?'#2C3E6B':'#fff',color:channelFilter===c.k?'#fff':'#374151',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>
+                    {c.l}
+                  </button>
+                ))}
+              </div>
+              {/* بحث + قطاع */}
+              <div style={{display:'flex',gap:6}}>
+                <input value={searchText} onChange={e=>setSearchText(e.target.value)}
+                  placeholder="🔍 اسم أو هاتف أو إيميل"
+                  style={{flex:2,padding:'7px 10px',borderRadius:7,border:'1.5px solid #e5e7eb',fontFamily:'Cairo,sans-serif',fontSize:12,outline:'none'}} />
+                <select value={sectorFilter} onChange={e=>setSectorFilter(e.target.value)}
+                  style={{flex:1,padding:'7px 8px',borderRadius:7,border:'1.5px solid #e5e7eb',fontFamily:'Cairo,sans-serif',fontSize:11,outline:'none'}}>
+                  <option value=''>📂 كل القطاعات</option>
+                  {traderSectorsList.map(s=><option key={s.id} value={s.id}>{s.value}</option>)}
+                </select>
               </div>
             </div>
 
             {/* اختيار الكل */}
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-              <span style={{fontSize:13,fontWeight:700,color:'#374151'}}>قائمة المتابعين — قسم الريادة</span>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+              <span style={{fontSize:12,fontWeight:700,color:'#374151'}}>النتائج ({filtered.length})</span>
               <button onClick={toggleAll}
-                style={{padding:'6px 14px',borderRadius:8,border:'1.5px solid #2C3E6B',background:selected.length===subscribers.length?'#2C3E6B':'#fff',color:selected.length===subscribers.length?'#fff':'#2C3E6B',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>
-                {selected.length === subscribers.length ? '❌ إلغاء الكل' : '✅ اختيار الكل'}
+                style={{padding:'5px 12px',borderRadius:7,border:'1.5px solid #2C3E6B',background:allFilteredSelected?'#2C3E6B':'#fff',color:allFilteredSelected?'#fff':'#2C3E6B',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>
+                {allFilteredSelected ? '❌ إلغاء الكل' : '✅ اختيار الكل'}
               </button>
             </div>
 
             {/* القائمة */}
             {subscribers.length === 0 ? (
               <div style={{textAlign:'center',padding:30,color:'#94a3b8',fontSize:13}}>لا يوجد متابعون لقسم الريادة بعد</div>
+            ) : filtered.length === 0 ? (
+              <div style={{textAlign:'center',padding:20,color:'#94a3b8',fontSize:12}}>لا توجد نتائج للفلتر المحدد</div>
             ) : (
               <div style={{display:'flex',flexDirection:'column',gap:8,maxHeight:320,overflowY:'auto',marginBottom:16}}>
-                {subscribers.map(s => (
+                {filtered.map(s => (
                   <div key={s.id} onClick={() => toggleOne(s.id)}
                     style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',borderRadius:12,border:`1.5px solid ${selected.includes(s.id)?'#2C3E6B':'#e5e7eb'}`,background:selected.includes(s.id)?'#eef2ff':'#fafafa',cursor:'pointer',transition:'all 0.15s'}}>
                     {/* صورة */}
