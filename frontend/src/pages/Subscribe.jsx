@@ -702,7 +702,7 @@ export default function Subscribe() {
                 {key:'sectors_tab', label:'🏭 القطاعات'},
                 {key:'social',    label:'🌐 التواصل'},
                 {key:'docs',      label:'📄 الوثائق'},
-                {key:'company_docs', label:'🏢 أوراق الشركة'},
+
               ].map(t => (
                 <button key={t.key} onClick={() => setProfileTab(t.key)}
                   style={{padding:'7px 14px',borderRadius:20,border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11,whiteSpace:'nowrap',
@@ -883,6 +883,7 @@ export default function Subscribe() {
                   {key:'tradeIdFront', label:'هوية التجارة — أمام', icon:'🏪', accept:'image/*'},
                   {key:'tradeIdBack', label:'هوية التجارة — خلف', icon:'🏪', accept:'image/*'},
                   {key:'cv', label:'السيفي (CV)', icon:'📋', accept:'application/pdf,image/*'},
+                  {key:'companyReg', label:'أوراق الشركة', icon:'🏢', accept:'application/pdf,image/*'},
                 ].map(doc => {
                   const val = profileForm[doc.key] || subscriber?.[doc.key]
                   const isPdf = val && val.toLowerCase().endsWith('.pdf')
@@ -908,38 +909,7 @@ export default function Subscribe() {
             </div>
             )}
 
-            {/* Tab: أوراق الشركة */}
-            {profileTab === 'company_docs' && (
-            <div style={{background:'#fff',borderRadius:16,padding:20,boxShadow:'0 4px 16px rgba(44,62,107,0.08)',marginBottom:12}}>
-              <h3 style={{color:'#2C3E6B',fontWeight:800,fontSize:15,margin:'0 0 16px',paddingBottom:10,borderBottom:'2px solid #FFC72C'}}>🏢 أوراق الشركة</h3>
-              <p style={{fontSize:12,color:'#64748b',marginBottom:16}}>ارفع ملف PDF واحد يحتوي على جميع أوراق الشركة (تسجيل، غرفة، ضريبية، إلخ)</p>
-              {(() => {
-                const val = profileForm.companyReg || subscriber?.companyReg
-                const isPdf = val && val.toLowerCase().endsWith('.pdf')
-                return (
-                  <div style={{border:'2px dashed #c7d2fe',borderRadius:14,padding:24,textAlign:'center',background:'#f8faff'}}>
-                    <div style={{fontSize:48,marginBottom:8}}>🏢</div>
-                    <div style={{fontWeight:700,fontSize:14,color:'#2C3E6B',marginBottom:4}}>أوراق الشركة</div>
-                    {val ? (
-                      <div style={{marginBottom:16}}>
-                        {isPdf
-                          ? <a href={val} target="_blank" rel="noreferrer" style={{fontSize:13,color:'#dc2626',fontWeight:700,display:'block',marginBottom:8}}>📄 PDF مرفوع — اضغط لفتحه</a>
-                          : <a href={val} target="_blank" rel="noreferrer" style={{fontSize:13,color:'#059669',fontWeight:700,display:'block',marginBottom:8}}>✅ ملف مرفوع — اضغط للعرض</a>
-                        }
-                      </div>
-                    ) : (
-                      <div style={{fontSize:12,color:'#94a3b8',marginBottom:16}}>لم يرفع بعد</div>
-                    )}
-                    <label style={{display:'inline-block',padding:'10px 28px',background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:'#fff',borderRadius:10,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:14}}>
-                      {uploading.companyReg ? '⏳ جاري الرفع...' : val ? '🔄 تحديث الملف' : '📤 رفع PDF'}
-                      <input type="file" accept="application/pdf,image/*" style={{display:'none'}} onChange={e => uploadDoc('companyReg', e.target.files[0])} />
-                    </label>
-                    <div style={{fontSize:11,color:'#94a3b8',marginTop:8}}>PDF أو صورة — الحجم الأقصى 10MB</div>
-                  </div>
-                )
-              })()}
-            </div>
-            )}
+
 
             {/* زر الحفظ الثابت — يعمل من أي tab */}
             {profileMsg && <div style={{background: profileMsg.includes('✅') ? '#f0fdf4' : '#fef2f2', color: profileMsg.includes('✅') ? '#059669' : '#ef4444', padding:'10px 14px', borderRadius:10, fontSize:13, marginBottom:12, fontWeight:700, marginTop:8}}>{profileMsg}</div>}

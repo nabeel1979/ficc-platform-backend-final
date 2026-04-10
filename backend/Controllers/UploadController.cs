@@ -12,7 +12,7 @@ public class UploadController : ControllerBase {
         
         try {
             var ext = Path.GetExtension(file.FileName).ToLower();
-            if (!new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" }.Contains(ext))
+            if (!new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".pdf" }.Contains(ext))
                 return BadRequest("Invalid type");
 
             var dir = Path.Combine("/app/uploads", folder);
