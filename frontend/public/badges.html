@@ -74,13 +74,14 @@ tbody td { padding: 10px 14px; color: #374151; vertical-align: middle; }
   .print-page { display: flex !important; }
 }
 
-/* صفحة A4 كاملة — 4 أرباع */
+/* صفحة A4 — وجه وخلف جنب بعض (نصف صفحة) */
 .print-page {
   display: none;
   width: 210mm;
   height: 297mm;
   background: white;
   flex-direction: column;
+  align-items: flex-start;
   overflow: hidden;
   page-break-after: always;
 }
@@ -91,6 +92,7 @@ tbody td { padding: 10px 14px; color: #374151; vertical-align: middle; }
   display: flex;
   flex-direction: row;
   flex-shrink: 0;
+  overflow: hidden;
 }
 /* ربع واحد = A6 */
 .print-quarter {
@@ -98,13 +100,25 @@ tbody td { padding: 10px 14px; color: #374151; vertical-align: middle; }
   height: 148.5mm;
   flex-shrink: 0;
   overflow: hidden;
-  border: 0.3px dashed #bbb;
-  position: relative;
+  border: 0.3px dashed #ccc;
 }
-/* الصف السفلي — المحتوى الداخلي مقلوب */
-.print-row.flipped .print-quarter > * {
-  transform: rotate(180deg);
-  transform-origin: center center;
+/* المنطقة السفلية الفارغة — تعليمات الطي */
+.fold-instructions {
+  width: 210mm;
+  height: 148.5mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  border-top: 1.5px dashed #aaa;
+}
+.fold-instructions-text {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 9pt;
+  line-height: 2;
+  direction: rtl;
+  font-family: 'Cairo', sans-serif;
 }
 
 /* ===== الوجه ===== */
@@ -338,54 +352,17 @@ function makePrintPage(app) {
     </div></div><!-- /ربع 2 -->
     </div><!-- /الصف العلوي -->
 
-    <!-- الصف السفلي مقلوب: خلف يمين + وجه يسار -->
-    <div class="print-row flipped">
-      <!-- ربع 3: الخلف مقلوب -->
-      <div class="print-quarter">
-    <div class="back-wrap">
-      <div class="back-top">
-        <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
-        <span>اتحاد الغرف التجارية العراقية</span>
-      </div>
-      ${makeBackBody(course, dates)}
-    </div>
-    </div><!-- /ربع 3 -->
-      <!-- ربع 4: الوجه مقلوب -->
-      <div class="print-quarter">
-    <div style="width:105mm;height:148.5mm;display:flex;flex-direction:column;overflow:hidden">
-      <div class="top-bar">
-        <div style="display:flex;align-items:center;gap:4mm">
-          <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
-          <div class="top-bar-org">
-            <div class="org-ar">اتحاد الغرف التجارية العراقية</div>
-            <div class="org-en">Federation of Iraqi Chambers of Commerce</div>
-          </div>
-        </div>
-        <div class="top-bar-badge">ATTENDEE</div>
-      </div>
-      <div class="photo-section">
-        <div class="photo-circle">
-          ${photo ? `<img src="${photo}" onerror="this.parentElement.textContent='👤'">` : '👤'}
-        </div>
-      </div>
-      <div class="info-section">
-        <div class="type-badge">PARTICIPANT</div>
-        <div class="print-name">${name}</div>
-        <div class="print-org">اتحاد الغرف التجارية العراقية</div>
-        ${code ? `<div class="code-box"><span style="font-size:8pt">🪪</span><span class="code-text">${code}</span></div>` : ''}
-        <div class="qr-wrap">
-          <img src="${qr(url)}" alt="QR">
-          <div class="qr-label">امسح لعرض الدورة</div>
-        </div>
-      </div>
-      <div class="bottom-bar">
-        <span class="site">ficc.iq</span>
-        <span class="member-badge">✓ عضو مشارك</span>
-        <span>${new Date().getFullYear()}</span>
+    <!-- النصف السفلي — تعليمات الطي -->
+    <div class="fold-instructions">
+      <div class="fold-instructions-text">
+        ✂️ <strong>تعليمات الاستخدام</strong><br>
+        اطوِ الورقة من خط الطي المنقط أعلاه<br>
+        الوجه الأمامي: بطاقة العضو<br>
+        الوجه الخلفي: تفاصيل الدورة<br><br>
+        🏛️ اتحاد الغرف التجارية العراقية<br>
+        <span style="color:#4A6FA5">ficc.iq</span>
       </div>
     </div>
-    </div><!-- /ربع 4 -->
-    </div><!-- /الصف السفلي -->
   </div>`
 }
 
