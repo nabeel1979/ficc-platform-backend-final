@@ -602,7 +602,8 @@ function DashboardBroadcastModal({ sectorId, itemTitle, itemId, itemImage, onClo
       const r = await api.post('/subscribers/broadcast', {
         subscriberIds: selected,
         message: `📢 ${itemTitle}\n🔗 ${window.location.origin}`,
-        imageUrl: itemImage || null
+        imageUrl: itemImage || null,
+        channel: 'whatsapp'
       })
       setMsg(`✅ تم الإرسال لـ ${r.data?.sent||selected.length} متابع`)
     } catch { setMsg('❌ حدث خطأ') }

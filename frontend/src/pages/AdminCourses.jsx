@@ -646,10 +646,12 @@ function BroadcastModal({ course, onClose }) {
     const targets = subscribers.filter(s => selected.includes(s.id))
     try {
       const fmt = d => new Date(d).toLocaleDateString('ar-IQ',{year:'numeric',month:'short',day:'numeric',timeZone:'Asia/Baghdad'})
+      const channel = channelFilter === 'email' ? 'email' : channelFilter === 'both' ? 'both' : 'whatsapp'
       await api.post('/subscribers/broadcast', {
         subscriberIds: selected,
         message: `📢 دورة جديدة: ${course.title}\n📅 ${fmt(course.startDate)}\n📍 ${course.location||''}\n🔗 ${window.location.origin}/courses/${course.id}`,
-        imageUrl: course.imageUrl || course.bannerUrl || course.thumbnailUrl || null
+        imageUrl: course.imageUrl || course.bannerUrl || course.thumbnailUrl || null,
+        channel
       })
       setMsg(`✅ تم الإرسال لـ ${selected.length} متابع`)
     } catch {

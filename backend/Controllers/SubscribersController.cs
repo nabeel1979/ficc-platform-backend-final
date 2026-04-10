@@ -315,38 +315,52 @@ public class SubscribersController : ControllerBase {
         int sent = 0;
         using var http = new System.Net.Http.HttpClient();
         foreach (var sub in subscribers) {
-            // إرسال واتساب
-            var waRaw = sub.WhatsApp ?? sub.Phone ?? "";
-            if (!string.IsNullOrEmpty(waRaw)) {
-                try {
-                    var wa = waRaw.Replace("+", "").Replace(" ", "");
-                    var to = wa.StartsWith("964") ? $"+{wa}" : wa.StartsWith("0") ? $"+964{wa[1..]}" : $"+{wa}";
+            bool sentThis = false;
 
-                    // إرسال الصورة أولاً إذا موجودة
-                    if (!string.IsNullOrEmpty(dto.ImageUrl)) {
-                        await http.PostAsync(
-                            "https://api.ultramsg.com/instance167281/messages/image",
-                            new System.Net.Http.FormUrlEncodedContent(new[] {
-                                new System.Collections.Generic.KeyValuePair<string,string>("token", "4sfgtwxi8b4l46yq"),
-                                new System.Collections.Generic.KeyValuePair<string,string>("to", to),
-                                new System.Collections.Generic.KeyValuePair<string,string>("image", dto.ImageUrl),
-                                new System.Collections.Generic.KeyValuePair<string,string>("caption", dto.Message)
-                            })
-                        );
-                    } else {
-                        // نص فقط
-                        await http.PostAsync(
-                            "https://api.ultramsg.com/instance167281/messages/chat",
-                            new System.Net.Http.FormUrlEncodedContent(new[] {
-                                new System.Collections.Generic.KeyValuePair<string,string>("token", "4sfgtwxi8b4l46yq"),
-                                new System.Collections.Generic.KeyValuePair<string,string>("to", to),
-                                new System.Collections.Generic.KeyValuePair<string,string>("body", dto.Message)
-                            })
-                        );
-                    }
-                    sent++;
-                } catch { }
+            // إرسال واتساب
+            if (dto.Channel == "whatsapp" || dto.Channel == "both") {
+                var waRaw = sub.WhatsApp ?? sub.Phone ?? "";
+                if (!string.IsNullOrEmpty(waRaw)) {
+                    try {
+                        var wa = waRaw.Replace("+", "").Replace(" ", "");
+                        var to = wa.StartsWith("964") ? $"+{wa}" : wa.StartsWith("0") ? $"+964{wa[1..]}" : $"+{wa}";
+                        if (!string.IsNullOrEmpty(dto.ImageUrl)) {
+                            await http.PostAsync("https://api.ultramsg.com/instance167281/messages/image",
+                                new System.Net.Http.FormUrlEncodedContent(new[] {
+                                    new System.Collections.Generic.KeyValuePair<string,string>("token", "4sfgtwxi8b4l46yq"),
+                                    new System.Collections.Generic.KeyValuePair<string,string>("to", to),
+                                    new System.Collections.Generic.KeyValuePair<string,string>("image", dto.ImageUrl),
+                                    new System.Collections.Generic.KeyValuePair<string,string>("caption", dto.Message)
+                                }));
+                        } else {
+                            await http.PostAsync("https://api.ultramsg.com/instance167281/messages/chat",
+                                new System.Net.Http.FormUrlEncodedContent(new[] {
+                                    new System.Collections.Generic.KeyValuePair<string,string>("token", "4sfgtwxi8b4l46yq"),
+                                    new System.Collections.Generic.KeyValuePair<string,string>("to", to),
+                                    new System.Collections.Generic.KeyValuePair<string,string>("body", dto.Message)
+                                }));
+                        }
+                        sentThis = true;
+                    } catch { }
+                }
             }
+
+            // إرسال إيميل
+            if (dto.Channel == "email" || dto.Channel == "both") {
+                if (!string.IsNullOrEmpty(sub.Email)) {
+                    try {
+                        var htmlBody = $"<div dir='rtl' style='font-family:Cairo,sans-serif;padding:20px;max-width:600px;margin:0 auto'>" +
+                            (string.IsNullOrEmpty(dto.ImageUrl) ? "" : $"<img src='{dto.ImageUrl}' style='width:100%;border-radius:12px;margin-bottom:16px' />") +
+                            $"<p style='font-size:15px;line-height:1.8;color:#1e293b'>{dto.Message.Replace("\n","<br/>")}</p>" +
+                            $"<hr style='border:none;border-top:1px solid #e5e7eb;margin:16px 0'/>" +
+                            $"<p style='font-size:11px;color:#94a3b8'>اتحاد الغرف التجارية العراقية — ficc.iq</p></div>";
+                        await _notify.SendEmail(sub.Email, "📢 تعميم من اتحاد الغرف التجارية العراقية", htmlBody);
+                        sentThis = true;
+                    } catch { }
+                }
+            }
+
+            if (sentThis) sent++;
         }
 
         return Ok(new { message = $"تم الإرسال لـ {sent} متابع", sent, total = subscribers.Count });
@@ -391,7 +405,8 @@ public static class EmailHelper {
 public class BroadcastDto {
     public List<int> SubscriberIds { get; set; } = new();
     public string Message { get; set; } = "";
-    public string? ImageUrl { get; set; } // رابط الصورة (اختياري)
+    public string? ImageUrl { get; set; }
+    public string Channel { get; set; } = "whatsapp"; // whatsapp | email | both
 }
 
 public class SubscriberProfileDto {
