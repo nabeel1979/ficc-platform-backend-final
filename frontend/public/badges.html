@@ -2,6 +2,7 @@
 <html dir="rtl" lang="ar">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=210mm, initial-scale=1.0">
 <title>Badges — FICC</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Inter:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -471,6 +472,11 @@ async function load() {
 load()
 </script>
 
+<!-- A4 size fix -->
+<style>
+html, body { width: 210mm; margin: 0 auto; }
+@media screen { body { width: auto; min-width: 210mm; } }
+</style>
 <style>
 @media print {
   .print-page { page-break-after: always !important; break-after: page !important; }
