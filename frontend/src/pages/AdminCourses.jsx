@@ -971,7 +971,7 @@ export default function AdminCourses() {
                     </button>
                     <button onClick={() => setAppsModal(c)} style={{flex:1,padding:'7px',background:'#e0e7ff',color:'#4338ca',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>📋 الطلبات ({c.currentParticipants})</button>
                     <button onClick={() => setBroadcastModal(c)} style={{flex:1,padding:'7px',background:'#fff7ed',color:'#c2410c',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>📢 تعميم</button>
-                    <button onClick={() => window.open(`/admin/courses/${c.id}/badges`, '_blank')} style={{flex:1,padding:'7px',background:'#f0f9ff',color:'#0369a1',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>🪪 Badges</button>
+                    <button onClick={() => { const t = localStorage.getItem('ficc_token'); window.open(`/badges/course/${c.id}?t=${t}`, '_blank') }} style={{flex:1,padding:'7px',background:'#f0f9ff',color:'#0369a1',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>🪪 Badges</button>
                     <button onClick={() => setModal(c)} style={{padding:'7px 12px',background:'#FFC72C20',color:'#92400e',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>✏️</button>
                     <button onClick={() => del(c.id)} style={{padding:'7px 12px',background:'#fee2e2',color:'#ef4444',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>🗑️</button>
                   </div>

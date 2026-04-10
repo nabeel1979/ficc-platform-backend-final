@@ -134,7 +134,7 @@ export default function App() {
       <Route path="/customs-agents" element={<Layout><CustomsAgents /></Layout>} />
       <Route path="/lawyers" element={<Layout><Lawyers /></Layout>} />
       <Route path="/startups" element={<Layout><Startups /></Layout>} />
-      <Route path="/admin/courses/:courseId/badges" element={<PrivateRoute><CourseBadge /></PrivateRoute>} />
+      <Route path="/badges/course/:courseId" element={<PrivateRoute><CourseBadge /></PrivateRoute>} />
       <Route path="/courses/:id" element={<Layout><CourseDetail /></Layout>} />
       <Route path="/track-request" element={<TrackRequest />} />
       <Route path="/join" element={<JoinPage />} />
