@@ -365,7 +365,7 @@ public class SubscribersController : ControllerBase {
   </div>
   {imageTag}
   {(bodyLines.Length > 0 ? $"<div style='background:#fff;border-radius:12px;padding:16px;margin-bottom:12px'><p style='color:#374151;font-size:14px;line-height:2;margin:0'>{bodyLines}</p></div>" : "")}
-  <a href='https://ficc.iq' style='display:block;text-align:center;background:linear-gradient(135deg,#2C3E6B,#4A6FA5);color:#fff;padding:13px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;margin-bottom:12px'>زيارة الموقع ←</a>
+  <a href='{(string.IsNullOrEmpty(dto.ItemUrl) ? "https://ficc.iq" : dto.ItemUrl)}' style='display:block;text-align:center;background:linear-gradient(135deg,#2C3E6B,#4A6FA5);color:#fff;padding:13px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;margin-bottom:12px'>عرض التفاصيل ←</a>
   <p style='color:#aaa;font-size:11px;text-align:center;margin:0'>
     <a href='https://ficc.iq' style='color:#4A6FA5;text-decoration:none'>ficc.iq</a> — اتحاد الغرف التجارية العراقية
   </p>
@@ -422,6 +422,7 @@ public class BroadcastDto {
     public List<int> SubscriberIds { get; set; } = new();
     public string Message { get; set; } = "";
     public string? ImageUrl { get; set; }
+    public string? ItemUrl { get; set; } // رابط الدورة/الخبر
     public string Channel { get; set; } = "whatsapp"; // whatsapp | email | both
 }
 

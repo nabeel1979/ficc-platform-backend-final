@@ -651,6 +651,7 @@ function BroadcastModal({ course, onClose }) {
         subscriberIds: selected,
         message: `📢 دورة جديدة: ${course.title}\n📅 ${fmt(course.startDate)}\n📍 ${course.location||''}\n🔗 ${window.location.origin}/courses/${course.id}`,
         imageUrl: course.imageUrl || course.bannerUrl || course.thumbnailUrl || null,
+        itemUrl: `${window.location.origin}/startups/${course.id}`,
         channel
       })
       setMsg(`✅ تم الإرسال لـ ${selected.length} متابع`)

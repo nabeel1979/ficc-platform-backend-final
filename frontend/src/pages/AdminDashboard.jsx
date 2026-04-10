@@ -603,6 +603,7 @@ function DashboardBroadcastModal({ sectorId, itemTitle, itemId, itemImage, onClo
         subscriberIds: selected,
         message: `📢 ${itemTitle}\n🔗 ${window.location.origin}`,
         imageUrl: itemImage || null,
+        itemUrl: itemId ? `${window.location.origin}/startups/${itemId}` : window.location.origin,
         channel: 'whatsapp'
       })
       setMsg(`✅ تم الإرسال لـ ${r.data?.sent||selected.length} متابع`)
