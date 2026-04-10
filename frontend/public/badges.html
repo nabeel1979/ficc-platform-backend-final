@@ -66,6 +66,17 @@ tbody td { padding: 10px 14px; color: #374151; vertical-align: middle; }
   cursor: pointer; font-family: 'Cairo',sans-serif; font-weight: 700; font-size: 11px; white-space: nowrap; }
 .btn-print-row:hover { background: #2C3E6B; }
 
+/* Orientation controls */
+.orientation-controls {
+  display: flex; gap: 12px; align-items: center; margin-left: 20px;
+  padding: 0 16px; border-left: 1px solid rgba(255,255,255,0.2);
+}
+.orientation-label { color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 700; }
+.radio-group { display: flex; gap: 16px; }
+.radio-item { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.radio-item input[type="radio"] { cursor: pointer; accent-color: #FFC72C; }
+.radio-item label { color: rgba(255,255,255,0.8); font-size: 12px; cursor: pointer; }
+
 #status { text-align:center; padding:60px; font-size:16px; color:#666; }
 
 /* ===== صفحة الطباعة ===== */
@@ -223,6 +234,21 @@ tbody td { padding: 10px 14px; color: #374151; vertical-align: middle; }
 <div class="toolbar">
   <h1 id="title">🪪 Badges — FICC</h1>
   <span class="info-text" id="count"></span>
+  
+  <div class="orientation-controls">
+    <span class="orientation-label">التخطيط:</span>
+    <div class="radio-group">
+      <div class="radio-item">
+        <input type="radio" id="portrait" name="orientation" value="portrait" checked>
+        <label for="portrait">عمودي (Landscape)</label>
+      </div>
+      <div class="radio-item">
+        <input type="radio" id="landscape" name="orientation" value="landscape">
+        <label for="landscape">أفقي (Portrait)</label>
+      </div>
+    </div>
+  </div>
+  
   <button class="btn btn-print-all" onclick="printAll()">🖨️ طباعة الكل</button>
   <button class="btn btn-close" onclick="window.close()">✕ إغلاق</button>
 </div>
@@ -434,6 +460,29 @@ function printAll() {
   }, 800)
 }
 
+function getOrientation() {
+  return document.querySelector('input[name="orientation"]:checked')?.value || 'portrait'
+}
+
+function onOrientationChange() {
+  const orientation = getOrientation()
+  document.querySelectorAll('.print-page').forEach(page => {
+    if (orientation === 'landscape') {
+      // Landscape: 4 badges in a row (A6 size each)
+      page.style.width = '297mm'
+      page.style.height = '210mm'
+      page.style.flexDirection = 'row'
+      page.style.flexWrap = 'wrap'
+    } else {
+      // Portrait: original design with fold line
+      page.style.width = '210mm'
+      page.style.height = '297mm'
+      page.style.flexDirection = 'column'
+      page.style.flexWrap = 'nowrap'
+    }
+  })
+}
+
 async function load() {
   try {
     const [cr, ar] = await Promise.all([
@@ -510,6 +559,11 @@ async function load() {
 }
 
 load()
+
+// Listen to orientation changes
+document.querySelectorAll('input[name="orientation"]').forEach(radio => {
+  radio.addEventListener('change', onOrientationChange)
+})
 </script>
 
 
