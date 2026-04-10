@@ -158,9 +158,10 @@ public class SubscribersController : ControllerBase {
         // البحث بالهاتف أو الإيميل
         Subscriber? sub = null;
         if (!string.IsNullOrEmpty(dto.Email)) {
-            var (blocked, blockMsg) = await CheckRateLimit(dto.Email, "email-login");
+            var emailLower = dto.Email.Trim().ToLower();
+            var (blocked, blockMsg) = await CheckRateLimit(emailLower, "email-login");
             if (blocked) return StatusCode(429, new { message = blockMsg });
-            sub = await _db.Subscribers.FirstOrDefaultAsync(s => s.Email == dto.Email);
+            sub = await _db.Subscribers.FirstOrDefaultAsync(s => s.Email != null && s.Email.ToLower() == emailLower);
             if (sub == null) return NotFound(new { message = "هذا البريد الإلكتروني غير مسجّل" });
         } else {
             var phone = dto.Phone ?? "";
@@ -209,7 +210,8 @@ public class SubscribersController : ControllerBase {
     public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpLoginDto dto) {
         Subscriber? sub = null;
         if (!string.IsNullOrEmpty(dto.Email)) {
-            sub = await _db.Subscribers.FirstOrDefaultAsync(s => s.Email == dto.Email);
+            var emailLower = dto.Email.Trim().ToLower();
+            sub = await _db.Subscribers.FirstOrDefaultAsync(s => s.Email != null && s.Email.ToLower() == emailLower);
         } else {
             var phone = dto.Phone ?? "";
             var phone07 = phone.StartsWith("+964") ? "0" + phone[4..] : phone.StartsWith("964") ? "0" + phone[3..] : phone;
