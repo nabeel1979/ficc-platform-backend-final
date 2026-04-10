@@ -393,6 +393,8 @@ public class Subscriber {
     public string? TradeIdBack { get; set; }
     public string? CV { get; set; }
 
+    public string? SubscriberCode { get; set; } // كود فريد مثل FICC-K7X2M
+
     // أوراق الشركة
     public string? CompanyReg { get; set; }    // شهادة تسجيل الشركة
     public string? ChamberCert { get; set; }   // شهادة اتحاد الغرف

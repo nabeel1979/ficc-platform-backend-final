@@ -24,15 +24,25 @@ public class SubscribersController : ControllerBase {
         var existing = await _db.Subscribers.FirstOrDefaultAsync(s => s.Phone == dto.Phone);
         if (existing != null) return BadRequest(new { message = "هذا الرقم مسجّل مسبقاً" });
 
+        // توليد كود فريد
+        string GenerateCode() {
+            const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            var rng = new Random();
+            return "FICC-" + new string(Enumerable.Repeat(chars, 6).Select(s => s[rng.Next(s.Length)]).ToArray());
+        }
+        string code;
+        do { code = GenerateCode(); } while (await _db.Subscribers.AnyAsync(s => s.SubscriberCode == code));
+
         var sub = new Subscriber {
-            FullName  = dto.FullName,
-            Phone     = dto.Phone,
-            WhatsApp  = dto.WhatsApp ?? dto.Phone,
-            Email     = dto.Email,
-            Sectors   = dto.Sectors,
-            NotifyBy  = dto.NotifyBy,
-            IsActive  = true,
-            CreatedAt = DateTime.UtcNow
+            FullName       = dto.FullName,
+            Phone          = dto.Phone,
+            WhatsApp       = dto.WhatsApp ?? dto.Phone,
+            Email          = dto.Email,
+            Sectors        = dto.Sectors,
+            NotifyBy       = dto.NotifyBy,
+            IsActive       = true,
+            SubscriberCode = code,
+            CreatedAt      = DateTime.UtcNow
         };
         _db.Subscribers.Add(sub);
         await _db.SaveChangesAsync();
