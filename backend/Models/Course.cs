@@ -34,6 +34,7 @@ public class CourseApplication {
     public string? Company { get; set; }
     public string? Motivation { get; set; }
     public string Status { get; set; } = "pending";
+    public int? SubscriberId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 

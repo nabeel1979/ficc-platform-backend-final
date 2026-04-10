@@ -81,10 +81,13 @@ public class CoursesController : ControllerBase {
         var existing = await _db.CourseApplications.AnyAsync(a => a.CourseId == id && a.Phone == dto.Phone);
         if (existing) return BadRequest(new { message = "لقد قدّمت طلباً مسبقاً لهذه الدورة" });
 
+        // جلب المتابع بالهاتف
+        var subscriber = await _db.Subscribers.FirstOrDefaultAsync(s => s.Phone == dto.Phone || s.WhatsApp == dto.Phone);
         var app = new CourseApplication {
             CourseId = id, FullName = dto.FullName, Phone = dto.Phone,
             Email = dto.Email, Company = dto.Company, Motivation = dto.Motivation,
-            Status = "pending", CreatedAt = DateTime.UtcNow
+            Status = "pending", SubscriberId = subscriber?.Id,
+            CreatedAt = DateTime.UtcNow
         };
         _db.CourseApplications.Add(app);
         course.CurrentParticipants++;
@@ -96,7 +99,24 @@ public class CoursesController : ControllerBase {
     [Authorize(Roles = "SuperAdmin,Admin")]
     public async Task<IActionResult> GetApplications(int id) {
         var apps = await _db.CourseApplications.Where(a => a.CourseId == id).OrderByDescending(a => a.CreatedAt).ToListAsync();
-        return Ok(apps);
+        // أضيف بيانات المتابع لكل طلب
+        var result = new System.Collections.Generic.List<object>();
+        foreach (var app in apps) {
+            Subscriber? sub = null;
+            if (app.SubscriberId.HasValue)
+                sub = await _db.Subscribers.FindAsync(app.SubscriberId.Value);
+            else if (!string.IsNullOrEmpty(app.Phone))
+                sub = await _db.Subscribers.FirstOrDefaultAsync(s => s.Phone == app.Phone || s.WhatsApp == app.Phone);
+            result.Add(new {
+                app.Id, app.CourseId, app.FullName, app.Phone, app.Email,
+                app.Company, app.Motivation, app.Status, app.CreatedAt, app.SubscriberId,
+                subscriber = sub == null ? null : new {
+                    sub.Id, sub.FullName, sub.Phone, sub.WhatsApp, sub.Email,
+                    sub.ProfileImage, sub.SubscriberCode, sub.CreatedAt
+                }
+            });
+        }
+        return Ok(result);
     }
 
     private string GetStatus(DateTime start, DateTime end) {
@@ -113,4 +133,5 @@ public class CourseApplicationDto {
     public string? Email { get; set; }
     public string? Company { get; set; }
     public string? Motivation { get; set; }
+    public int? SubscriberId { get; set; }
 }
