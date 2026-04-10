@@ -235,10 +235,6 @@ function ApplicationsModal({ course, onClose }) {
               <p style={{fontSize:11,color:'rgba(255,255,255,0.7)',margin:'2px 0 0'}}>{course.title}</p>
             </div>
             <div style={{display:'flex',gap:6,alignItems:'center'}}>
-              <button onClick={() => window.open(`/badges.html?course=${course.id}`, '_blank')}
-                style={{padding:'6px 12px',background:'#FFC72C',color:'#1a2a5e',border:'none',borderRadius:7,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:800,fontSize:11,boxShadow:'0 2px 8px rgba(255,199,44,0.3)'}}>
-                🪪 بطاقات
-              </button>
               <button onClick={exportCSV}
                 style={{padding:'5px 10px',background:'rgba(255,255,255,0.12)',color:'#fff',border:'1px solid rgba(255,255,255,0.2)',borderRadius:7,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:10}}>
                 📊 CSV
@@ -299,10 +295,6 @@ function ApplicationsModal({ course, onClose }) {
                       <td style={{padding:'8px 10px',color:'#94a3b8',whiteSpace:'nowrap',fontSize:10}}>{fmt(a.createdAt)}</td>
                       <td style={{padding:'6px 10px'}}>
                         <div style={{display:'flex',gap:3,flexWrap:'wrap'}}>
-                          <button onClick={() => window.open(`/badges.html?course=${course.id}&member=${a.id}`, '_blank')}
-                            style={{padding:'3px 7px',background:'#eef2ff',color:'#1e40af',border:'none',borderRadius:5,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:10}}>
-                            🪪
-                          </button>
                           <button onClick={() => toggleAttendance(a.id)}
                             style={{padding:'3px 7px',background:isAttended?'#dcfce7':'#f1f5f9',color:isAttended?'#16a34a':'#6b7280',border:`1px solid ${isAttended?'#86efac':'#e5e7eb'}`,borderRadius:5,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:10}}>
                             {isAttended ? '✅' : '⬜'}
@@ -1095,7 +1087,6 @@ export default function AdminCourses() {
                     </button>
                     <button onClick={() => setAppsModal(c)} style={{flex:1,padding:'7px',background:'#e0e7ff',color:'#4338ca',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>📋 الطلبات ({c.currentParticipants})</button>
                     <button onClick={() => setBroadcastModal(c)} style={{flex:1,padding:'7px',background:'#fff7ed',color:'#c2410c',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>📢 تعميم</button>
-                    <button onClick={() => window.open(`/badges.html?course=${c.id}`, '_blank')} style={{flex:1,padding:'7px',background:'#FFC72C',color:'#1a2a5e',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:800,fontSize:11}}>🪪 بطاقات</button>
                     <button onClick={() => setModal(c)} style={{padding:'7px 12px',background:'#FFC72C20',color:'#92400e',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>✏️</button>
                     <button onClick={() => del(c.id)} style={{padding:'7px 12px',background:'#fee2e2',color:'#ef4444',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>🗑️</button>
                   </div>
