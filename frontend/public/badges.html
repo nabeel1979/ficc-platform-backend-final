@@ -3,14 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <title>Badges — FICC</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Cairo', sans-serif; background: #e8ecf0; direction: rtl; }
+body { font-family: 'Cairo', sans-serif; background: #d1d5db; }
 
-/* شريط التحكم */
 .toolbar {
-  background: #1a2a5e;
+  background: #111827;
   padding: 10px 20px;
   display: flex;
   gap: 10px;
@@ -21,17 +20,17 @@ body { font-family: 'Cairo', sans-serif; background: #e8ecf0; direction: rtl; }
   flex-wrap: wrap;
 }
 .toolbar h1 { color: #FFC72C; font-size: 14px; font-weight: 800; }
-.toolbar .info { color: rgba(255,255,255,0.6); font-size: 11px; }
-.btn { padding: 7px 16px; border: none; border-radius: 7px; cursor: pointer; font-family: 'Cairo', sans-serif; font-weight: 800; font-size: 12px; }
-.btn-print { background: #FFC72C; color: #1a2a5e; margin-right: auto; }
-.btn-close  { background: rgba(255,255,255,0.12); color: #fff; }
-.btn-mode   { background: rgba(255,255,255,0.12); color: #fff; }
-.btn-mode.active { background: #FFC72C; color: #1a2a5e; }
+.info { color: rgba(255,255,255,0.5); font-size: 11px; }
+.btn { padding: 7px 16px; border: none; border-radius: 6px; cursor: pointer; font-family: 'Cairo',sans-serif; font-weight: 800; font-size: 12px; }
+.btn-print { background: #FFC72C; color: #111; margin-right: auto; }
+.btn-close  { background: rgba(255,255,255,0.1); color: #fff; }
+.btn-mode   { background: rgba(255,255,255,0.1); color: #fff; }
+.btn-mode.active { background: #3b82f6; color: #fff; }
 
-/* ورقة A4 */
+/* A4 صفحة */
 .a4-page {
   width: 210mm;
-  height: 297mm;
+  min-height: 297mm;
   background: #fff;
   margin: 16px auto;
   display: grid;
@@ -39,245 +38,325 @@ body { font-family: 'Cairo', sans-serif; background: #e8ecf0; direction: rtl; }
   grid-template-rows: 1fr 1fr;
   gap: 0;
   page-break-after: always;
-  overflow: hidden;
-}
-
-/* بطاقة A6 */
-.card {
-  width: 105mm;
-  height: 148mm;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* ===== FRONT ===== */
-.card-front {
-  background: linear-gradient(170deg, #1a2a5e 0%, #2C3E6B 50%, #3d5a9a 100%);
-  color: #fff;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10mm 8mm;
   position: relative;
 }
-/* دوائر زخرفية */
-.card-front::before {
+
+/* خط الفصل */
+.a4-page::before {
   content: '';
   position: absolute;
-  top: -20mm; right: -15mm;
-  width: 60mm; height: 60mm;
-  border-radius: 50%;
-  background: rgba(255,199,44,0.08);
+  top: 0; bottom: 0; left: 50%;
+  width: 0.5px;
+  background: #d1d5db;
+  z-index: 10;
 }
-.card-front::after {
+.a4-page::after {
   content: '';
   position: absolute;
-  bottom: -15mm; left: -10mm;
-  width: 50mm; height: 50mm;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.05);
+  left: 0; right: 0; top: 50%;
+  height: 0.5px;
+  background: #d1d5db;
+  z-index: 10;
 }
 
-.front-header {
+/* البطاقة A6 عمودي */
+.badge {
+  width: 105mm;
+  height: 148.5mm;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 4mm;
-  z-index: 1;
-}
-.front-header img.logo {
-  width: 18mm; height: 18mm;
-  border-radius: 4mm;
-  background: #fff;
-  padding: 1.5mm;
-  object-fit: contain;
-}
-.front-header .org-ar {
-  color: #FFC72C;
-  font-weight: 900;
-  font-size: 9pt;
-  text-align: center;
-  line-height: 1.4;
-}
-.front-header .org-en {
-  color: rgba(255,255,255,0.55);
-  font-size: 6pt;
-  text-align: center;
-}
-
-.front-photo-wrap {
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4mm;
-}
-.front-photo {
-  width: 32mm; height: 32mm;
-  border-radius: 50%;
   overflow: hidden;
-  border: 3px solid #FFC72C;
-  background: rgba(255,255,255,0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24pt;
-}
-.front-photo img { width: 100%; height: 100%; object-fit: cover; }
-
-.front-name {
-  font-size: 13pt;
-  font-weight: 900;
-  text-align: center;
-  line-height: 1.3;
-  color: #fff;
-}
-.front-code {
-  font-size: 8pt;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  color: #FFC72C;
-  background: rgba(255,199,44,0.15);
-  padding: 2mm 6mm;
-  border-radius: 10mm;
-  border: 1px solid rgba(255,199,44,0.3);
+  position: relative;
 }
 
-.front-qr {
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2mm;
-}
-.front-qr img {
-  width: 22mm; height: 22mm;
+/* ===== الوجه ===== */
+.badge-front {
   background: #fff;
-  border-radius: 3mm;
-  padding: 1.5mm;
-  display: block;
 }
-.front-qr-label {
-  font-size: 5.5pt;
-  color: rgba(255,255,255,0.5);
-}
-.front-footer {
+
+/* شريط اللون العلوي */
+.badge-top-bar {
+  background: linear-gradient(135deg, #1a2a5e 0%, #1e40af 100%);
+  height: 18mm;
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  width: 100%;
-  z-index: 1;
-  font-size: 5.5pt;
-  color: rgba(255,255,255,0.4);
-  border-top: 1px solid rgba(255,255,255,0.1);
-  padding-top: 3mm;
+  padding: 0 6mm;
+  flex-shrink: 0;
 }
-.front-footer .member-badge {
-  color: #FFC72C;
-  font-weight: 700;
-}
-
-/* ===== BACK ===== */
-.card-back {
-  background: #fff;
-  border: 0.5mm solid #e5e7eb;
-  padding: 8mm;
-  align-items: stretch;
-  justify-content: flex-start;
-  gap: 4mm;
-}
-
-.back-header {
-  background: linear-gradient(135deg, #1a2a5e, #2C3E6B);
-  border-radius: 4mm;
-  padding: 5mm;
+.badge-top-bar .logo-wrap {
   display: flex;
   align-items: center;
   gap: 3mm;
 }
-.back-header img {
-  width: 10mm; height: 10mm;
+.badge-top-bar img {
+  height: 10mm;
   border-radius: 2mm;
-  background: #fff;
+  background: rgba(255,255,255,0.9);
   padding: 1mm;
   object-fit: contain;
 }
-.back-header .org {
-  color: #FFC72C;
-  font-weight: 900;
-  font-size: 7.5pt;
-}
-.back-header .org-en {
-  color: rgba(255,255,255,0.5);
-  font-size: 5pt;
-}
-
-.back-course-title {
-  font-size: 12pt;
-  font-weight: 900;
-  color: #1a2a5e;
+.badge-top-bar .org-name {
+  color: #fff;
+  font-size: 6.5pt;
+  font-weight: 800;
   line-height: 1.4;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 3mm;
+}
+.badge-top-bar .org-name-en {
+  color: rgba(255,255,255,0.55);
+  font-size: 4.5pt;
+  font-weight: 400;
+}
+.badge-top-bar .event-label {
+  color: #FFC72C;
+  font-size: 6pt;
+  font-weight: 900;
+  text-align: left;
+  direction: ltr;
+  white-space: nowrap;
 }
 
-.back-details {
+/* منطقة الصورة */
+.badge-photo-section {
+  background: #f8fafc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 6mm 0 4mm;
+  flex-shrink: 0;
+}
+.badge-photo-circle {
+  width: 36mm;
+  height: 36mm;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #1e40af;
+  box-shadow: 0 4px 20px rgba(30,64,175,0.25);
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28pt;
+}
+.badge-photo-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* معلومات العضو */
+.badge-info-section {
+  background: #fff;
+  padding: 4mm 6mm;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2mm;
-  flex: 1;
+  align-items: center;
+  gap: 2.5mm;
 }
-.back-detail-row {
+.badge-attendee-type {
+  background: #1e40af;
+  color: #fff;
+  font-size: 6.5pt;
+  font-weight: 900;
+  padding: 1.5mm 8mm;
+  border-radius: 20mm;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-family: 'Inter', sans-serif;
+}
+.badge-name {
+  font-size: 16pt;
+  font-weight: 900;
+  color: #111827;
+  text-align: center;
+  line-height: 1.2;
+}
+.badge-org-label {
+  font-size: 8pt;
+  color: #6b7280;
+  text-align: center;
+  font-weight: 600;
+  direction: rtl;
+}
+
+/* الكود */
+.badge-code-wrap {
+  display: flex;
+  align-items: center;
+  gap: 2mm;
+  background: #f0f4ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 8mm;
+  padding: 2mm 6mm;
+}
+.badge-code-icon { font-size: 9pt; }
+.badge-code-text {
+  font-family: 'Inter', 'Courier New', monospace;
+  font-size: 10pt;
+  font-weight: 800;
+  color: #1e40af;
+  letter-spacing: 1px;
+  direction: ltr;
+}
+
+/* QR */
+.badge-qr-section {
+  display: flex;
+  justify-content: center;
+  padding: 2mm 0;
+}
+.badge-qr-section img {
+  width: 20mm;
+  height: 20mm;
+  border-radius: 2mm;
+}
+
+/* الشريط السفلي */
+.badge-bottom-bar {
+  background: #111827;
+  height: 8mm;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 5mm;
+  flex-shrink: 0;
+}
+.badge-bottom-bar span {
+  color: rgba(255,255,255,0.5);
+  font-size: 5.5pt;
+}
+.badge-bottom-bar .site {
+  color: #FFC72C;
+  font-weight: 700;
+}
+
+/* ===== الخلف ===== */
+.badge-back {
+  background: #fff;
+}
+
+.back-color-bar {
+  background: linear-gradient(135deg, #1a2a5e, #1e40af);
+  height: 5mm;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.back-content {
+  flex: 1;
+  padding: 6mm;
+  display: flex;
+  flex-direction: column;
+  gap: 4mm;
+  overflow: hidden;
+}
+
+.back-event-header {
+  text-align: center;
+  border-bottom: 1.5px solid #e5e7eb;
+  padding-bottom: 4mm;
+}
+.back-event-header .event-title {
+  font-size: 12pt;
+  font-weight: 900;
+  color: #111827;
+  line-height: 1.3;
+}
+.back-event-header .event-type {
+  display: inline-block;
+  margin-top: 2mm;
+  background: #1e40af;
+  color: #fff;
+  font-size: 6pt;
+  font-weight: 900;
+  padding: 1mm 5mm;
+  border-radius: 10mm;
+  letter-spacing: 1px;
+}
+
+.back-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5mm;
+}
+.back-detail-item {
   display: flex;
   align-items: flex-start;
-  gap: 2mm;
+  gap: 3mm;
   font-size: 8.5pt;
   color: #374151;
   line-height: 1.5;
 }
-.back-detail-icon { flex-shrink: 0; font-size: 9pt; }
+.detail-icon {
+  width: 5mm;
+  text-align: center;
+  flex-shrink: 0;
+  font-size: 9pt;
+}
 
-.back-welcome {
-  background: linear-gradient(135deg, #FFC72C20, #FFC72C10);
-  border: 1px solid #FFC72C50;
+.back-welcome-box {
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border-right: 3px solid #1e40af;
   border-radius: 3mm;
   padding: 4mm;
-  text-align: center;
-  font-size: 8pt;
-  color: #92400e;
-  line-height: 1.6;
+  flex: 1;
 }
-.back-welcome strong { color: #1a2a5e; display: block; font-size: 9pt; margin-bottom: 1mm; }
+.back-welcome-box .welcome-title {
+  font-size: 9pt;
+  font-weight: 800;
+  color: #1e40af;
+  margin-bottom: 2mm;
+}
+.back-welcome-box .welcome-text {
+  font-size: 7.5pt;
+  color: #374151;
+  line-height: 1.7;
+}
 
-.back-footer {
+.back-logos {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   border-top: 1px solid #e5e7eb;
   padding-top: 3mm;
-  font-size: 6pt;
-  color: #94a3b8;
 }
-.back-website { color: #4A6FA5; font-weight: 700; }
-
-/* Separator بين البطاقات */
-.a4-page .card { border: 0.25mm dashed #ddd; }
-
-#status {
-  text-align: center;
-  padding: 60px;
-  font-size: 16px;
-  color: #666;
+.back-logos img {
+  height: 8mm;
+  border-radius: 1.5mm;
+  background: #f3f4f6;
+  padding: 1mm;
+  object-fit: contain;
 }
+.back-logos .site-url {
+  font-size: 7pt;
+  color: #1e40af;
+  font-weight: 700;
+  direction: ltr;
+}
+
+.back-bottom-bar {
+  background: #111827;
+  height: 6mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4mm;
+  flex-shrink: 0;
+}
+.back-bottom-bar span {
+  color: rgba(255,255,255,0.45);
+  font-size: 5pt;
+}
+.back-bottom-bar .highlight { color: #FFC72C; font-weight: 700; }
+
+#status { text-align:center; padding:60px; font-size:16px; color:#666; }
 
 @media print {
   .toolbar { display: none !important; }
   body { background: white; }
-  .a4-page {
-    margin: 0 !important;
-    page-break-after: always;
-    box-shadow: none !important;
-  }
-  .card { border: none !important; }
+  .a4-page { margin: 0 !important; page-break-after: always; }
+  .a4-page::before, .a4-page::after { display: none; }
 }
 @page { size: A4 portrait; margin: 0; }
 </style>
@@ -299,60 +378,79 @@ body { font-family: 'Cairo', sans-serif; background: #e8ecf0; direction: rtl; }
 const params   = new URLSearchParams(window.location.search)
 const courseId = params.get('course') || ''
 const API      = '/api'
-let showBoth   = true // وجه + خلف
-let courseData = null
-let appsData   = []
+let showBack   = true
+let course     = null
+let apps       = []
 
 function toggleMode() {
-  showBoth = !showBoth
-  document.getElementById('modeBtn').textContent = showBoth ? '🔄 وجه + خلف' : '📋 وجه فقط'
-  document.getElementById('modeBtn').classList.toggle('active', showBoth)
+  showBack = !showBack
+  document.getElementById('modeBtn').textContent  = showBack ? '🔄 وجه + خلف' : '📋 وجه فقط'
+  document.getElementById('modeBtn').classList.toggle('active', showBack)
   render()
 }
 
-function fmt(d) {
+function fmt(d, short) {
   if (!d) return ''
-  try { return new Date(d).toLocaleDateString('ar-IQ',{year:'numeric',month:'long',day:'numeric',timeZone:'Asia/Baghdad'}) } catch { return d }
+  try {
+    const opts = short
+      ? {day:'2-digit', month:'2-digit', year:'numeric', timeZone:'Asia/Baghdad'}
+      : {year:'numeric', month:'long', day:'numeric', timeZone:'Asia/Baghdad'}
+    return new Date(d).toLocaleDateString('ar-IQ', opts)
+  } catch { return d }
 }
-function qr(url) { return 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=6&data=' + encodeURIComponent(url) }
 
-function makeFront(app, course) {
-  const sub    = app.subscriber || {}
-  const name   = sub.fullName   || app.fullName  || app.FullName  || '—'
-  const code   = sub.subscriberCode || sub.SubscriberCode || ''
-  const photo  = sub.profileImage   || sub.ProfileImage  || ''
-  const url    = 'https://ficc.iq/startups/' + courseId
+function qr(url) {
+  return 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=4&color=1e40af&data=' + encodeURIComponent(url)
+}
+
+function makeFront(app) {
+  const sub   = app.subscriber || {}
+  const name  = sub.fullName  || app.fullName  || app.FullName  || '—'
+  const code  = sub.subscriberCode || sub.SubscriberCode || ''
+  const photo = sub.profileImage   || sub.ProfileImage  || ''
+  const url   = 'https://ficc.iq/startups/' + courseId
 
   return `
-  <div class="card card-front">
-    <div class="front-header">
-      <img class="logo" src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
-      <div class="org-ar">اتحاد الغرف التجارية العراقية</div>
-      <div class="org-en">Federation of Iraqi Chambers of Commerce</div>
-    </div>
-
-    <div class="front-photo-wrap">
-      <div class="front-photo">
-        ${photo ? `<img src="${photo}" onerror="this.textContent='👤'">` : '👤'}
+  <div class="badge badge-front">
+    <div class="badge-top-bar">
+      <div class="logo-wrap">
+        <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
+        <div>
+          <div class="org-name">اتحاد الغرف التجارية العراقية</div>
+          <div class="org-name-en">Federation of Iraqi Chambers of Commerce</div>
+        </div>
       </div>
-      <div class="front-name">${name}</div>
-      ${code ? `<div class="front-code">${code}</div>` : ''}
+      <div class="event-label">ATTENDEE</div>
     </div>
 
-    <div class="front-qr">
-      <img src="${qr(url)}" alt="QR">
-      <div class="front-qr-label">امسح لعرض الدورة</div>
+    <div class="badge-photo-section">
+      <div class="badge-photo-circle">
+        ${photo ? `<img src="${photo}" onerror="this.parentElement.textContent='👤'">` : '👤'}
+      </div>
     </div>
 
-    <div class="front-footer">
-      <span>ficc.iq</span>
-      <span class="member-badge">✓ عضو مشارك</span>
+    <div class="badge-info-section">
+      <div class="badge-attendee-type">PARTICIPANT</div>
+      <div class="badge-name">${name}</div>
+      <div class="badge-org-label">اتحاد الغرف التجارية العراقية</div>
+      ${code ? `
+      <div class="badge-code-wrap">
+        <span class="badge-code-icon">🪪</span>
+        <span class="badge-code-text">${code}</span>
+      </div>` : ''}
+      <div class="badge-qr-section">
+        <img src="${qr(url)}" alt="QR">
+      </div>
+    </div>
+
+    <div class="badge-bottom-bar">
+      <span class="site">ficc.iq</span>
       <span>${new Date().getFullYear()}</span>
     </div>
   </div>`
 }
 
-function makeBack(course) {
+function makeBack() {
   const dates = course.startDate
     ? (course.endDate
       ? `${fmt(course.startDate)} — ${fmt(course.endDate)}`
@@ -360,72 +458,75 @@ function makeBack(course) {
     : ''
 
   return `
-  <div class="card card-back">
-    <div class="back-header">
-      <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
-      <div>
-        <div class="org">اتحاد الغرف التجارية العراقية</div>
-        <div class="org-en">Federation of Iraqi Chambers of Commerce</div>
+  <div class="badge badge-back">
+    <div class="back-color-bar"></div>
+    <div class="back-content">
+      <div class="back-event-header">
+        <div class="event-title">🎓 ${course.title || ''}</div>
+        <span class="event-type">TRAINING COURSE</span>
+      </div>
+
+      <div class="back-details-list">
+        ${dates ? `<div class="back-detail-item"><span class="detail-icon">📅</span><span>${dates}</span></div>` : ''}
+        ${course.location ? `<div class="back-detail-item"><span class="detail-icon">📍</span><span>${course.location}</span></div>` : ''}
+        ${course.speaker  ? `<div class="back-detail-item"><span class="detail-icon">👤</span><span>${course.speaker}${course.speakerTitle ? ' — ' + course.speakerTitle : ''}</span></div>` : ''}
+        ${(course.price !== undefined) ? `<div class="back-detail-item"><span class="detail-icon">💰</span><span>${course.isFree || course.price===0 ? 'مجانية' : course.price?.toLocaleString() + ' د.ع'}</span></div>` : ''}
+      </div>
+
+      <div class="back-welcome-box">
+        <div class="welcome-title">🎉 أهلاً وسهلاً بك!</div>
+        <div class="welcome-text">
+          يسعدنا مشاركتك في هذه الدورة التدريبية المميزة.<br>
+          نتمنى لك تجربة تعليمية ثرية ومثمرة تُضيف لمسيرتك المهنية.
+        </div>
+      </div>
+
+      <div class="back-logos">
+        <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
+        <span class="site-url">www.ficc.iq</span>
       </div>
     </div>
-
-    <div class="back-course-title">🎓 ${course.title || ''}</div>
-
-    <div class="back-details">
-      ${dates         ? `<div class="back-detail-row"><span class="back-detail-icon">📅</span><span>${dates}</span></div>` : ''}
-      ${course.location ? `<div class="back-detail-row"><span class="back-detail-icon">📍</span><span>${course.location}</span></div>` : ''}
-      ${course.speaker  ? `<div class="back-detail-row"><span class="back-detail-icon">👤</span><span>المتحدث: ${course.speaker}</span></div>` : ''}
-      ${course.price !== undefined ? `<div class="back-detail-row"><span class="back-detail-icon">💰</span><span>${course.isFree || course.price===0 ? 'مجانية' : course.price?.toLocaleString() + ' د.ع'}</span></div>` : ''}
-    </div>
-
-    <div class="back-welcome">
-      <strong>🎉 أهلاً وسهلاً بك!</strong>
-      نسعد بمشاركتك في هذه الدورة ونتمنى لك تجربة تعليمية مثمرة ومميزة.
-    </div>
-
-    <div class="back-footer">
-      <span class="back-website">🌐 ficc.iq</span>
-      <span>اتحاد الغرف التجارية العراقية</span>
+    <div class="back-bottom-bar">
+      <span>Federation of Iraqi Chambers of Commerce</span>
+      <span class="highlight">FICC</span>
+      <span>${new Date().getFullYear()}</span>
     </div>
   </div>`
 }
 
 function render() {
-  const content = document.getElementById('content')
-  if (!appsData.length) {
-    content.innerHTML = '<div id="status" style="text-align:center;padding:60px;color:#666">لا يوجد مشاركون بعد</div>'
+  const el = document.getElementById('content')
+  if (!apps.length) {
+    el.innerHTML = '<div style="text-align:center;padding:60px;color:#666">لا يوجد مشاركون بعد</div>'
     return
   }
 
   let html = ''
 
-  // صفحات الوجه (4 في كل صفحة)
-  for (let i = 0; i < appsData.length; i += 4) {
-    const group = appsData.slice(i, i + 4)
+  // صفحات الوجه
+  for (let i = 0; i < apps.length; i += 4) {
+    const grp = apps.slice(i, i + 4)
     html += `<div class="a4-page">`
-    group.forEach(app => html += makeFront(app, courseData))
-    // تعبئة بطاقات فارغة إذا أقل من 4
-    for (let j = group.length; j < 4; j++) html += `<div class="card"></div>`
+    grp.forEach(a => html += makeFront(a))
+    for (let j = grp.length; j < 4; j++) html += `<div class="badge"></div>`
     html += `</div>`
   }
 
-  // صفحات الخلف (إذا showBoth)
-  if (showBoth) {
-    for (let i = 0; i < appsData.length; i += 4) {
-      const group = appsData.slice(i, i + 4)
+  // صفحات الخلف
+  if (showBack) {
+    for (let i = 0; i < apps.length; i += 4) {
+      const grp = apps.slice(i, i + 4)
       html += `<div class="a4-page">`
-      // الخلف معكوس أفقياً للتوافق عند الطباعة على الوجهين
-      // الترتيب: [1][0][3][2] بدل [0][1][2][3]
-      const backOrder = [1, 0, 3, 2]
-      backOrder.forEach(idx => {
-        if (idx < group.length) html += makeBack(courseData)
-        else html += `<div class="card"></div>`
+      // ترتيب معكوس للطباعة على الوجهين: [1][0][3][2]
+      [1,0,3,2].forEach(idx => {
+        if (idx < grp.length) html += makeBack()
+        else html += `<div class="badge"></div>`
       })
       html += `</div>`
     }
   }
 
-  content.innerHTML = html
+  el.innerHTML = html
 }
 
 async function load() {
@@ -434,15 +535,13 @@ async function load() {
       fetch(`${API}/courses/${courseId}`),
       fetch(`${API}/courses/${courseId}/badges-data?key=ficc2026badges`)
     ])
-    courseData = await cr.json()
-    appsData   = await ar.json()
+    course = await cr.json()
+    const raw = await ar.json()
+    apps = Array.isArray(raw) ? raw : []
 
-    if (!Array.isArray(appsData)) appsData = []
-
-    document.getElementById('title').textContent  = '🪪 ' + (courseData?.title || 'Badges')
-    document.getElementById('count').textContent   = appsData.length + ' مشارك'
+    document.getElementById('title').textContent = '🪪 ' + (course?.title || 'Badges')
+    document.getElementById('count').textContent = apps.length + ' مشارك'
     document.getElementById('status').style.display = 'none'
-
     render()
   } catch(e) {
     document.getElementById('status').textContent = '❌ خطأ: ' + e.message
