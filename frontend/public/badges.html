@@ -73,8 +73,13 @@ tbody td { padding: 10px 14px; color: #374151; vertical-align: middle; }
   flex-direction: column !important;
 }
 .print-page.portrait-mode .print-row {
+  display: flex !important;
   flex-direction: row !important;
   width: 210mm !important;
+  height: 148.5mm !important;
+}
+.print-page.portrait-mode .print-quarter {
+  width: 105mm !important;
   height: 148.5mm !important;
 }
 .print-page.landscape-mode {
@@ -371,7 +376,7 @@ function makePrintPage(app) {
   return `
   <div class="print-page portrait-mode" id="page-${app.id}">
     <!-- الصف العلوي: وجه يمين + خلف يسار -->
-    <div class="print-row">
+    <div class="print-row" style="display:flex;flex-direction:row;">
       <!-- ربع 1: الوجه -->
       <div class="print-quarter">
     <div style="width:105mm;height:148.5mm;display:flex;flex-direction:column;overflow:hidden">
@@ -421,7 +426,7 @@ function makePrintPage(app) {
     <!-- خط الطي -->
     <div class="fold-line-separator"></div>
     <!-- النصف السفلي = نفس الباجات مقلوبة للطي -->
-    <div class="print-row" style="transform:rotate(180deg);transform-origin:center center">
+    <div class="print-row" style="display:flex !important;flex-direction:row !important;transform:rotate(180deg);transform-origin:center center;">
       <div class="print-quarter">
     <div class="back-wrap">
       <div class="back-top">
