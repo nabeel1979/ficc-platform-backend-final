@@ -28,7 +28,7 @@ public class SubscribersController : ControllerBase {
         string GenerateCode() {
             const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
             var rng = new Random();
-            return "FICC" + new string(Enumerable.Repeat(chars, 8).Select(s => s[rng.Next(s.Length)]).ToArray());
+            return new string(Enumerable.Repeat(chars, 8).Select(s => s[rng.Next(s.Length)]).ToArray());
         }
         string code;
         do { code = GenerateCode(); } while (await _db.Subscribers.AnyAsync(s => s.SubscriberCode == code));
