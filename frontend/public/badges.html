@@ -318,6 +318,12 @@ async function load() {
     // فلتر عضو واحد إذا محدد
     apps = memberId ? raw.filter(a => String(a.id) === memberId) : raw
 
+    // إذا عضو واحد — اعرض badge مباشرة + اطبع
+    if (memberId && apps.length > 0) {
+      document.getElementById('tableWrap').style.display = 'none'
+      document.getElementById('status').style.display = 'none'
+    }
+
     document.getElementById('title').textContent = '🪪 ' + (course?.title||'Badges')
     document.getElementById('count').textContent = apps.length + ' مشارك'
     document.getElementById('status').style.display = 'none'
@@ -364,6 +370,12 @@ async function load() {
     tbody.innerHTML = bodyHtml
     printArea.innerHTML = printHtml
 
+    // إذا عضو واحد — اعرض الـ badge مباشرة وأخفي الجدول
+    if (memberId && apps.length > 0) {
+      document.querySelectorAll('.print-page').forEach(p => p.style.display = 'flex')
+      document.querySelector('.toolbar').style.display = 'none'
+    }
+
   } catch(e) {
     document.getElementById('status').textContent = '❌ خطأ: ' + e.message
   }
@@ -378,7 +390,7 @@ load()
   .print-page { page-break-after: always; break-after: page; }
   body { margin: 0; padding: 0; background: white; }
 }
-@page { size: A4 landscape; margin: 0; }
+@page { size: 210mm 148mm landscape; margin: 0; }
 </style>
 </body>
 </html>
