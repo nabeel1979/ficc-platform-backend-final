@@ -645,13 +645,19 @@ function BroadcastModal({ course, onClose }) {
     setSending(true); setMsg('')
     const targets = subscribers.filter(s => selected.includes(s.id))
     try {
-      const fmt = d => new Date(d).toLocaleDateString('ar-IQ',{year:'numeric',month:'short',day:'numeric',timeZone:'Asia/Baghdad'})
+      const fmt = d => new Date(d).toLocaleDateString('ar-IQ',{year:'numeric',month:'long',day:'numeric',timeZone:'Asia/Baghdad'})
       const channel = channelFilter === 'email' ? 'email' : channelFilter === 'both' ? 'both' : 'whatsapp'
+      const dates = course.startDate
+        ? (course.endDate
+          ? `📅 من ${fmt(course.startDate)} إلى ${fmt(course.endDate)}`
+          : `📅 ${fmt(course.startDate)}`)
+        : ''
+      const itemUrl = `${window.location.origin}/startups/${course.id}`
       await api.post('/subscribers/broadcast', {
         subscriberIds: selected,
-        message: `📢 دورة جديدة: ${course.title}\n📅 ${fmt(course.startDate)}\n📍 ${course.location||''}\n🔗 ${window.location.origin}/courses/${course.id}`,
+        message: `📢 دورة جديدة: ${course.title}\n${dates}\n📍 ${course.location||''}`,
         imageUrl: course.imageUrl || course.bannerUrl || course.thumbnailUrl || null,
-        itemUrl: `${window.location.origin}/startups/${course.id}`,
+        itemUrl,
         channel
       })
       setMsg(`✅ تم الإرسال لـ ${selected.length} متابع`)

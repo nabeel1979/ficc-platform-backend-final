@@ -352,20 +352,29 @@ public class SubscribersController : ControllerBase {
                         // استخرج عنوان الرسالة (السطر الأول)
                         var lines = dto.Message.Split('\n');
                         var title = lines.Length > 0 ? lines[0] : dto.Message;
-                        var bodyLines = lines.Length > 1 ? string.Join("<br/>", lines[1..]) : "";
+                        var itemLink = string.IsNullOrEmpty(dto.ItemUrl) ? "https://ficc.iq" : dto.ItemUrl;
+
+                        // بناء سطور التفاصيل (بدون رابط — الرابط في الزر فقط)
+                        var detailRows = "";
+                        for (int li = 1; li < lines.Length; li++) {
+                            var line = lines[li].Trim();
+                            if (string.IsNullOrEmpty(line)) continue;
+                            if (line.StartsWith("http")) continue; // تجاهل الروابط من النص
+                            detailRows += $"<div style='font-size:14px;color:#374151;padding:6px 0;border-bottom:1px solid #f1f5f9'>{System.Web.HttpUtility.HtmlEncode(line)}</div>";
+                        }
+
                         var imageTag = string.IsNullOrEmpty(dto.ImageUrl) ? "" :
                             $"<img src='{dto.ImageUrl}' style='width:100%;border-radius:12px;margin-bottom:16px;display:block' />";
 
                         var htmlBody = $@"
 <div dir='rtl' style='font-family:Cairo,sans-serif;max-width:600px;margin:0 auto;background:#f5f7fa;padding:16px;border-radius:16px'>
   <div style='background:linear-gradient(135deg,#2C3E6B,#4A6FA5);padding:24px 20px;border-radius:12px;text-align:center;margin-bottom:16px'>
-    <img src='https://ficc.iq/ficc-logo.png' style='height:48px;margin-bottom:12px' onerror='this.style.display=&quot;none&quot;' />
-    <h2 style='color:#fff;margin:0;font-size:18px'>{System.Web.HttpUtility.HtmlEncode(title)}</h2>
-    <p style='color:#FFC72C;margin:6px 0 0;font-size:12px'>اتحاد الغرف التجارية العراقية</p>
+    <h2 style='color:#fff;margin:0;font-size:20px;line-height:1.4'>{System.Web.HttpUtility.HtmlEncode(title)}</h2>
+    <p style='color:#FFC72C;margin:8px 0 0;font-size:12px'>اتحاد الغرف التجارية العراقية</p>
   </div>
   {imageTag}
-  {(bodyLines.Length > 0 ? $"<div style='background:#fff;border-radius:12px;padding:16px;margin-bottom:12px'><p style='color:#374151;font-size:14px;line-height:2;margin:0'>{bodyLines}</p></div>" : "")}
-  <a href='{(string.IsNullOrEmpty(dto.ItemUrl) ? "https://ficc.iq" : dto.ItemUrl)}' style='display:block;text-align:center;background:linear-gradient(135deg,#2C3E6B,#4A6FA5);color:#fff;padding:13px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;margin-bottom:12px'>عرض التفاصيل ←</a>
+  {(detailRows.Length > 0 ? $"<div style='background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;line-height:2'>{detailRows}</div>" : "")}
+  <a href='{itemLink}' style='display:block;text-align:center;background:linear-gradient(135deg,#2C3E6B,#4A6FA5);color:#fff;padding:14px;border-radius:10px;text-decoration:none;font-weight:800;font-size:15px;margin-bottom:12px'>عرض التفاصيل ←</a>
   <p style='color:#aaa;font-size:11px;text-align:center;margin:0'>
     <a href='https://ficc.iq' style='color:#4A6FA5;text-decoration:none'>ficc.iq</a> — اتحاد الغرف التجارية العراقية
   </p>
