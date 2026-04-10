@@ -172,8 +172,8 @@ export default function CourseDetail() {
                           }
                         </div>
                         <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontWeight:800,fontSize:14,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{sp.name}</div>
-                          {sp.title && <div style={{color:'rgba(255,255,255,0.65)',fontSize:12,marginTop:2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{sp.title}</div>}
+                          <div style={{fontWeight:800,fontSize:13,lineHeight:1.4,wordBreak:'break-word'}}>{sp.name}</div>
+                          {sp.title && <div style={{color:'rgba(255,255,255,0.65)',fontSize:11,marginTop:2,lineHeight:1.4,wordBreak:'break-word'}}>{sp.title}</div>}
                         </div>
                       </div>
                     ))}

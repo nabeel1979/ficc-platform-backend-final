@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 
 const API_BASE = ''
@@ -213,7 +214,7 @@ function CoursesSection() {
 
 
   return (
-    <div style={{marginBottom:28,background:'#f8fafc',borderRadius:16,padding:20}}>
+    <div id="courses" style={{marginBottom:28,background:'#f8fafc',borderRadius:16,padding:20}}>
       {applying && <CourseApplyModal course={applying} onClose={()=>setApplying(null)} />}
       {loading && <div style={{textAlign:'center',padding:20,color:'#94a3b8',fontSize:13}}>⏳ جارٍ تحميل الدورات...</div>}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:10}}>

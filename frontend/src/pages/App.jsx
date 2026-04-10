@@ -133,7 +133,6 @@ export default function App() {
       <Route path="/customs-agents" element={<Layout><CustomsAgents /></Layout>} />
       <Route path="/lawyers" element={<Layout><Lawyers /></Layout>} />
       <Route path="/startups" element={<Layout><Startups /></Layout>} />
-      <Route path="/courses" element={<Layout><Courses /></Layout>} />
       <Route path="/courses/:id" element={<Layout><CourseDetail /></Layout>} />
       <Route path="/track-request" element={<TrackRequest />} />
       <Route path="/join" element={<JoinPage />} />
