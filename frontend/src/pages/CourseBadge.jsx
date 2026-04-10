@@ -20,9 +20,10 @@ export default function CourseBadge() {
       .then(r => setCourse(r.data))
       .catch(e => { setStatus('error'); setErrMsg('خطأ course: ' + e?.response?.status) })
 
-    api.get('/courses/' + courseId + '/applications')
+    const token = urlToken || localStorage.getItem('ficc_token') || ''
+    api.get('/courses/' + courseId + '/badges-data?t=' + encodeURIComponent(token))
       .then(r => { setApps(r.data || []); setStatus('ready') })
-      .catch(e => { setStatus('error'); setErrMsg('خطأ applications: ' + (e?.response?.status || e?.message)) })
+      .catch(e => { setStatus('error'); setErrMsg('خطأ badges-data: ' + (e?.response?.status || e?.message)) })
   }, [courseId])
 
   if (status === 'loading') {

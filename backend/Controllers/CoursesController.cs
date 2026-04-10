@@ -10,7 +10,8 @@ namespace FICCPlatform.Controllers;
 [Route("api/[controller]")]
 public class CoursesController : ControllerBase {
     private readonly AppDbContext _db;
-    public CoursesController(AppDbContext db) { _db = db; }
+    private readonly IConfiguration _cfg;
+    public CoursesController(AppDbContext db, IConfiguration cfg) { _db = db; _cfg = cfg; }
 
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] string? status) {
@@ -93,6 +94,40 @@ public class CoursesController : ControllerBase {
         course.CurrentParticipants++;
         await _db.SaveChangesAsync();
         return Ok(new { message = "تم تسجيل طلبك بنجاح! سيتم التواصل معك قريباً", id = app.Id });
+    }
+
+    [HttpGet("{id}/badges-data")]
+    public async Task<IActionResult> GetBadgesData(int id, [FromQuery] string? t = null) {
+        // تحقق بسيط من التوكن عبر query string
+        if (!string.IsNullOrEmpty(t)) {
+            var secret = _cfg["Jwt:Key"] ?? "";
+            try {
+                var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                var key = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(secret));
+                handler.ValidateToken(t, new Microsoft.IdentityModel.Tokens.TokenValidationParameters {
+                    ValidateIssuerSigningKey = true, IssuerSigningKey = key,
+                    ValidateIssuer = false, ValidateAudience = false
+                }, out _);
+            } catch { return Unauthorized(); }
+        } else return Unauthorized();
+
+        var apps = await _db.CourseApplications.Where(a => a.CourseId == id).OrderByDescending(a => a.CreatedAt).ToListAsync();
+        var result = new System.Collections.Generic.List<object>();
+        foreach (var app in apps) {
+            Subscriber? sub = null;
+            if (app.SubscriberId.HasValue)
+                sub = await _db.Subscribers.FindAsync(app.SubscriberId.Value);
+            else if (!string.IsNullOrEmpty(app.Phone))
+                sub = await _db.Subscribers.FirstOrDefaultAsync(s => s.Phone == app.Phone || s.WhatsApp == app.Phone);
+            result.Add(new {
+                app.Id, app.FullName, app.Phone, app.Email, app.Status,
+                subscriber = sub == null ? null : new {
+                    sub.Id, sub.FullName, sub.Phone, sub.WhatsApp, sub.Email,
+                    sub.ProfileImage, sub.SubscriberCode, sub.CreatedAt
+                }
+            });
+        }
+        return Ok(result);
     }
 
     [HttpGet("{id}/applications")]
