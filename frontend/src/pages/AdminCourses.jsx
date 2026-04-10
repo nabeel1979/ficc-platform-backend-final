@@ -164,38 +164,108 @@ function CourseForm({ item, onSave, onClose }) {
 function ApplicationsModal({ course, onClose }) {
   const [apps, setApps] = useState([])
   const [loading, setLoading] = useState(true)
-  useEffect(() => { api.get(`/courses/${course.id}/applications`).then(r => setApps(r.data)).finally(() => setLoading(false)) }, [course.id])
+  const [attendance, setAttendance] = useState({}) // {appId: true/false}
+
+  useEffect(() => {
+    api.get(`/courses/${course.id}/applications`).then(r => {
+      setApps(r.data)
+      // تحميل حالة الحضور المحفوظة
+      const saved = {}
+      ;(r.data||[]).forEach(a => { if (a.status === 'attended') saved[a.id] = true })
+      setAttendance(saved)
+    }).finally(() => setLoading(false))
+  }, [course.id])
+
+  const toggleAttendance = async (appId) => {
+    const newVal = !attendance[appId]
+    setAttendance(p => ({...p, [appId]: newVal}))
+    try {
+      await api.put(`/courses/${course.id}/applications/${appId}`, { status: newVal ? 'attended' : 'pending' })
+    } catch { setAttendance(p => ({...p, [appId]: !newVal})) }
+  }
+
+  const fmt = d => d ? new Date(d).toLocaleDateString('ar-IQ',{timeZone:'Asia/Baghdad'}) : '—'
+  const sub = a => a.subscriber || {}
+
   return (
-    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{background:'#fff',borderRadius:20,padding:'24px',width:'100%',maxWidth:700,maxHeight:'90vh',overflowY:'auto',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:12}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:'#fff',borderRadius:20,width:'100%',maxWidth:900,maxHeight:'92vh',display:'flex',flexDirection:'column',direction:'rtl',fontFamily:'Cairo,sans-serif',overflow:'hidden'}}>
+        {/* Header */}
+        <div style={{background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',padding:'16px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
           <div>
-            <h2 style={{fontSize:17,fontWeight:800,color:'#2C3E6B',margin:0}}>📋 طلبات التسجيل</h2>
-            <p style={{fontSize:12,color:'#64748b',margin:'4px 0 0'}}>{course.title}</p>
+            <h2 style={{fontSize:16,fontWeight:800,color:'#fff',margin:0}}>📋 طلبات التسجيل</h2>
+            <p style={{fontSize:12,color:'rgba(255,255,255,0.7)',margin:'3px 0 0'}}>{course.title}</p>
           </div>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#94a3b8'}}>✕</button>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            <span style={{color:'#FFC72C',fontSize:12,fontWeight:700}}>{apps.length} طلب</span>
+            <button onClick={() => window.open(`/badges.html?course=${course.id}`, '_blank')}
+              style={{padding:'6px 12px',background:'rgba(255,199,44,0.2)',color:'#FFC72C',border:'1.5px solid rgba(255,199,44,0.4)',borderRadius:8,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:11}}>
+              🪪 Badges
+            </button>
+            <button onClick={onClose} style={{background:'rgba(255,255,255,0.15)',border:'none',color:'#fff',width:30,height:30,borderRadius:8,cursor:'pointer',fontSize:16}}>✕</button>
+          </div>
         </div>
-        {loading ? <div style={{textAlign:'center',padding:40,color:'#94a3b8'}}>⏳ جارٍ التحميل...</div>
-        : apps.length === 0 ? <div style={{textAlign:'center',padding:40,color:'#94a3b8'}}>لا توجد طلبات بعد</div>
-        : <>
-          <div style={{marginBottom:12,fontSize:13,color:'#64748b',fontWeight:600}}>إجمالي الطلبات: {apps.length}</div>
-          <div style={{overflowX:'auto'}}>
-            <table style={{width:'100%',borderCollapse:'collapse',fontSize:13,minWidth:500}}>
-              <thead><tr style={{background:'#2C3E6B',color:'#fff'}}>
-                {['الاسم','الهاتف','الإيميل','الشركة','التاريخ'].map(h=><th key={h} style={{padding:'10px 12px',textAlign:'right',fontWeight:700}}>{h}</th>)}
-              </tr></thead>
-              <tbody>{apps.map((a,i)=>(
-                <tr key={a.id} style={{borderBottom:'1px solid #f1f5f9',background:i%2===0?'#fff':'#fafbfc'}}>
-                  <td style={{padding:'10px 12px',fontWeight:700}}>{a.fullName}</td>
-                  <td style={{padding:'10px 12px'}}><a href={`tel:${a.phone}`} style={{color:'#2C3E6B',fontWeight:700}}>{a.phone}</a></td>
-                  <td style={{padding:'10px 12px',color:'#64748b'}}>{a.email||'—'}</td>
-                  <td style={{padding:'10px 12px'}}>{a.company||'—'}</td>
-                  <td style={{padding:'10px 12px',color:'#94a3b8',fontSize:11}}>{new Date(a.createdAt).toLocaleDateString('ar-IQ')}</td>
+
+        {/* Table */}
+        <div style={{overflowY:'auto',flex:1}}>
+          {loading ? <div style={{textAlign:'center',padding:40,color:'#94a3b8'}}>⏳ جارٍ التحميل...</div>
+          : apps.length === 0 ? <div style={{textAlign:'center',padding:40,color:'#94a3b8'}}>لا توجد طلبات بعد</div>
+          : <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+              <thead>
+                <tr style={{background:'#f8fafc',borderBottom:'2px solid #e5e7eb'}}>
+                  {['الاسم','الهاتف','الإيميل','الشركة','التاريخ','الإجراءات'].map(h=>(
+                    <th key={h} style={{padding:'10px 12px',textAlign:'right',fontWeight:800,color:'#374151',fontSize:11}}>{h}</th>
+                  ))}
                 </tr>
-              ))}</tbody>
+              </thead>
+              <tbody>
+                {apps.map((a,i) => {
+                  const s = sub(a)
+                  const photo = s.profileImage || s.ProfileImage || ''
+                  const code = s.subscriberCode || s.SubscriberCode || ''
+                  const isAttended = attendance[a.id]
+                  return (
+                    <tr key={a.id} style={{borderBottom:'1px solid #f1f5f9',background:isAttended?'#f0fdf4':i%2===0?'#fff':'#fafbfc'}}>
+                      {/* الاسم */}
+                      <td style={{padding:'10px 12px'}}>
+                        <div style={{display:'flex',alignItems:'center',gap:8}}>
+                          <div style={{width:34,height:34,borderRadius:'50%',overflow:'hidden',border:'2px solid #FFC72C',background:'#eef2ff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>
+                            {photo ? <img src={photo} style={{width:'100%',height:'100%',objectFit:'cover'}} /> : '👤'}
+                          </div>
+                          <div>
+                            <div style={{fontWeight:800,color:'#111827'}}>{a.fullName}</div>
+                            {code && <div style={{fontSize:10,color:'#1e40af',fontFamily:'monospace',fontWeight:700}}>{code}</div>}
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{padding:'10px 12px'}}><a href={`tel:${a.phone}`} style={{color:'#2C3E6B',fontWeight:700,direction:'ltr',display:'block'}}>{a.phone}</a></td>
+                      <td style={{padding:'10px 12px',color:'#64748b'}}>{a.email||'—'}</td>
+                      <td style={{padding:'10px 12px',color:'#374151'}}>{a.company||'—'}</td>
+                      <td style={{padding:'10px 12px',color:'#94a3b8',whiteSpace:'nowrap'}}>{fmt(a.createdAt)}</td>
+                      {/* الإجراءات */}
+                      <td style={{padding:'8px 12px'}}>
+                        <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                          <button onClick={() => window.open(`/badges.html?course=${course.id}`, '_blank')}
+                            style={{padding:'4px 8px',background:'#eef2ff',color:'#1e40af',border:'none',borderRadius:6,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:10}}>
+                            🪪 Badge
+                          </button>
+                          <button onClick={() => alert('شهادة — قريباً')}
+                            style={{padding:'4px 8px',background:'#fef3c7',color:'#92400e',border:'none',borderRadius:6,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:10}}>
+                            📜 شهادة
+                          </button>
+                          <button onClick={() => toggleAttendance(a.id)}
+                            style={{padding:'4px 8px',background:isAttended?'#dcfce7':'#f1f5f9',color:isAttended?'#16a34a':'#6b7280',border:`1.5px solid ${isAttended?'#86efac':'#e5e7eb'}`,borderRadius:6,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:10}}>
+                            {isAttended ? '✅ حضر' : '⬜ غائب'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
             </table>
-          </div>
-        </>}
+          }
+        </div>
       </div>
     </div>
   )

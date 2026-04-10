@@ -145,6 +145,17 @@ public class CoursesController : ControllerBase {
         return Ok(result);
     }
 
+    // PUT /api/courses/{id}/applications/{appId} — تحديث حالة الطلب (حضور/غياب)
+    [HttpPut("{id}/applications/{appId}")]
+    [Authorize(Roles = "SuperAdmin,Admin")]
+    public async Task<IActionResult> UpdateApplication(int id, int appId, [FromBody] UpdateApplicationDto dto) {
+        var app = await _db.CourseApplications.FirstOrDefaultAsync(a => a.Id == appId && a.CourseId == id);
+        if (app == null) return NotFound();
+        if (dto.Status != null) app.Status = dto.Status;
+        await _db.SaveChangesAsync();
+        return Ok(app);
+    }
+
     private string GetStatus(DateTime start, DateTime end) {
         var now = DateTime.UtcNow;
         if (end < now) return "completed";
@@ -153,6 +164,7 @@ public class CoursesController : ControllerBase {
     }
 }
 
+public class UpdateApplicationDto { public string? Status { get; set; } }
 public class CourseApplicationDto {
     public string FullName { get; set; } = "";
     public string Phone { get; set; } = "";
