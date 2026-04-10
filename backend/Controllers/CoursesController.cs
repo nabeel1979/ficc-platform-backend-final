@@ -97,19 +97,10 @@ public class CoursesController : ControllerBase {
     }
 
     [HttpGet("{id}/badges-data")]
-    public async Task<IActionResult> GetBadgesData(int id, [FromQuery] string? t = null) {
-        // تحقق بسيط من التوكن عبر query string
-        if (!string.IsNullOrEmpty(t)) {
-            var secret = _cfg["Jwt:Key"] ?? "";
-            try {
-                var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
-                var key = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(secret));
-                handler.ValidateToken(t, new Microsoft.IdentityModel.Tokens.TokenValidationParameters {
-                    ValidateIssuerSigningKey = true, IssuerSigningKey = key,
-                    ValidateIssuer = false, ValidateAudience = false
-                }, out _);
-            } catch { return Unauthorized(); }
-        } else return Unauthorized();
+    public async Task<IActionResult> GetBadgesData(int id, [FromQuery] string? key = null) {
+        // مفتاح ثابت بسيط للـ badges (internal use only)
+        // مفتاح بسيط للـ badges (داخلي فقط)
+        if (key != "ficc2026badges") return Unauthorized();
 
         var apps = await _db.CourseApplications.Where(a => a.CourseId == id).OrderByDescending(a => a.CreatedAt).ToListAsync();
         var result = new System.Collections.Generic.List<object>();

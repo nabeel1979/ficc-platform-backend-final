@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>Badges — FICC</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Cairo', sans-serif; background: #f0f4f8; direction: rtl; }
+
+.toolbar {
+  background: #1a2a5e;
+  padding: 12px 24px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.toolbar h1 { color: #FFC72C; font-size: 16px; font-weight: 800; }
+.toolbar span { color: rgba(255,255,255,0.6); font-size: 12px; }
+.toolbar button {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 800;
+  font-size: 13px;
+}
+.btn-print { background: #FFC72C; color: #1a2a5e; margin-right: auto; }
+.btn-close { background: rgba(255,255,255,0.15); color: #fff; }
+
+.page {
+  width: 210mm;
+  min-height: 297mm;
+  background: #fff;
+  margin: 20px auto;
+  padding: 15mm;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 12mm;
+}
+
+.badge {
+  width: 85mm;
+  height: 54mm;
+  background: linear-gradient(135deg, #1a2a5e, #2C3E6B, #4A6FA5);
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  color: white;
+}
+
+.badge-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.badge-logo {
+  width: 28px; height: 28px;
+  border-radius: 5px;
+  background: #fff;
+  padding: 1px;
+  object-fit: contain;
+}
+.badge-org { color: #FFC72C; font-weight: 800; font-size: 7px; }
+.badge-org-en { color: rgba(255,255,255,0.6); font-size: 5.5px; }
+
+.badge-body {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  flex: 1;
+  margin: 4px 0;
+}
+.badge-photo {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #FFC72C;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+.badge-photo img { width: 100%; height: 100%; object-fit: cover; }
+.badge-info { flex: 1; min-width: 0; }
+.badge-name { color: #fff; font-weight: 800; font-size: 9px; line-height: 1.3; margin-bottom: 2px; }
+.badge-code { color: #FFC72C; font-weight: 700; font-size: 7.5px; letter-spacing: 0.5px; margin-bottom: 3px; }
+.badge-details { color: rgba(255,255,255,0.75); font-size: 6px; line-height: 1.5; }
+.badge-qr {
+  background: #fff;
+  border-radius: 4px;
+  padding: 2px;
+  flex-shrink: 0;
+}
+.badge-qr img { width: 42px; height: 42px; display: block; }
+
+.badge-footer {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  padding-top: 3px;
+  font-size: 5px;
+  color: rgba(255,255,255,0.5);
+}
+.badge-member { color: #FFC72C; font-size: 6px; font-weight: 700; }
+
+#status {
+  text-align: center;
+  padding: 60px;
+  font-size: 16px;
+  color: #666;
+}
+
+@media print {
+  .toolbar { display: none !important; }
+  body { background: white; }
+  .page { margin: 0 !important; box-shadow: none !important; page-break-after: always; }
+}
+@page { size: A4; margin: 0; }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <h1 id="title">🪪 Badges — جارٍ التحميل...</h1>
+  <span id="count"></span>
+  <button class="btn-print" onclick="window.print()">🖨️ طباعة</button>
+  <button class="btn-close" onclick="window.close()">✕ إغلاق</button>
+</div>
+
+<div id="status">⏳ جارٍ التحميل...</div>
+<div id="content"></div>
+
+<script>
+const params = new URLSearchParams(window.location.search)
+const token = params.get('t') || localStorage.getItem('ficc_token') || ''
+const courseId = params.get('course') || ''
+
+const API = '/api'
+
+function fmt(d) {
+  if (!d) return ''
+  try {
+    return new Date(d).toLocaleDateString('ar-IQ', {
+      year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Baghdad'
+    })
+  } catch { return d }
+}
+
+function qrUrl(url) {
+  return 'https://api.qrserver.com/v1/create-qr-code/?size=100x100&margin=4&data=' + encodeURIComponent(url)
+}
+
+function makeBadge(app, course) {
+  const sub = app.subscriber || {}
+  const name = sub.fullName || app.fullName || app.FullName || '—'
+  const code = sub.subscriberCode || sub.SubscriberCode || ''
+  const photo = sub.profileImage || sub.ProfileImage || ''
+  const courseUrl = 'https://ficc.iq/startups/' + courseId
+
+  return `
+  <div class="badge">
+    <div class="badge-header">
+      <img class="badge-logo" src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'" />
+      <div>
+        <div class="badge-org">اتحاد الغرف التجارية العراقية</div>
+        <div class="badge-org-en">Federation of Iraqi Chambers of Commerce</div>
+      </div>
+    </div>
+    <div class="badge-body">
+      <div class="badge-photo">
+        ${photo ? `<img src="${photo}" />` : '👤'}
+      </div>
+      <div class="badge-info">
+        <div class="badge-name">${name}</div>
+        ${code ? `<div class="badge-code">${code}</div>` : ''}
+        <div class="badge-details">
+          <div>🎓 ${course.title || ''}</div>
+          ${course.startDate ? `<div>📅 ${fmt(course.startDate)}${course.endDate ? ' — ' + fmt(course.endDate) : ''}</div>` : ''}
+          ${course.location ? `<div>📍 ${course.location}</div>` : ''}
+        </div>
+      </div>
+      <div class="badge-qr">
+        <img src="${qrUrl(courseUrl)}" />
+      </div>
+    </div>
+    <div class="badge-footer">
+      <span>ficc.iq</span>
+      <span class="badge-member">✓ عضو مشارك</span>
+      <span>${new Date().getFullYear()}</span>
+    </div>
+  </div>`
+}
+
+async function load() {
+  try {
+    // جلب الدورة
+    const cr = await fetch(`${API}/courses/${courseId}`)
+    const course = await cr.json()
+
+    // جلب المشاركين
+    const ar = await fetch(`${API}/courses/${courseId}/badges-data?key=ficc2026badges`)
+    const apps = await ar.json()
+
+    document.getElementById('title').textContent = '🪪 Badges — ' + (course.title || '')
+    document.getElementById('count').textContent = apps.length + ' مشارك'
+    document.getElementById('status').style.display = 'none'
+
+    if (!apps.length) {
+      document.getElementById('status').style.display = 'block'
+      document.getElementById('status').textContent = 'لا يوجد مشاركون بعد'
+      return
+    }
+
+    // تقسيم إلى صفحات كل 4
+    let html = ''
+    for (let i = 0; i < apps.length; i += 4) {
+      const group = apps.slice(i, i + 4)
+      html += `<div class="page">`
+      group.forEach(app => { html += makeBadge(app, course) })
+      html += `</div>`
+    }
+    document.getElementById('content').innerHTML = html
+
+  } catch(e) {
+    document.getElementById('status').textContent = '❌ خطأ: ' + e.message
+  }
+}
+
+load()
+</script>
+</body>
+</html>

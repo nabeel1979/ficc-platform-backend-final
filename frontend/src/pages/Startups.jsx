@@ -141,22 +141,23 @@ function CourseApplyModal({ course, onClose }) {
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
 
-  const API = import.meta.env.VITE_API_URL || '/api'
-
   // إرسال OTP
   const sendOtp = async () => {
     if (!loginVal.trim()) return setMsg('أدخل رقم الواتساب أو البريد الإلكتروني')
     setLoading(true); setMsg('')
     try {
       const payload = loginType === 'email' ? { email: loginVal } : { phone: loginVal }
-      await api.post(`${API}/subscribers/send-otp`, payload)
+      await api.post('/subscribers/send-otp', payload)
       setStep('otp')
     } catch(e) {
       const m = e?.response?.data?.message || ''
-      if (m.includes('غير مسجّل') || m.includes('not found') || e?.response?.status === 404) {
-        setStep('register_prompt')
+      const status = e?.response?.status
+      if (status === 404 || m.includes('غير مسجّل') || m.includes('not found')) {
+        setMsg('❌ ' + (m || 'هذا الرقم / البريد غير مسجّل'))
+      } else if (status === 429) {
+        setMsg('⚠️ ' + m)
       } else {
-        setMsg(m || 'حدث خطأ')
+        setMsg(m || 'حدث خطأ، حاول مرة أخرى')
       }
     }
     setLoading(false)
@@ -168,7 +169,7 @@ function CourseApplyModal({ course, onClose }) {
     setLoading(true); setMsg('')
     try {
       const payload = loginType === 'email' ? { email: loginVal, code: otp } : { phone: loginVal, code: otp }
-      const res = await api.post(`${API}/subscribers/verify-otp`, payload)
+      const res = await api.post('/subscribers/verify-otp', payload)
       setSubscriber(res.data)
       setStep('confirm')
     } catch(e) { setMsg(e?.response?.data?.message || 'رمز خاطئ') }
@@ -180,7 +181,7 @@ function CourseApplyModal({ course, onClose }) {
     if (!subscriber) return
     setLoading(true); setMsg('')
     try {
-      await api.post(`${API}/courses/${course.id}/apply`, {
+      await api.post(`/courses/${course.id}/apply`, {
         fullName: subscriber.fullName,
         phone: subscriber.phone || subscriber.whatsApp,
         email: subscriber.email,
