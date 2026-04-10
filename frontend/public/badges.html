@@ -198,6 +198,7 @@ tbody td { padding: 10px 14px; color: #374151; vertical-align: middle; }
 <script>
 const params   = new URLSearchParams(window.location.search)
 const courseId = params.get('course') || ''
+const memberId = params.get('member') || '' // إذا محدد → عضو واحد فقط
 const API      = '/api'
 let course     = null
 let apps       = []
@@ -312,8 +313,10 @@ async function load() {
       fetch(`${API}/courses/${courseId}/badges-data?key=ficc2026badges`)
     ])
     course = await cr.json()
-    const raw = await ar.json()
-    apps = Array.isArray(raw) ? raw : []
+    let raw = await ar.json()
+    if (!Array.isArray(raw)) raw = []
+    // فلتر عضو واحد إذا محدد
+    apps = memberId ? raw.filter(a => String(a.id) === memberId) : raw
 
     document.getElementById('title').textContent = '🪪 ' + (course?.title||'Badges')
     document.getElementById('count').textContent = apps.length + ' مشارك'
