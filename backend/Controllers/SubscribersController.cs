@@ -367,19 +367,42 @@ public class SubscribersController : ControllerBase {
                             $"<img src='{dto.ImageUrl}' style='width:100%;border-radius:12px;margin-bottom:16px;display:block' />";
 
                         var htmlBody = $@"
-<div dir='rtl' style='font-family:Cairo,sans-serif;max-width:600px;margin:0 auto;background:#f5f7fa;padding:16px;border-radius:16px'>
-  <div style='background:linear-gradient(135deg,#2C3E6B,#4A6FA5);padding:24px 20px;border-radius:12px;text-align:center;margin-bottom:16px'>
-    <img src='https://ficc.iq/ficc-logo.jpg' alt='FICC' style='height:52px;margin-bottom:12px;display:block;margin-left:auto;margin-right:auto' />
-    <h2 style='color:#fff;margin:0;font-size:20px;line-height:1.4'>{System.Web.HttpUtility.HtmlEncode(title)}</h2>
-    <p style='color:#FFC72C;margin:8px 0 0;font-size:12px'>اتحاد الغرف التجارية العراقية</p>
+<!DOCTYPE html>
+<html dir='rtl'>
+<body style='margin:0;padding:0;background:#f0f4f8;font-family:Cairo,Arial,sans-serif'>
+<div style='max-width:560px;margin:24px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08)'>
+
+  <!-- Header -->
+  <div style='background:linear-gradient(135deg,#1a2a5e,#2C3E6B,#4A6FA5);padding:28px 24px;text-align:center'>
+    <img src='https://ficc.iq/ficc-logo.jpg' alt='FICC' style='height:60px;margin-bottom:14px;display:block;margin-left:auto;margin-right:auto;border-radius:8px' />
+    <h1 style='color:#fff;margin:0;font-size:20px;font-weight:800;line-height:1.5'>{System.Web.HttpUtility.HtmlEncode(title)}</h1>
+    <p style='color:#FFC72C;margin:8px 0 0;font-size:13px;font-weight:600'>اتحاد الغرف التجارية العراقية</p>
   </div>
-  {imageTag}
-  {(detailRows.Length > 0 ? $"<div style='background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;line-height:2'>{detailRows}</div>" : "")}
-  <a href='{itemLink}' style='display:block;text-align:center;background:linear-gradient(135deg,#2C3E6B,#4A6FA5);color:#fff;padding:14px;border-radius:10px;text-decoration:none;font-weight:800;font-size:15px;margin-bottom:12px'>عرض التفاصيل ←</a>
-  <p style='color:#aaa;font-size:11px;text-align:center;margin:0'>
-    <a href='https://ficc.iq' style='color:#4A6FA5;text-decoration:none'>ficc.iq</a> — اتحاد الغرف التجارية العراقية
-  </p>
-</div>";
+
+  <!-- صورة الدورة -->
+  {(string.IsNullOrEmpty(dto.ImageUrl) ? "" : $"<img src='{dto.ImageUrl}' alt='' style='width:100%;display:block;max-height:280px;object-fit:cover' />")}
+
+  <!-- التفاصيل -->
+  {(detailRows.Length > 0 ? $"<div style='padding:20px 24px;border-bottom:1px solid #f1f5f9'>{detailRows}</div>" : "")}
+
+  <!-- زر عرض التفاصيل -->
+  <div style='padding:20px 24px;text-align:center'>
+    <a href='{itemLink}' style='display:inline-block;background:linear-gradient(135deg,#2C3E6B,#4A6FA5);color:#fff;padding:13px 36px;border-radius:10px;text-decoration:none;font-weight:800;font-size:15px;letter-spacing:0.5px'>
+      عرض التفاصيل ←
+    </a>
+  </div>
+
+  <!-- Footer -->
+  <div style='background:#f8fafc;padding:14px 24px;text-align:center;border-top:1px solid #e5e7eb'>
+    <p style='color:#94a3b8;font-size:11px;margin:0'>
+      <a href='https://ficc.iq' style='color:#4A6FA5;text-decoration:none;font-weight:700'>ficc.iq</a>
+      &nbsp;—&nbsp;اتحاد الغرف التجارية العراقية
+    </p>
+  </div>
+
+</div>
+</body>
+</html>";
                         await _notify.SendEmail(sub.Email, $"📢 {title} | اتحاد الغرف التجارية العراقية", htmlBody);
                         sentThis = true;
                     } catch { }
