@@ -166,7 +166,13 @@ public class SubscribersController : ControllerBase {
             var phone = dto.Phone ?? "";
             var (blocked, blockMsg) = await CheckRateLimit(phone, "phone-login");
             if (blocked) return StatusCode(429, new { message = blockMsg });
-            sub = await _db.Subscribers.FirstOrDefaultAsync(s => s.Phone == phone);
+            // نحوّل الرقم لصيغتين ونبحث بهما
+            var phone07 = phone.StartsWith("+964") ? "0" + phone[4..] : phone.StartsWith("964") ? "0" + phone[3..] : phone;
+            var phone964 = phone.StartsWith("0") ? "+964" + phone[1..] : phone;
+            sub = await _db.Subscribers.FirstOrDefaultAsync(s =>
+                s.Phone == phone || s.Phone == phone07 || s.Phone == phone964 ||
+                s.WhatsApp == phone || s.WhatsApp == phone07 || s.WhatsApp == phone964);
+            if (sub == null) return NotFound(new { message = "هذا الرقم غير مسجّل" });
         }
         var otp = new string(System.Linq.Enumerable.Repeat("0123456789", 6)
             .Select(s => s[new Random().Next(s.Length)]).ToArray());
@@ -201,9 +207,17 @@ public class SubscribersController : ControllerBase {
     // POST /api/subscribers/verify-otp — تحقق OTP (بالهاتف أو الإيميل)
     [HttpPost("verify-otp")]
     public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpLoginDto dto) {
-        Subscriber? sub = !string.IsNullOrEmpty(dto.Email)
-            ? await _db.Subscribers.FirstOrDefaultAsync(s => s.Email == dto.Email)
-            : await _db.Subscribers.FirstOrDefaultAsync(s => s.Phone == dto.Phone);
+        Subscriber? sub = null;
+        if (!string.IsNullOrEmpty(dto.Email)) {
+            sub = await _db.Subscribers.FirstOrDefaultAsync(s => s.Email == dto.Email);
+        } else {
+            var phone = dto.Phone ?? "";
+            var phone07 = phone.StartsWith("+964") ? "0" + phone[4..] : phone.StartsWith("964") ? "0" + phone[3..] : phone;
+            var phone964 = phone.StartsWith("0") ? "+964" + phone[1..] : phone;
+            sub = await _db.Subscribers.FirstOrDefaultAsync(s =>
+                s.Phone == phone || s.Phone == phone07 || s.Phone == phone964 ||
+                s.WhatsApp == phone || s.WhatsApp == phone07 || s.WhatsApp == phone964);
+        }
         if (sub == null) return NotFound(new { message = "غير مسجّل" });
 
         var otpRecord = await _db.OtpCodes.FirstOrDefaultAsync(o =>
