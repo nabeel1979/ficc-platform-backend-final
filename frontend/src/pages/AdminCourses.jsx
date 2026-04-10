@@ -827,8 +827,10 @@ export default function AdminCourses() {
   const [mediaModal, setMediaModal] = useState(null)
   const [broadcastModal, setBroadcastModal] = useState(null)
   // فلاتر
-  const [statusFilter, setStatusFilter] = useState(['upcoming','ongoing']) // افتراضي: قادمة + جارية
+  const [statusFilter, setStatusFilter] = useState(['upcoming','ongoing'])
   const [searchText, setSearchText] = useState('')
+  const [pageSize, setPageSize] = useState(10)
+  const [page, setPage] = useState(1)
 
   const load = () => {
     setLoading(true)
@@ -862,12 +864,14 @@ export default function AdminCourses() {
   }
 
   // فلترة
-  const toggleStatus = (s) => setStatusFilter(p => p.includes(s) ? p.filter(x=>x!==s) : [...p,s])
+  const toggleStatus = (s) => { setStatusFilter(p => p.includes(s) ? p.filter(x=>x!==s) : [...p,s]); setPage(1) }
   const filtered = courses.filter(c => {
     if (statusFilter.length > 0 && !statusFilter.includes(c.status)) return false
     if (searchText && !c.title?.includes(searchText) && !c.speaker?.includes(searchText) && !c.location?.includes(searchText)) return false
     return true
   })
+  const totalPages = pageSize >= 1000 ? 1 : Math.ceil(filtered.length / pageSize)
+  const paginated = pageSize >= 1000 ? filtered : filtered.slice((page-1)*pageSize, page*pageSize)
 
   const fmt = d => d ? new Date(d).toLocaleDateString('ar-IQ',{year:'numeric',month:'numeric',day:'numeric',timeZone:'Asia/Baghdad'}) : ''
 
@@ -924,14 +928,21 @@ export default function AdminCourses() {
             placeholder="🔍 بحث بالاسم أو المتحدث"
             style={{width:'100%',padding:'7px 12px',borderRadius:8,border:'1.5px solid #e5e7eb',fontFamily:'Cairo,sans-serif',fontSize:12,outline:'none',boxSizing:'border-box'}} />
         </div>
-        <span style={{fontSize:12,color:'#94a3b8',fontWeight:600}}>{filtered.length} دورة</span>
+        <div style={{display:'flex',alignItems:'center',gap:6}}>
+          <span style={{fontSize:12,color:'#94a3b8',fontWeight:600}}>{filtered.length} دورة</span>
+          <select value={pageSize} onChange={e=>{setPageSize(Number(e.target.value));setPage(1)}}
+            style={{padding:'5px 8px',borderRadius:7,border:'1.5px solid #e5e7eb',fontFamily:'Cairo,sans-serif',fontSize:12,outline:'none',background:'#f8fafc'}}>
+            {[10,20,50,100,1000].map(n=><option key={n} value={n}>{n === 1000 ? 'الكل' : n} / صفحة</option>)}
+          </select>
+        </div>
       </div>
 
       {loading ? <div style={{textAlign:'center',padding:60,color:'#94a3b8'}}>⏳ جارٍ التحميل...</div> : filtered.length === 0 ? (
         <div style={{textAlign:'center',padding:40,color:'#94a3b8',fontSize:14}}>لا توجد دورات للفلتر المحدد</div>
       ) : (
+        <>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:16}}>
-          {filtered.map(c => {
+          {paginated.map(c => {
             const pct = c.maxParticipants > 0 ? Math.round((c.currentParticipants / c.maxParticipants) * 100) : 0
             return (
               <div key={c.id} style={{background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:'0 2px 10px rgba(44,62,107,0.07)',border:'1px solid #e5e7eb'}}>
@@ -968,6 +979,31 @@ export default function AdminCourses() {
             )
           })}
         </div>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div style={{display:'flex',justifyContent:'center',alignItems:'center',gap:8,marginTop:20,flexWrap:'wrap'}}>
+            <button onClick={()=>setPage(1)} disabled={page===1}
+              style={{padding:'6px 12px',borderRadius:7,border:'1.5px solid #e5e7eb',background:page===1?'#f1f5f9':'#fff',cursor:page===1?'default':'pointer',fontFamily:'Cairo,sans-serif',fontSize:12,fontWeight:700,color:'#374151'}}>⏮ أول</button>
+            <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
+              style={{padding:'6px 12px',borderRadius:7,border:'1.5px solid #e5e7eb',background:page===1?'#f1f5f9':'#fff',cursor:page===1?'default':'pointer',fontFamily:'Cairo,sans-serif',fontSize:12,fontWeight:700,color:'#374151'}}>← السابق</button>
+            {Array.from({length:Math.min(totalPages,5)}, (_,i) => {
+              const p = totalPages <= 5 ? i+1 : page <= 3 ? i+1 : page >= totalPages-2 ? totalPages-4+i : page-2+i
+              return (
+                <button key={p} onClick={()=>setPage(p)}
+                  style={{padding:'6px 12px',borderRadius:7,border:'1.5px solid',fontFamily:'Cairo,sans-serif',fontSize:12,fontWeight:700,cursor:'pointer',
+                    borderColor:page===p?'#2C3E6B':'#e5e7eb',background:page===p?'#2C3E6B':'#fff',color:page===p?'#fff':'#374151'}}>
+                  {p}
+                </button>
+              )
+            })}
+            <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
+              style={{padding:'6px 12px',borderRadius:7,border:'1.5px solid #e5e7eb',background:page===totalPages?'#f1f5f9':'#fff',cursor:page===totalPages?'default':'pointer',fontFamily:'Cairo,sans-serif',fontSize:12,fontWeight:700,color:'#374151'}}>التالي ←</button>
+            <button onClick={()=>setPage(totalPages)} disabled={page===totalPages}
+              style={{padding:'6px 12px',borderRadius:7,border:'1.5px solid #e5e7eb',background:page===totalPages?'#f1f5f9':'#fff',cursor:page===totalPages?'default':'pointer',fontFamily:'Cairo,sans-serif',fontSize:12,fontWeight:700,color:'#374151'}}>آخر ⏭</button>
+            <span style={{fontSize:12,color:'#94a3b8'}}>صفحة {page} من {totalPages}</span>
+          </div>
+        )}
+        </>
       )}
     </div>
   )
