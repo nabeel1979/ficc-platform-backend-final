@@ -17,6 +17,7 @@ public class AppDbContext : DbContext {
     public DbSet<Setting> Settings => Set<Setting>();
     public DbSet<ShippingCompany> ShippingCompanies => Set<ShippingCompany>();
     public DbSet<OtpCode> OtpCodes => Set<OtpCode>();
+    public DbSet<BroadcastLog> BroadcastLogs => Set<BroadcastLog>();
     public DbSet<News> News => Set<News>();
     public DbSet<Certificate> Certificates => Set<Certificate>();
     public DbSet<Request> Requests => Set<Request>();

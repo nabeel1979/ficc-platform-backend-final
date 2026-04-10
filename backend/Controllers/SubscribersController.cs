@@ -409,10 +409,34 @@ public class SubscribersController : ControllerBase {
                 }
             }
 
-            if (sentThis) sent++;
+            if (sentThis) {
+                sent++;
+                // سجّل التعميم
+                if (dto.CourseId.HasValue) {
+                    _db.BroadcastLogs.Add(new BroadcastLog {
+                        CourseId = dto.CourseId.Value,
+                        SubscriberId = sub.Id,
+                        Channel = dto.Channel,
+                        SentAt = DateTime.UtcNow
+                    });
+                }
+            }
         }
 
+        if (dto.CourseId.HasValue) await _db.SaveChangesAsync();
+
         return Ok(new { message = $"تم الإرسال لـ {sent} متابع", sent, total = subscribers.Count });
+    }
+
+    // GET /api/subscribers/broadcast-log/{courseId} — من أُرسل إليهم
+    [HttpGet("broadcast-log/{courseId}"), Authorize]
+    public async Task<IActionResult> GetBroadcastLog(int courseId) {
+        var ids = await _db.BroadcastLogs
+            .Where(l => l.CourseId == courseId)
+            .Select(l => l.SubscriberId)
+            .Distinct()
+            .ToListAsync();
+        return Ok(ids);
     }
 
     // DELETE /api/subscribers/{id}
@@ -455,8 +479,9 @@ public class BroadcastDto {
     public List<int> SubscriberIds { get; set; } = new();
     public string Message { get; set; } = "";
     public string? ImageUrl { get; set; }
-    public string? ItemUrl { get; set; } // رابط الدورة/الخبر
-    public string Channel { get; set; } = "whatsapp"; // whatsapp | email | both
+    public string? ItemUrl { get; set; }
+    public int? CourseId { get; set; } // لتتبع التعميم
+    public string Channel { get; set; } = "whatsapp";
 }
 
 public class SubscriberProfileDto {

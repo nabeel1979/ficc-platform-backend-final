@@ -477,3 +477,11 @@ public class SubscriberChatMessage {
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public SubscriberChat? Chat { get; set; }
 }
+
+public class BroadcastLog {
+    public int Id { get; set; }
+    public int CourseId { get; set; }
+    public int SubscriberId { get; set; }
+    public string Channel { get; set; } = "";
+    public DateTime SentAt { get; set; } = DateTime.UtcNow;
+}

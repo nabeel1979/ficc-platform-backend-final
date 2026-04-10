@@ -588,11 +588,13 @@ function BroadcastModal({ course, onClose }) {
   const [sending, setSending] = useState(false)
   const [msg, setMsg] = useState('')
   // فلاتر
-  const [channelFilter, setChannelFilter] = useState('all') // all | whatsapp | email | both
+  const [channelFilter, setChannelFilter] = useState('all')
   const [searchText, setSearchText] = useState('')
-  const [selectedSectors, setSelectedSectors] = useState([]) // قطاعات مختارة للفلتر
+  const [selectedSectors, setSelectedSectors] = useState([])
   const [traderSectorsList, setTraderSectorsList] = useState([])
   const [showSectors, setShowSectors] = useState(false)
+  const [alreadySent, setAlreadySent] = useState([]) // IDs من أُرسل إليهم
+  const [newOnly, setNewOnly] = useState(false) // فلتر المتابعين الجدد فقط
 
   useEffect(() => {
     api.get('/sectors/1/subscribers')
@@ -602,6 +604,10 @@ function BroadcastModal({ course, onClose }) {
       })
       .finally(() => setLoading(false))
     api.get('/constants/trader_sector').then(r => setTraderSectorsList(r.data || [])).catch(()=>{})
+    // جلب من أُرسل إليهم مسبقاً
+    if (course?.id) {
+      api.get(`/subscribers/broadcast-log/${course.id}`).then(r => setAlreadySent(r.data || [])).catch(()=>{})
+    }
   }, [])
 
   // فلترة المتابعين
@@ -610,6 +616,8 @@ function BroadcastModal({ course, onClose }) {
     if (channelFilter === 'whatsapp' && !s.phone && !s.whatsApp) return false
     if (channelFilter === 'email' && !s.email) return false
     if (channelFilter === 'both' && (!s.email || (!s.phone && !s.whatsApp))) return false
+    // فلتر الجدد فقط
+    if (newOnly && alreadySent.includes(s.id)) return false
     // فلتر القطاعات — يشمل المتابع إذا عنده أي قطاع من المختارة
     if (selectedSectors.length > 0) {
       try {
@@ -658,9 +666,11 @@ function BroadcastModal({ course, onClose }) {
         message: `📢 دورة جديدة: ${course.title}\n${dates}\n📍 ${course.location||''}`,
         imageUrl: course.imageUrl || course.bannerUrl || course.thumbnailUrl || null,
         itemUrl,
+        courseId: course.id,
         channel
       })
       setMsg(`✅ تم الإرسال لـ ${selected.length} متابع`)
+      setAlreadySent(p => [...new Set([...p, ...selected])])
       setTimeout(() => onClose(), 2000)
     } catch {
       setMsg('❌ حدث خطأ أثناء الإرسال')
@@ -701,6 +711,13 @@ function BroadcastModal({ course, onClose }) {
 
             {/* فلاتر */}
             <div style={{background:'#f8fafc',borderRadius:12,padding:12,marginBottom:12,display:'flex',flexDirection:'column',gap:8}}>
+              {/* فلتر الجدد */}
+              {alreadySent.length > 0 && (
+                <label style={{display:'flex',alignItems:'center',gap:8,padding:'6px 10px',borderRadius:8,background:newOnly?'#fef3c7':'#fff',border:`1.5px solid ${newOnly?'#f59e0b':'#e5e7eb'}`,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:12,fontWeight:700}}>
+                  <input type="checkbox" checked={newOnly} onChange={e=>setNewOnly(e.target.checked)} />
+                  🆕 متابعون جدد فقط ({subscribers.filter(s=>!alreadySent.includes(s.id)).length} لم يصلهم)
+                </label>
+              )}
               {/* فلتر القناة */}
               <div style={{display:'flex',gap:6}}>
                 {[{k:'all',l:'الكل'},{k:'whatsapp',l:'📱 هاتف'},{k:'email',l:'📧 إيميل'},{k:'both',l:'✅ كلاهما'}].map(c=>(
@@ -757,24 +774,32 @@ function BroadcastModal({ course, onClose }) {
               <div style={{textAlign:'center',padding:20,color:'#94a3b8',fontSize:12}}>لا توجد نتائج للفلتر المحدد</div>
             ) : (
               <div style={{display:'flex',flexDirection:'column',gap:8,maxHeight:320,overflowY:'auto',marginBottom:16}}>
-                {filtered.map(s => (
-                  <div key={s.id} onClick={() => toggleOne(s.id)}
-                    style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',borderRadius:12,border:`1.5px solid ${selected.includes(s.id)?'#2C3E6B':'#e5e7eb'}`,background:selected.includes(s.id)?'#eef2ff':'#fafafa',cursor:'pointer',transition:'all 0.15s'}}>
-                    {/* صورة */}
-                    <div style={{width:38,height:38,borderRadius:'50%',overflow:'hidden',background:'#f1f5f9',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>
-                      {s.profileImage ? <img src={s.profileImage} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}} /> : '👤'}
+                {filtered.map(s => {
+                    const wasSent = alreadySent.includes(s.id)
+                    const isSelected = selected.includes(s.id)
+                    return (
+                    <div key={s.id}
+                      onClick={() => !wasSent && toggleOne(s.id)}
+                      style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',borderRadius:12,
+                        border:`1.5px solid ${wasSent?'#fde68a':isSelected?'#2C3E6B':'#e5e7eb'}`,
+                        background:wasSent?'#fefce8':isSelected?'#eef2ff':'#fafafa',
+                        cursor:wasSent?'default':'pointer',opacity:wasSent?0.7:1,transition:'all 0.15s'}}>
+                      <div style={{width:38,height:38,borderRadius:'50%',overflow:'hidden',background:'#f1f5f9',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>
+                        {s.profileImage ? <img src={s.profileImage} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}} /> : '👤'}
+                      </div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontWeight:700,fontSize:13,color:'#1e293b'}}>{s.fullName}</div>
+                        <div style={{fontSize:11,color:'#64748b',direction:'ltr'}}>{s.phone} {s.email ? `• ${s.email}` : ''}</div>
+                        {wasSent && <div style={{fontSize:10,color:'#d97706',fontWeight:700}}>✅ تم الإرسال مسبقاً</div>}
+                      </div>
+                      <div style={{width:22,height:22,borderRadius:6,border:`2px solid ${wasSent?'#fde68a':isSelected?'#2C3E6B':'#cbd5e1'}`,
+                        background:wasSent?'#fef3c7':isSelected?'#2C3E6B':'#fff',
+                        display:'flex',alignItems:'center',justifyContent:'center',color:wasSent?'#d97706':'#fff',fontSize:13,flexShrink:0}}>
+                        {wasSent ? '✓' : isSelected ? '✓' : ''}
+                      </div>
                     </div>
-                    {/* البيانات */}
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontWeight:700,fontSize:13,color:'#1e293b'}}>{s.fullName}</div>
-                      <div style={{fontSize:11,color:'#64748b',direction:'ltr'}}>{s.phone} {s.email ? `• ${s.email}` : ''}</div>
-                    </div>
-                    {/* checkbox */}
-                    <div style={{width:22,height:22,borderRadius:6,border:`2px solid ${selected.includes(s.id)?'#2C3E6B':'#cbd5e1'}`,background:selected.includes(s.id)?'#2C3E6B':'#fff',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:13,flexShrink:0}}>
-                      {selected.includes(s.id) ? '✓' : ''}
-                    </div>
-                  </div>
-                ))}
+                    )
+                  })}
               </div>
             )}
 
