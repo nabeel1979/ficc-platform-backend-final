@@ -97,6 +97,7 @@ export default function Home() {
 
       <AboutSection />
       <LatestNewsSection />
+      <LatestCoursesSection />
       <YouTubeSection />
 
       <section className="services">
@@ -412,6 +413,59 @@ function YouTubeSection() {
             </a>
           </div>
         )}
+      </div>
+    </section>
+  )
+}
+
+function LatestCoursesSection() {
+  const [courses, setCourses] = useState([])
+  useEffect(() => {
+    api.get('/courses?pageSize=3').then(r => {
+      const all = r.data || []
+      // أحدث 3 دورات غير منتهية
+      setCourses(all.filter(c => c.status !== 'completed').slice(0, 3))
+    }).catch(() => {})
+  }, [])
+  if (!courses.length) return null
+  const STATUS = { upcoming: { label:'🟢 قادمة', bg:'#dcfce7', color:'#166534' }, ongoing: { label:'🔴 جارية', bg:'#fee2e2', color:'#991b1b' }, completed: { label:'✅ منتهية', bg:'#f3f4f6', color:'#374151' } }
+  const fmt = d => d ? new Date(d).toLocaleDateString('ar-IQ',{year:'numeric',month:'short',day:'numeric'}) : ''
+  return (
+    <section style={{padding:'40px 16px',background:'#f8fafc',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
+      <div style={{maxWidth:1100,margin:'0 auto'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+          <h2 style={{fontSize:22,fontWeight:900,color:'#2C3E6B',margin:0}}>🎓 الدورات الريادية</h2>
+          <a href="/startups" style={{color:'#4A6FA5',fontSize:14,fontWeight:700,textDecoration:'none'}}>كل الدورات ←</a>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:16}}>
+          {courses.map(c => {
+            const st = STATUS[c.status] || STATUS.upcoming
+            const pct = c.maxParticipants > 0 ? Math.round((c.currentParticipants/c.maxParticipants)*100) : 0
+            return (
+              <a key={c.id} href={`/startups/${c.id}`} style={{textDecoration:'none',display:'flex',flexDirection:'column',background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:'0 2px 10px rgba(44,62,107,0.07)',border:'1px solid #e5e7eb'}}>
+                <div style={{background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',padding:'16px',position:'relative'}}>
+                  <span style={{position:'absolute',top:10,left:10,padding:'3px 10px',borderRadius:20,fontSize:10,fontWeight:800,background:st.bg,color:st.color}}>{st.label}</span>
+                  {c.category && <span style={{position:'absolute',top:10,right:10,padding:'2px 8px',borderRadius:20,fontSize:10,background:'rgba(255,199,44,0.2)',color:'#FFC72C',fontWeight:700}}>{c.category}</span>}
+                  <h3 style={{color:'#fff',fontSize:14,fontWeight:800,marginTop:20,marginBottom:4,lineHeight:1.4}}>{c.title}</h3>
+                  {c.speaker && <div style={{color:'rgba(255,255,255,0.75)',fontSize:11}}>👤 {c.speaker}</div>}
+                </div>
+                <div style={{padding:'12px 14px',flex:1,display:'flex',flexDirection:'column',gap:6}}>
+                  {c.startDate && <div style={{fontSize:11,color:'#64748b'}}>📅 {fmt(c.startDate)}{c.endDate ? ` — ${fmt(c.endDate)}` : ''}</div>}
+                  {c.location && <div style={{fontSize:11,color:'#64748b'}}>📍 {c.location}</div>}
+                  {c.price !== undefined && <div style={{fontSize:12,fontWeight:700,color:'#059669'}}>💰 {c.price===0?'مجانية':`${c.price?.toLocaleString()} د.ع`}</div>}
+                  {c.maxParticipants > 0 && (
+                    <div style={{marginTop:4}}>
+                      <div style={{height:4,background:'#e5e7eb',borderRadius:4,overflow:'hidden'}}>
+                        <div style={{height:'100%',width:`${pct}%`,background:pct>=90?'#ef4444':'#2C3E6B',borderRadius:4}}/>
+                      </div>
+                      <div style={{fontSize:10,color:'#94a3b8',marginTop:2}}>{c.currentParticipants}/{c.maxParticipants} مشارك</div>
+                    </div>
+                  )}
+                </div>
+              </a>
+            )
+          })}
+        </div>
       </div>
     </section>
   )

@@ -196,6 +196,10 @@ function CoursesSection() {
   const [applying, setApplying] = useState(null)
   const [contact, setContact] = useState({ email:'', phone1:'', phone2:'' })
   const [loading, setLoading] = useState(true)
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [searchText, setSearchText] = useState('')
 
   useEffect(() => {
     api.get('/courses').then(r => setCourses(r.data)).catch(()=>{}).finally(()=>setLoading(false))
@@ -209,7 +213,18 @@ function CoursesSection() {
     }).catch(()=>{})
   }, [])
 
-  const filtered = filter==='all' ? courses : courses.filter(c=>c.status===filter)
+  // جمع التخصصات الفريدة
+  const categories = [...new Set(courses.map(c=>c.category).filter(Boolean))]
+
+  // فلترة متعددة
+  const filtered = courses.filter(c => {
+    if (filter !== 'all' && c.status !== filter) return false
+    if (categoryFilter && c.category !== categoryFilter) return false
+    if (searchText && !c.title?.includes(searchText) && !c.speaker?.includes(searchText)) return false
+    if (dateFrom && c.startDate && new Date(c.startDate) < new Date(dateFrom)) return false
+    if (dateTo && c.startDate && new Date(c.startDate) > new Date(dateTo)) return false
+    return true
+  })
   const counts = { all:courses.length, upcoming:courses.filter(c=>c.status==='upcoming').length, ongoing:courses.filter(c=>c.status==='ongoing').length, completed:courses.filter(c=>c.status==='completed').length }
 
 
@@ -235,6 +250,32 @@ function CoursesSection() {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* شريط الفلاتر المتقدمة */}
+      <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:16,alignItems:'center',background:'#fff',borderRadius:12,padding:'10px 14px',border:'1px solid #e5e7eb'}}>
+        {/* تخصص */}
+        <select value={categoryFilter} onChange={e=>setCategoryFilter(e.target.value)}
+          style={{padding:'7px 12px',borderRadius:8,border:'1.5px solid #e5e7eb',fontFamily:'Cairo,sans-serif',fontSize:12,fontWeight:700,color:'#374151',background:'#f8fafc',outline:'none',flex:1,minWidth:120}}>
+          <option value=''>📂 كل التخصصات</option>
+          {categories.map(c=><option key={c} value={c}>{c}</option>)}
+        </select>
+        {/* من تاريخ */}
+        <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)}
+          style={{padding:'7px 10px',borderRadius:8,border:'1.5px solid #e5e7eb',fontFamily:'Cairo,sans-serif',fontSize:12,background:'#f8fafc',outline:'none',flex:1,minWidth:120}} placeholder="من" title="من تاريخ"/>
+        {/* إلى تاريخ */}
+        <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)}
+          style={{padding:'7px 10px',borderRadius:8,border:'1.5px solid #e5e7eb',fontFamily:'Cairo,sans-serif',fontSize:12,background:'#f8fafc',outline:'none',flex:1,minWidth:120}} placeholder="إلى" title="إلى تاريخ"/>
+        {/* بحث */}
+        <input value={searchText} onChange={e=>setSearchText(e.target.value)} placeholder="🔍 بحث بالاسم أو المتحدث"
+          style={{padding:'7px 12px',borderRadius:8,border:'1.5px solid #e5e7eb',fontFamily:'Cairo,sans-serif',fontSize:12,background:'#f8fafc',outline:'none',flex:2,minWidth:160}}/>
+        {/* مسح */}
+        {(categoryFilter||dateFrom||dateTo||searchText) && (
+          <button onClick={()=>{setCategoryFilter('');setDateFrom('');setDateTo('');setSearchText('')}}
+            style={{padding:'7px 12px',borderRadius:8,background:'#fee2e2',color:'#dc2626',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12}}>
+            ✕ مسح
+          </button>
+        )}
       </div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(290px,1fr))',gap:16}}>
         {filtered.map(course => {
