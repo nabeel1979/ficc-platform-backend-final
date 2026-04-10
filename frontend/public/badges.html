@@ -332,6 +332,9 @@ function fmt(d) {
 function qr(url) { return 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=4&color=1e40af&data=' + encodeURIComponent(url) }
 
 function makeBackBody(c, dates) {
+  let datesHtml = dates ? `<div class="back-detail"><span class="icon">📅</span><span>${dates}</span></div>` : ''
+  let locHtml = c?.location ? `<div class="back-detail"><span class="icon">📍</span><span>${c.location}</span></div>` : ''
+  let spkHtml = c?.speaker ? `<div class="back-detail"><span class="icon">👤</span><span>${c.speaker}</span></div>` : ''
   return `
   <div class="back-body">
     <!-- تفاصيل الدورة -->
@@ -340,9 +343,9 @@ function makeBackBody(c, dates) {
       <span class="back-course-type">TRAINING COURSE</span>
     </div>
     <div class="back-details">
-      ${dates?`<div class="back-detail"><span class="icon">📅</span><span>${dates}</span></div>`:''}
-      ${c?.location?`<div class="back-detail"><span class="icon">📍</span><span>${c.location}</span></div>`:''}
-      ${c?.speaker?`<div class="back-detail"><span class="icon">👤</span><span>${c.speaker}</span></div>`:''}
+      ${datesHtml}
+      ${locHtml}
+      ${spkHtml}
     </div>
     <!-- نبذة عن الاتحاد -->
     <div class="about-box">
