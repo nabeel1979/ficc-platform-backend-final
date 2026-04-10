@@ -6,8 +6,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Cairo', sans-serif; background: #d1d5db; display: block; }
-#content { display: block; }
+body { font-family: 'Cairo', sans-serif; background: #d1d5db; }
+#content { display: block; width: 100%; }
 .toolbar {
   background: #111827; padding: 10px 20px;
   display: flex; gap: 10px; align-items: center;
@@ -21,67 +21,58 @@ body { font-family: 'Cairo', sans-serif; background: #d1d5db; display: block; }
 .btn-mode   { background: rgba(255,255,255,0.1); color: #fff; }
 .btn-mode.active { background: #3b82f6; color: #fff; }
 
-/* كل عضو في صفحة A4 مستقلة تماماً */
+/* كل عضو في صفحة A4 — وجه + خلف جنب بعض */
 .member-page {
   width: 210mm;
   height: 297mm;
   background: white;
   margin: 16px auto;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 105mm 105mm;
+  page-break-before: always;
   page-break-after: always;
+  break-before: page;
   break-after: page;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  /* منع الانتقال لثنتين جنب بعض */
-  clear: both;
-  float: none;
 }
 
-/* وجه الباج — النصف العلوي */
+/* وجه الباج — العمود الأيمن */
 .badge-front {
-  width: 100%;
-  height: 148.5mm;
+  width: 105mm;
+  height: 297mm;
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
   overflow: hidden;
+  border-left: 1px dashed #ccc;
 }
 
-/* خلف الباج — النصف السفلي (مقلوب) */
+/* خلف الباج — العمود الأيسر */
 .badge-back-wrap {
-  width: 100%;
-  height: 148.5mm;
-  flex-shrink: 0;
+  width: 105mm;
+  height: 297mm;
   overflow: hidden;
-  transform: rotate(180deg);
   display: flex;
   flex-direction: column;
 }
 
-/* خط الطي */
-.fold-line {
-  width: 100%;
-  border-top: 1.5px dashed #999;
-  position: relative;
-  z-index: 10;
-  flex-shrink: 0;
-}
+/* خط الفصل */
+.fold-line { display: none; }
 
 /* ===== تصميم الوجه ===== */
 .top-bar {
   background: linear-gradient(135deg, #1a2a5e, #2C3E6B);
-  height: 22mm;
+  height: 18mm;
   display: flex; align-items: center;
   justify-content: space-between;
-  padding: 0 10mm; flex-shrink: 0;
+  padding: 0 5mm; flex-shrink: 0;
 }
-.top-bar img { height: 14mm; border-radius: 3mm; background: rgba(255,255,255,0.9); padding: 1.5mm; object-fit: contain; }
-.top-bar-org .org-ar { color: #FFC72C; font-size: 10pt; font-weight: 900; }
-.top-bar-org .org-en { color: rgba(255,255,255,0.6); font-size: 6.5pt; }
-.top-bar-badge { color: #fff; font-size: 7.5pt; font-weight: 900; direction: ltr;
-  border: 1.5px solid rgba(255,199,44,0.6); padding: 1.5mm 4mm;
-  border-radius: 6mm; background: rgba(255,199,44,0.15); }
+.top-bar img { height: 11mm; border-radius: 2mm; background: rgba(255,255,255,0.9); padding: 1mm; object-fit: contain; }
+.top-bar-org .org-ar { color: #FFC72C; font-size: 7.5pt; font-weight: 900; }
+.top-bar-org .org-en { color: rgba(255,255,255,0.6); font-size: 5pt; }
+.top-bar-badge { color: #fff; font-size: 6pt; font-weight: 900; direction: ltr;
+  border: 1.5px solid rgba(255,199,44,0.6); padding: 1mm 3mm;
+  border-radius: 5mm; background: rgba(255,199,44,0.15); }
 
 .photo-section {
   background: linear-gradient(180deg, #1a2a5e 0%, #f8fafc 40%);
@@ -89,79 +80,80 @@ body { font-family: 'Cairo', sans-serif; background: #d1d5db; display: block; }
   padding: 5mm 0 4mm; flex-shrink: 0;
 }
 .photo-circle {
-  width: 38mm; height: 38mm; border-radius: 50%;
-  overflow: hidden; border: 4px solid #FFC72C;
-  box-shadow: 0 4px 20px rgba(255,199,44,0.4);
+  width: 32mm; height: 32mm; border-radius: 50%;
+  overflow: hidden; border: 3px solid #FFC72C;
+  box-shadow: 0 3px 16px rgba(255,199,44,0.4);
   background: #e5e7eb; display: flex;
-  align-items: center; justify-content: center; font-size: 30pt;
+  align-items: center; justify-content: center; font-size: 24pt;
 }
 .photo-circle img { width: 100%; height: 100%; object-fit: cover; }
 
 .info-section {
-  background: #fff; padding: 4mm 10mm;
+  background: #fff; padding: 3mm 6mm;
   flex: 1; display: flex; flex-direction: column;
-  align-items: center; gap: 3mm;
+  align-items: center; gap: 2.5mm;
 }
 .type-badge {
   background: linear-gradient(135deg, #FFC72C, #f59e0b);
-  color: #1a2a5e; font-size: 7.5pt; font-weight: 900;
-  padding: 2mm 9mm; border-radius: 20mm; letter-spacing: 1.5px;
+  color: #1a2a5e; font-size: 6.5pt; font-weight: 900;
+  padding: 1.5mm 7mm; border-radius: 20mm; letter-spacing: 1.5px;
   text-transform: uppercase; font-family: 'Inter', sans-serif;
   box-shadow: 0 2px 8px rgba(245,158,11,0.4);
 }
-.member-name { font-size: 20pt; font-weight: 900; color: #111827; text-align: center; line-height: 1.2; }
-.member-org { font-size: 8.5pt; color: #6b7280; text-align: center; font-weight: 600; }
+.member-name { font-size: 15pt; font-weight: 900; color: #111827; text-align: center; line-height: 1.2; }
+.member-org { font-size: 7pt; color: #6b7280; text-align: center; font-weight: 600; }
 .code-box {
-  display: flex; align-items: center; gap: 2.5mm;
+  display: flex; align-items: center; gap: 2mm;
   background: linear-gradient(135deg, #eef2ff, #dbeafe);
-  border: 2px solid #1a2a5e; border-radius: 10mm; padding: 2.5mm 8mm;
+  border: 1.5px solid #1a2a5e; border-radius: 8mm; padding: 2mm 6mm;
 }
-.code-text { font-family: 'Inter', monospace; font-size: 13pt; font-weight: 900; color: #1a2a5e; letter-spacing: 2px; direction: ltr; }
+.code-text { font-family: 'Inter', monospace; font-size: 10pt; font-weight: 900; color: #1a2a5e; letter-spacing: 1.5px; direction: ltr; }
 .qr-section { display: flex; flex-direction: column; align-items: center; gap: 1.5mm; }
-.qr-section img { width: 28mm; height: 28mm; border-radius: 3mm; border: 1.5px solid #e5e7eb; padding: 1.5mm; background: #fff; }
-.qr-label { font-size: 6.5pt; color: #9ca3af; }
+.qr-section img { width: 24mm; height: 24mm; border-radius: 3mm; border: 1.5px solid #e5e7eb; padding: 1.5mm; background: #fff; }
+.qr-label { font-size: 6pt; color: #9ca3af; }
 
 .bottom-bar {
   background: linear-gradient(135deg, #1a2a5e, #2C3E6B);
-  height: 11mm; display: flex; align-items: center;
-  justify-content: space-between; padding: 0 10mm; flex-shrink: 0;
+  height: 10mm; display: flex; align-items: center;
+  justify-content: space-between; padding: 0 6mm; flex-shrink: 0;
 }
-.bottom-bar span { color: rgba(255,255,255,0.5); font-size: 7pt; }
-.bottom-bar .site { color: #FFC72C; font-weight: 700; font-size: 8.5pt; }
+.bottom-bar span { color: rgba(255,255,255,0.5); font-size: 6pt; }
+.bottom-bar .site { color: #FFC72C; font-weight: 700; font-size: 7pt; }
 
 /* ===== تصميم الخلف ===== */
 .back-top-bar {
   background: linear-gradient(135deg, #1a2a5e, #2C3E6B);
-  height: 12mm; display: flex; align-items: center;
-  justify-content: center; gap: 3mm; flex-shrink: 0;
+  height: 18mm; display: flex; align-items: center;
+  justify-content: center; gap: 3mm; flex-shrink: 0; flex-direction: column;
+  padding: 3mm;
 }
-.back-top-bar img { height: 8mm; border-radius: 2mm; background: rgba(255,255,255,0.9); padding: 1mm; object-fit: contain; }
-.back-top-bar span { color: #FFC72C; font-size: 9pt; font-weight: 900; }
+.back-top-bar img { height: 10mm; border-radius: 2mm; background: rgba(255,255,255,0.9); padding: 1mm; object-fit: contain; }
+.back-top-bar span { color: #FFC72C; font-size: 7pt; font-weight: 900; text-align: center; }
 
 .back-body {
-  flex: 1; padding: 7mm 12mm;
-  display: flex; flex-direction: column; gap: 5mm; overflow: hidden;
+  flex: 1; padding: 5mm 7mm;
+  display: flex; flex-direction: column; gap: 4mm; overflow: hidden;
 }
-.back-title-section { text-align: center; border-bottom: 2px solid #e5e7eb; padding-bottom: 5mm; }
-.back-course-name { font-size: 16pt; font-weight: 900; color: #111827; line-height: 1.3; }
+.back-title-section { text-align: center; border-bottom: 1.5px solid #e5e7eb; padding-bottom: 4mm; }
+.back-course-name { font-size: 12pt; font-weight: 900; color: #111827; line-height: 1.3; }
 .back-course-type { display: inline-block; margin-top: 2mm;
-  background: #1e40af; color: #fff; font-size: 7.5pt; font-weight: 900;
-  padding: 1.5mm 6mm; border-radius: 10mm; letter-spacing: 1px; }
-.back-details { display: flex; flex-direction: column; gap: 3.5mm; }
-.back-detail { display: flex; align-items: flex-start; gap: 3mm; font-size: 10.5pt; color: #374151; line-height: 1.5; }
-.back-detail .icon { width: 6mm; text-align: center; font-size: 11pt; flex-shrink: 0; }
+  background: #1e40af; color: #fff; font-size: 6pt; font-weight: 900;
+  padding: 1mm 4mm; border-radius: 8mm; letter-spacing: 1px; }
+.back-details { display: flex; flex-direction: column; gap: 2.5mm; }
+.back-detail { display: flex; align-items: flex-start; gap: 2.5mm; font-size: 8.5pt; color: #374151; line-height: 1.5; }
+.back-detail .icon { width: 5mm; text-align: center; font-size: 9pt; flex-shrink: 0; }
 .back-welcome {
   background: linear-gradient(135deg, #eff6ff, #dbeafe);
-  border-right: 4px solid #1e40af; border-radius: 4mm; padding: 5mm 6mm; flex: 1;
+  border-right: 3px solid #1e40af; border-radius: 3mm; padding: 4mm; flex: 1;
 }
-.back-welcome .title { font-size: 11pt; font-weight: 800; color: #1e40af; margin-bottom: 3mm; }
-.back-welcome .text { font-size: 9.5pt; color: #374151; line-height: 1.8; }
+.back-welcome .title { font-size: 9pt; font-weight: 800; color: #1e40af; margin-bottom: 2mm; }
+.back-welcome .text { font-size: 7.5pt; color: #374151; line-height: 1.7; }
 .back-footer {
   display: flex; justify-content: space-between; align-items: center;
-  border-top: 1px solid #e5e7eb; padding-top: 3mm;
+  border-top: 1px solid #e5e7eb; padding-top: 2.5mm;
 }
-.back-footer img { height: 8mm; border-radius: 2mm; background: #f3f4f6; padding: 1mm; object-fit: contain; }
-.back-footer .url { font-size: 7pt; color: #1e40af; font-weight: 700; direction: ltr; }
+.back-footer img { height: 7mm; border-radius: 2mm; background: #f3f4f6; padding: 1mm; object-fit: contain; }
+.back-footer .url { font-size: 6.5pt; color: #1e40af; font-weight: 700; direction: ltr; }
 
 #status { text-align:center; padding:60px; font-size:16px; color:#666; }
 
@@ -289,7 +281,7 @@ function render() {
   const el = document.getElementById('content')
   if (!apps.length) { el.innerHTML = '<div style="text-align:center;padding:60px;color:#666">لا يوجد مشاركون</div>'; return }
   let html = ''
-  apps.forEach((app, idx) => {
+  apps.forEach(app => {
     html += `<div class="member-page">`
     html += renderFront(app)
     if (showBack) {
@@ -297,10 +289,6 @@ function render() {
       html += renderBack()
     }
     html += `</div>`
-    // فصل واضح بين الأعضاء
-    if (idx < apps.length - 1) {
-      html += `<div style="width:100%;height:0;clear:both;page-break-after:always;display:block"></div>`
-    }
   })
   el.innerHTML = html
 }
