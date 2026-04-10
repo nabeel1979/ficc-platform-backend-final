@@ -69,9 +69,10 @@ tbody td { padding: 10px 14px; color: #374151; vertical-align: middle; }
 
 /* ===== صفحة الطباعة ===== */
 @media print {
-  body { background: white; }
-  .toolbar, .members-list { display: none !important; }
-  .print-page { display: flex !important; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  body { background: white; margin: 0 !important; padding: 0 !important; }
+  .toolbar, .members-list, #tableWrap, #status { display: none !important; }
+  .print-page { display: flex !important; width: 210mm !important; height: 297mm !important; }
 }
 
 /* صفحة A4 — وجه وخلف جنب بعض (نصف صفحة) */
@@ -472,11 +473,9 @@ load()
 
 <style>
 @media print {
-  .members-list, .toolbar, #tableWrap { display: none !important; }
-  .print-page { page-break-after: always; break-after: page; }
-  body { margin: 0; padding: 0; background: white; }
+  .print-page { page-break-after: always !important; break-after: page !important; }
 }
-@page { size: A4 portrait; margin: 0; }
+@page { size: A4 portrait; margin: 0mm; }
 </style>
 </body>
 </html>
