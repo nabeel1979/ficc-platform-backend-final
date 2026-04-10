@@ -577,7 +577,7 @@ function MultiCheckField({ options, value, onChange }) {
 }
 
 /* ─── Broadcast Modal ─── */
-function DashboardBroadcastModal({ sectorId, itemTitle, itemId, onClose }) {
+function DashboardBroadcastModal({ sectorId, itemTitle, itemId, itemImage, onClose }) {
   const [subscribers, setSubscribers] = React.useState([])
   const [loading, setLoading] = React.useState(true)
   const [selected, setSelected] = React.useState([])
@@ -601,7 +601,8 @@ function DashboardBroadcastModal({ sectorId, itemTitle, itemId, onClose }) {
     try {
       const r = await api.post('/subscribers/broadcast', {
         subscriberIds: selected,
-        message: `📢 ${itemTitle}\n🔗 ${window.location.origin}`
+        message: `📢 ${itemTitle}\n🔗 ${window.location.origin}`,
+        imageUrl: itemImage || null
       })
       setMsg(`✅ تم الإرسال لـ ${r.data?.sent||selected.length} متابع`)
     } catch { setMsg('❌ حدث خطأ') }
@@ -881,6 +882,7 @@ function CrudTable({ title, icon, endpoint, columns, fields: rawFields, addLabel
           sectorId={broadcastSectorId}
           itemTitle={broadcastItem.title || broadcastItem.name || broadcastItem.companyName || ''}
           itemId={broadcastItem.id}
+          itemImage={broadcastItem.imageUrl || broadcastItem.bannerUrl || broadcastItem.logoUrl || broadcastItem.thumbnailUrl || null}
           onClose={() => setBroadcastItem(null)}
         />
       )}

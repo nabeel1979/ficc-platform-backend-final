@@ -313,20 +313,37 @@ public class SubscribersController : ControllerBase {
             .ToListAsync();
 
         int sent = 0;
+        using var http = new System.Net.Http.HttpClient();
         foreach (var sub in subscribers) {
             // إرسال واتساب
-            if (!string.IsNullOrEmpty(sub.WhatsApp)) {
+            var waRaw = sub.WhatsApp ?? sub.Phone ?? "";
+            if (!string.IsNullOrEmpty(waRaw)) {
                 try {
-                    using var http = new System.Net.Http.HttpClient();
-                    var wa = sub.WhatsApp.Replace("+", "").Replace(" ", "");
-                    await http.PostAsync(
-                        "https://api.ultramsg.com/instance167281/messages/chat",
-                        new System.Net.Http.FormUrlEncodedContent(new[] {
-                            new System.Collections.Generic.KeyValuePair<string,string>("token", "4sfgtwxi8b4l46yq"),
-                            new System.Collections.Generic.KeyValuePair<string,string>("to", $"+{wa}"),
-                            new System.Collections.Generic.KeyValuePair<string,string>("body", dto.Message)
-                        })
-                    );
+                    var wa = waRaw.Replace("+", "").Replace(" ", "");
+                    var to = wa.StartsWith("964") ? $"+{wa}" : wa.StartsWith("0") ? $"+964{wa[1..]}" : $"+{wa}";
+
+                    // إرسال الصورة أولاً إذا موجودة
+                    if (!string.IsNullOrEmpty(dto.ImageUrl)) {
+                        await http.PostAsync(
+                            "https://api.ultramsg.com/instance167281/messages/image",
+                            new System.Net.Http.FormUrlEncodedContent(new[] {
+                                new System.Collections.Generic.KeyValuePair<string,string>("token", "4sfgtwxi8b4l46yq"),
+                                new System.Collections.Generic.KeyValuePair<string,string>("to", to),
+                                new System.Collections.Generic.KeyValuePair<string,string>("image", dto.ImageUrl),
+                                new System.Collections.Generic.KeyValuePair<string,string>("caption", dto.Message)
+                            })
+                        );
+                    } else {
+                        // نص فقط
+                        await http.PostAsync(
+                            "https://api.ultramsg.com/instance167281/messages/chat",
+                            new System.Net.Http.FormUrlEncodedContent(new[] {
+                                new System.Collections.Generic.KeyValuePair<string,string>("token", "4sfgtwxi8b4l46yq"),
+                                new System.Collections.Generic.KeyValuePair<string,string>("to", to),
+                                new System.Collections.Generic.KeyValuePair<string,string>("body", dto.Message)
+                            })
+                        );
+                    }
                     sent++;
                 } catch { }
             }
@@ -374,6 +391,7 @@ public static class EmailHelper {
 public class BroadcastDto {
     public List<int> SubscriberIds { get; set; } = new();
     public string Message { get; set; } = "";
+    public string? ImageUrl { get; set; } // رابط الصورة (اختياري)
 }
 
 public class SubscriberProfileDto {
