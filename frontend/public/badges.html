@@ -22,45 +22,48 @@ body { font-family: 'Cairo', sans-serif; background: #f1f5f9; direction: rtl; }
 .btn-print-all { background: #FFC72C; color: #1a2a5e; margin-right: auto; }
 .btn-close { background: rgba(255,255,255,0.1); color: #fff; }
 
-/* قائمة الأعضاء */
-.members-list {
-  max-width: 900px;
+/* الجدول */
+.table-wrap {
+  max-width: 960px;
   margin: 24px auto;
   padding: 0 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
 }
-
-/* صف العضو */
-.member-row {
+.table-card {
   background: #fff;
   border-radius: 14px;
-  padding: 14px 18px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
   border: 1px solid #e5e7eb;
 }
-.member-photo {
-  width: 52px; height: 52px; border-radius: 50%;
-  overflow: hidden; border: 2.5px solid #FFC72C;
-  background: #eef2ff; display: flex; align-items: center;
-  justify-content: center; font-size: 22px; flex-shrink: 0;
+.table-header-bar {
+  background: linear-gradient(135deg, #1a2a5e, #2C3E6B);
+  padding: 14px 20px;
+  display: flex; align-items: center; justify-content: space-between;
 }
-.member-photo img { width: 100%; height: 100%; object-fit: cover; }
-.member-info { flex: 1; min-width: 0; }
-.member-name { font-size: 15px; font-weight: 800; color: #111827; }
-.member-code { font-family: 'Inter', monospace; font-size: 11px; font-weight: 700; color: #1e40af;
-  background: #eef2ff; padding: 2px 8px; border-radius: 6px; display: inline-block; margin-top: 3px; }
-.member-actions { display: flex; gap: 8px; flex-shrink: 0; }
-.btn-print { padding: 7px 16px; background: #1a2a5e; color: #fff; border: none; border-radius: 8px;
-  cursor: pointer; font-family: 'Cairo',sans-serif; font-weight: 700; font-size: 12px; }
-.btn-print:hover { background: #2C3E6B; }
-.btn-send { padding: 7px 14px; background: #f0fdf4; color: #16a34a; border: 1.5px solid #bbf7d0;
-  border-radius: 8px; cursor: pointer; font-family: 'Cairo',sans-serif; font-weight: 700; font-size: 12px; }
-.btn-send:hover { background: #dcfce7; }
+.table-header-bar h2 { color: #FFC72C; font-size: 14px; font-weight: 800; }
+.table-header-bar span { color: rgba(255,255,255,0.7); font-size: 12px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  background: #f8fafc; color: #374151; font-weight: 800;
+  padding: 10px 14px; text-align: right; border-bottom: 2px solid #e5e7eb;
+  font-size: 12px;
+}
+tbody tr { border-bottom: 1px solid #f1f5f9; transition: background 0.1s; }
+tbody tr:hover { background: #f8fafc; }
+tbody td { padding: 10px 14px; color: #374151; vertical-align: middle; }
+.td-name { font-weight: 800; color: #111827; display: flex; align-items: center; gap: 10px; }
+.td-photo { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; border: 2px solid #FFC72C;
+  background: #eef2ff; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.td-photo img { width: 100%; height: 100%; object-fit: cover; }
+.td-code { font-family: 'Inter', monospace; font-size: 11px; font-weight: 700; color: #1e40af;
+  background: #eef2ff; padding: 2px 7px; border-radius: 5px; }
+.td-phone { direction: ltr; font-family: monospace; color: #374151; }
+.td-email { color: #6b7280; font-size: 12px; }
+.td-date { color: #9ca3af; font-size: 11px; white-space: nowrap; }
+.btn-print-row { padding: 5px 12px; background: #1a2a5e; color: #fff; border: none; border-radius: 7px;
+  cursor: pointer; font-family: 'Cairo',sans-serif; font-weight: 700; font-size: 11px; white-space: nowrap; }
+.btn-print-row:hover { background: #2C3E6B; }
 
 #status { text-align:center; padding:60px; font-size:16px; color:#666; }
 
@@ -166,7 +169,27 @@ body { font-family: 'Cairo', sans-serif; background: #f1f5f9; direction: rtl; }
 </div>
 
 <div id="status">⏳ جارٍ التحميل...</div>
-<div class="members-list" id="list"></div>
+<div class="table-wrap" id="tableWrap" style="display:none">
+  <div class="table-card">
+    <div class="table-header-bar">
+      <h2 id="tableTitle">📋 طلبات التسجيل</h2>
+      <span id="count2"></span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>الاسم</th>
+          <th>الواتف</th>
+          <th>الإيميل</th>
+          <th>الشركة</th>
+          <th>التاريخ</th>
+          <th>Badge</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
 <div id="printArea"></div>
 
 <script>
@@ -256,31 +279,29 @@ function makePrintPage(app) {
 }
 
 function printSingle(appId) {
-  // إظهار صفحة العضو المحدد فقط وطباعة
   document.querySelectorAll('.print-page').forEach(p => {
     p.style.display = p.id === 'page-' + appId ? 'flex' : 'none'
   })
-  document.querySelector('.members-list').style.display = 'none'
+  document.getElementById('tableWrap').style.display = 'none'
   document.querySelector('.toolbar').style.display = 'none'
   window.print()
-  // إرجاع الحالة
   setTimeout(() => {
     document.querySelectorAll('.print-page').forEach(p => p.style.display = 'none')
-    document.querySelector('.members-list').style.display = 'flex'
+    document.getElementById('tableWrap').style.display = 'block'
     document.querySelector('.toolbar').style.display = 'flex'
-  }, 500)
+  }, 800)
 }
 
 function printAll() {
   document.querySelectorAll('.print-page').forEach(p => p.style.display = 'flex')
-  document.querySelector('.members-list').style.display = 'none'
+  document.getElementById('tableWrap').style.display = 'none'
   document.querySelector('.toolbar').style.display = 'none'
   window.print()
   setTimeout(() => {
     document.querySelectorAll('.print-page').forEach(p => p.style.display = 'none')
-    document.querySelector('.members-list').style.display = 'flex'
+    document.getElementById('tableWrap').style.display = 'block'
     document.querySelector('.toolbar').style.display = 'flex'
-  }, 500)
+  }, 800)
 }
 
 async function load() {
@@ -297,35 +318,46 @@ async function load() {
     document.getElementById('count').textContent = apps.length + ' مشارك'
     document.getElementById('status').style.display = 'none'
 
-    // بناء القائمة
-    const list = document.getElementById('list')
+    document.getElementById('tableWrap').style.display = 'block'
+    document.getElementById('tableTitle').textContent = `📋 ${course?.title||'طلبات التسجيل'}`
+    document.getElementById('count2').textContent = `إجمالي الطلبات: ${apps.length}`
+
+    const tbody = document.getElementById('tableBody')
     const printArea = document.getElementById('printArea')
-    let listHtml = '', printHtml = ''
+    let bodyHtml = '', printHtml = ''
 
     apps.forEach(app => {
       const sub   = app.subscriber || {}
       const name  = sub.fullName  || app.fullName  || app.FullName  || '—'
       const code  = sub.subscriberCode || sub.SubscriberCode || ''
       const photo = sub.profileImage   || sub.ProfileImage  || ''
+      const phone = app.phone || sub.phone || sub.whatsApp || '—'
+      const email = app.email || sub.email || '—'
+      const company = app.company || '—'
+      const date = app.createdAt ? new Date(app.createdAt).toLocaleDateString('ar-IQ',{timeZone:'Asia/Baghdad',year:'numeric',month:'2-digit',day:'2-digit'}) : '—'
 
-      listHtml += `
-      <div class="member-row">
-        <div class="member-photo">
-          ${photo ? `<img src="${photo}" onerror="this.textContent='👤'">` : '👤'}
-        </div>
-        <div class="member-info">
-          <div class="member-name">${name}</div>
-          ${code ? `<span class="member-code">🪪 ${code}</span>` : ''}
-        </div>
-        <div class="member-actions">
-          <button class="btn-print" onclick="printSingle(${app.id})">🖨️ طباعة</button>
-        </div>
-      </div>`
+      bodyHtml += `
+      <tr>
+        <td>
+          <div class="td-name">
+            <div class="td-photo">${photo ? `<img src="${photo}" onerror="this.textContent='👤'">` : '👤'}</div>
+            <div>
+              <div>${name}</div>
+              ${code ? `<span class="td-code">${code}</span>` : ''}
+            </div>
+          </div>
+        </td>
+        <td><span class="td-phone">${phone}</span></td>
+        <td><span class="td-email">${email}</span></td>
+        <td>${company}</td>
+        <td><span class="td-date">${date}</span></td>
+        <td><button class="btn-print-row" onclick="printSingle(${app.id})">🖨️ Badge</button></td>
+      </tr>`
 
       printHtml += makePrintPage(app)
     })
 
-    list.innerHTML = listHtml
+    tbody.innerHTML = bodyHtml
     printArea.innerHTML = printHtml
 
   } catch(e) {
