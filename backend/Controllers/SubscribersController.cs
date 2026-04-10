@@ -369,6 +369,7 @@ public class SubscribersController : ControllerBase {
                         var htmlBody = $@"
 <div dir='rtl' style='font-family:Cairo,sans-serif;max-width:600px;margin:0 auto;background:#f5f7fa;padding:16px;border-radius:16px'>
   <div style='background:linear-gradient(135deg,#2C3E6B,#4A6FA5);padding:24px 20px;border-radius:12px;text-align:center;margin-bottom:16px'>
+    <img src='https://ficc.iq/ficc-logo.jpg' alt='FICC' style='height:52px;margin-bottom:12px;display:block;margin-left:auto;margin-right:auto' />
     <h2 style='color:#fff;margin:0;font-size:20px;line-height:1.4'>{System.Web.HttpUtility.HtmlEncode(title)}</h2>
     <p style='color:#FFC72C;margin:8px 0 0;font-size:12px'>اتحاد الغرف التجارية العراقية</p>
   </div>
