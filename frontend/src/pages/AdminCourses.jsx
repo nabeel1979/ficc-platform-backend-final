@@ -820,12 +820,15 @@ function BroadcastModal({ course, onClose }) {
 
 export default function AdminCourses() {
   const [courses, setCourses] = useState([])
-  const [mediaCounts, setMediaCounts] = useState({}) // {courseId: count}
+  const [mediaCounts, setMediaCounts] = useState({})
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(null)
   const [appsModal, setAppsModal] = useState(null)
   const [mediaModal, setMediaModal] = useState(null)
-  const [broadcastModal, setBroadcastModal] = useState(null) // {course, subscribers}
+  const [broadcastModal, setBroadcastModal] = useState(null)
+  // فلاتر
+  const [statusFilter, setStatusFilter] = useState(['upcoming','ongoing']) // افتراضي: قادمة + جارية
+  const [searchText, setSearchText] = useState('')
 
   const load = () => {
     setLoading(true)
@@ -849,6 +852,25 @@ export default function AdminCourses() {
     await api.delete(`/courses/${id}`); load()
   }
 
+  // إحصائيات
+  const stats = {
+    all: courses.length,
+    upcoming: courses.filter(c=>c.status==='upcoming').length,
+    ongoing: courses.filter(c=>c.status==='ongoing').length,
+    completed: courses.filter(c=>c.status==='completed').length,
+    totalParticipants: courses.reduce((s,c)=>s+(c.currentParticipants||0),0),
+  }
+
+  // فلترة
+  const toggleStatus = (s) => setStatusFilter(p => p.includes(s) ? p.filter(x=>x!==s) : [...p,s])
+  const filtered = courses.filter(c => {
+    if (statusFilter.length > 0 && !statusFilter.includes(c.status)) return false
+    if (searchText && !c.title?.includes(searchText) && !c.speaker?.includes(searchText) && !c.location?.includes(searchText)) return false
+    return true
+  })
+
+  const fmt = d => d ? new Date(d).toLocaleDateString('ar-IQ',{year:'numeric',month:'numeric',day:'numeric',timeZone:'Asia/Baghdad'}) : ''
+
   return (
     <div style={{direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
       {modal && <CourseForm item={modal === 'new' ? null : modal} onSave={() => { setModal(null); load() }} onClose={() => setModal(null)} />}
@@ -856,29 +878,75 @@ export default function AdminCourses() {
       {mediaModal && <MediaManager course={mediaModal} onClose={() => { setMediaModal(null); load() }} />}
       {broadcastModal && <BroadcastModal course={broadcastModal} onClose={() => setBroadcastModal(null)} />}
 
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
-        <h2 style={{fontSize:20,fontWeight:800,color:'#2C3E6B'}}>🎓 الدورات الريادية</h2>
+      {/* Header */}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+        <h2 style={{fontSize:20,fontWeight:800,color:'#2C3E6B',margin:0}}>🎓 الدورات الريادية</h2>
         <button onClick={() => setModal('new')} style={{padding:'10px 20px',background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:'#fff',border:'none',borderRadius:12,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:13}}>
           ➕ إضافة دورة
         </button>
       </div>
 
-      {loading ? <div style={{textAlign:'center',padding:60,color:'#94a3b8'}}>⏳ جارٍ التحميل...</div> : (
+      {/* إحصائيات */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10,marginBottom:16}}>
+        {[
+          {label:'الكل',val:stats.all,color:'#2C3E6B',bg:'#eef2ff',icon:'📚'},
+          {label:'قادمة',val:stats.upcoming,color:'#0369a1',bg:'#e0f2fe',icon:'🟢'},
+          {label:'جارية',val:stats.ongoing,color:'#dc2626',bg:'#fee2e2',icon:'🔴'},
+          {label:'منتهية',val:stats.completed,color:'#16a34a',bg:'#dcfce7',icon:'✅'},
+          {label:'مشاركون',val:stats.totalParticipants,color:'#7c3aed',bg:'#f3e8ff',icon:'👥'},
+        ].map(s=>(
+          <div key={s.label} style={{background:s.bg,borderRadius:12,padding:'12px 10px',textAlign:'center'}}>
+            <div style={{fontSize:20,marginBottom:2}}>{s.icon}</div>
+            <div style={{fontSize:20,fontWeight:800,color:s.color}}>{s.val}</div>
+            <div style={{fontSize:11,color:'#64748b',fontWeight:600}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* فلاتر */}
+      <div style={{background:'#fff',borderRadius:12,padding:'12px 14px',marginBottom:16,display:'flex',gap:8,flexWrap:'wrap',alignItems:'center',border:'1px solid #e5e7eb'}}>
+        {/* أزرار الحالة */}
+        {[{k:'upcoming',l:'🟢 قادمة'},{k:'ongoing',l:'🔴 جارية'},{k:'completed',l:'✅ منتهية'}].map(f=>(
+          <button key={f.k} onClick={()=>toggleStatus(f.k)}
+            style={{padding:'6px 14px',borderRadius:20,border:'1.5px solid',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12,
+              borderColor:statusFilter.includes(f.k)?'#2C3E6B':'#e5e7eb',
+              background:statusFilter.includes(f.k)?'#2C3E6B':'#fff',
+              color:statusFilter.includes(f.k)?'#fff':'#374151'}}>
+            {f.l}
+          </button>
+        ))}
+        <button onClick={()=>setStatusFilter([])}
+          style={{padding:'6px 14px',borderRadius:20,border:'1.5px solid #e5e7eb',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12,background:'#f8fafc',color:'#374151'}}>
+          الكل
+        </button>
+        <div style={{flex:1,minWidth:160}}>
+          <input value={searchText} onChange={e=>setSearchText(e.target.value)}
+            placeholder="🔍 بحث بالاسم أو المتحدث"
+            style={{width:'100%',padding:'7px 12px',borderRadius:8,border:'1.5px solid #e5e7eb',fontFamily:'Cairo,sans-serif',fontSize:12,outline:'none',boxSizing:'border-box'}} />
+        </div>
+        <span style={{fontSize:12,color:'#94a3b8',fontWeight:600}}>{filtered.length} دورة</span>
+      </div>
+
+      {loading ? <div style={{textAlign:'center',padding:60,color:'#94a3b8'}}>⏳ جارٍ التحميل...</div> : filtered.length === 0 ? (
+        <div style={{textAlign:'center',padding:40,color:'#94a3b8',fontSize:14}}>لا توجد دورات للفلتر المحدد</div>
+      ) : (
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:16}}>
-          {courses.map(c => {
+          {filtered.map(c => {
             const pct = c.maxParticipants > 0 ? Math.round((c.currentParticipants / c.maxParticipants) * 100) : 0
             return (
               <div key={c.id} style={{background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:'0 2px 10px rgba(44,62,107,0.07)',border:'1px solid #e5e7eb'}}>
                 <div style={{background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',padding:'16px',position:'relative'}}>
-                  <span style={{position:'absolute',top:10,left:10,padding:'3px 10px',borderRadius:20,fontSize:11,fontWeight:800,background:'rgba(255,255,255,0.2)',color:'#fff'}}>
-                    {STATUS[c.status]||c.status}
+                  <span style={{position:'absolute',top:10,left:10,padding:'3px 10px',borderRadius:20,fontSize:11,fontWeight:800,
+                    background:c.status==='upcoming'?'#dcfce7':c.status==='ongoing'?'#fee2e2':'#f3f4f6',
+                    color:c.status==='upcoming'?'#166534':c.status==='ongoing'?'#991b1b':'#374151'}}>
+                    {c.status==='upcoming'?'🟢 قادمة':c.status==='ongoing'?'🔴 جارية':'✅ منتهية'}
                   </span>
                   <h3 style={{color:'#fff',fontSize:14,fontWeight:800,marginTop:20,lineHeight:1.4}}>{c.title}</h3>
                   {c.speaker && <div style={{color:'rgba(255,255,255,0.75)',fontSize:11,marginTop:4}}>👤 {c.speaker}</div>}
                 </div>
                 <div style={{padding:'14px 16px'}}>
                   <div style={{display:'flex',flexDirection:'column',gap:6,fontSize:12,color:'#64748b',marginBottom:12}}>
-                    <span>📅 {new Date(c.startDate).toLocaleDateString('ar-IQ')} — {new Date(c.endDate).toLocaleDateString('ar-IQ')}</span>
+                    <span>📅 {fmt(c.startDate)} — {fmt(c.endDate)}</span>
                     {c.location && <span>📍 {c.location}</span>}
                     <span>👥 {c.currentParticipants} / {c.maxParticipants} مشارك</span>
                     <div style={{background:'#e5e7eb',borderRadius:10,height:6,overflow:'hidden'}}>
