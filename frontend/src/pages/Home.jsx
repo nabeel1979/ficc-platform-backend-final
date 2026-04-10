@@ -429,7 +429,7 @@ function LatestCoursesSection() {
   }, [])
   if (!courses.length) return null
   const STATUS = { upcoming: { label:'🟢 قادمة', bg:'#dcfce7', color:'#166534' }, ongoing: { label:'🔴 جارية', bg:'#fee2e2', color:'#991b1b' }, completed: { label:'✅ منتهية', bg:'#f3f4f6', color:'#374151' } }
-  const fmt = d => d ? new Date(d).toLocaleDateString('ar-IQ',{year:'numeric',month:'short',day:'numeric'}) : ''
+  const fmt = d => d ? new Date(d).toLocaleDateString('ar-IQ',{year:'numeric',month:'short',day:'numeric',timeZone:'Asia/Baghdad'}) : ''
   return (
     <section style={{padding:'40px 16px',background:'#f8fafc',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
       <div style={{maxWidth:1100,margin:'0 auto'}}>

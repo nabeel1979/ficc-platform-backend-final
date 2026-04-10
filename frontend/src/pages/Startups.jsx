@@ -281,7 +281,7 @@ function CoursesSection() {
         {filtered.map(course => {
           const st = STATUS_LABELS[course.status]||STATUS_LABELS.upcoming
           const pct = course.maxParticipants>0 ? Math.round((course.currentParticipants/course.maxParticipants)*100) : 0
-          const fmt = d => new Date(d).toLocaleDateString('ar-IQ',{year:'numeric',month:'short',day:'numeric'})
+          const fmt = d => new Date(d).toLocaleDateString('ar-IQ',{year:'numeric',month:'short',day:'numeric',timeZone:'Asia/Baghdad'})
           return (
             <div key={course.id} style={{background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:'0 2px 10px rgba(44,62,107,0.07)',border:'1px solid #e5e7eb',display:'flex',flexDirection:'column'}}>
               <div style={{background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',padding:'16px 16px 12px',position:'relative'}}>
