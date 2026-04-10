@@ -3,72 +3,90 @@
 <head>
 <meta charset="UTF-8">
 <title>Badges — FICC</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Inter:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Cairo', sans-serif; background: #d1d5db; }
-#content { display: block; width: 100%; }
+body { font-family: 'Cairo', sans-serif; background: #f1f5f9; direction: rtl; }
+
+/* شريط الأدوات */
 .toolbar {
-  background: #111827; padding: 10px 20px;
-  display: flex; gap: 10px; align-items: center;
+  background: #1a2a5e;
+  padding: 12px 24px;
+  display: flex; gap: 12px; align-items: center;
   position: sticky; top: 0; z-index: 100; flex-wrap: wrap;
 }
-.toolbar h1 { color: #FFC72C; font-size: 14px; font-weight: 800; }
-.info { color: rgba(255,255,255,0.5); font-size: 11px; }
-.btn { padding: 7px 16px; border: none; border-radius: 6px; cursor: pointer; font-family: 'Cairo',sans-serif; font-weight: 800; font-size: 12px; }
-.btn-print { background: #FFC72C; color: #111; margin-right: auto; }
-.btn-close  { background: rgba(255,255,255,0.1); color: #fff; }
-.btn-mode   { background: rgba(255,255,255,0.1); color: #fff; }
-.btn-mode.active { background: #3b82f6; color: #fff; }
+.toolbar h1 { color: #FFC72C; font-size: 15px; font-weight: 800; }
+.info-text { color: rgba(255,255,255,0.55); font-size: 12px; }
+.btn { padding: 8px 18px; border: none; border-radius: 8px; cursor: pointer;
+  font-family: 'Cairo',sans-serif; font-weight: 800; font-size: 12px; }
+.btn-print-all { background: #FFC72C; color: #1a2a5e; margin-right: auto; }
+.btn-close { background: rgba(255,255,255,0.1); color: #fff; }
 
-/* كل عضو في صفحة A4 مستقلة */
-.member-page {
+/* قائمة الأعضاء */
+.members-list {
+  max-width: 900px;
+  margin: 24px auto;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* صف العضو */
+.member-row {
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  border: 1px solid #e5e7eb;
+}
+.member-photo {
+  width: 52px; height: 52px; border-radius: 50%;
+  overflow: hidden; border: 2.5px solid #FFC72C;
+  background: #eef2ff; display: flex; align-items: center;
+  justify-content: center; font-size: 22px; flex-shrink: 0;
+}
+.member-photo img { width: 100%; height: 100%; object-fit: cover; }
+.member-info { flex: 1; min-width: 0; }
+.member-name { font-size: 15px; font-weight: 800; color: #111827; }
+.member-code { font-family: 'Inter', monospace; font-size: 11px; font-weight: 700; color: #1e40af;
+  background: #eef2ff; padding: 2px 8px; border-radius: 6px; display: inline-block; margin-top: 3px; }
+.member-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.btn-print { padding: 7px 16px; background: #1a2a5e; color: #fff; border: none; border-radius: 8px;
+  cursor: pointer; font-family: 'Cairo',sans-serif; font-weight: 700; font-size: 12px; }
+.btn-print:hover { background: #2C3E6B; }
+.btn-send { padding: 7px 14px; background: #f0fdf4; color: #16a34a; border: 1.5px solid #bbf7d0;
+  border-radius: 8px; cursor: pointer; font-family: 'Cairo',sans-serif; font-weight: 700; font-size: 12px; }
+.btn-send:hover { background: #dcfce7; }
+
+#status { text-align:center; padding:60px; font-size:16px; color:#666; }
+
+/* ===== صفحة الطباعة ===== */
+@media print {
+  body { background: white; }
+  .toolbar, .members-list { display: none !important; }
+  .print-page { display: flex !important; }
+}
+
+/* صفحة الطباعة (مخفية في العرض العادي) */
+.print-page {
+  display: none;
   width: 210mm;
   height: 297mm;
   background: white;
-  margin: 16px auto;
-  page-break-before: always;
+  flex-direction: column;
+  overflow: hidden;
   page-break-after: always;
-  break-before: page;
-  break-after: page;
-  overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  position: relative;
 }
 
-/* وجه الباج — النصف العلوي */
-.badge-front {
-  width: 210mm;
-  height: 148.5mm;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* خط الطي */
-.fold-line {
-  width: 210mm;
-  border-top: 1.5px dashed #aaa;
-  flex-shrink: 0;
-}
-
-/* خلف الباج — النصف السفلي مقلوب */
-.badge-back-wrap {
-  width: 210mm;
-  height: 148.5mm;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  transform: rotate(180deg);
-}
-
-/* ===== تصميم الوجه ===== */
+/* ===== الوجه ===== */
 .top-bar {
   background: linear-gradient(135deg, #1a2a5e, #2C3E6B);
-  height: 26mm;
-  display: flex; align-items: center;
-  justify-content: space-between;
-  padding: 0 12mm; flex-shrink: 0;
+  height: 26mm; display: flex; align-items: center;
+  justify-content: space-between; padding: 0 12mm; flex-shrink: 0;
 }
 .top-bar img { height: 16mm; border-radius: 3mm; background: rgba(255,255,255,0.9); padding: 1.5mm; object-fit: contain; }
 .top-bar-org .org-ar { color: #FFC72C; font-size: 12pt; font-weight: 900; }
@@ -80,221 +98,189 @@ body { font-family: 'Cairo', sans-serif; background: #d1d5db; }
 .photo-section {
   background: linear-gradient(180deg, #1a2a5e 0%, #f8fafc 40%);
   display: flex; justify-content: center; align-items: center;
-  padding: 5mm 0 4mm; flex-shrink: 0;
+  padding: 7mm 0 5mm; flex-shrink: 0;
 }
 .photo-circle {
   width: 44mm; height: 44mm; border-radius: 50%;
   overflow: hidden; border: 4px solid #FFC72C;
   box-shadow: 0 4px 20px rgba(255,199,44,0.4);
-  background: #e5e7eb; display: flex;
-  align-items: center; justify-content: center; font-size: 34pt;
+  background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 34pt;
 }
 .photo-circle img { width: 100%; height: 100%; object-fit: cover; }
 
 .info-section {
-  background: #fff; padding: 4mm 12mm;
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; gap: 3mm;
+  background: #fff; padding: 5mm 12mm;
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3.5mm;
 }
-.type-badge {
-  background: linear-gradient(135deg, #FFC72C, #f59e0b);
-  color: #1a2a5e; font-size: 8pt; font-weight: 900;
-  padding: 2mm 10mm; border-radius: 20mm; letter-spacing: 1.5px;
-  text-transform: uppercase; font-family: 'Inter', sans-serif;
-  box-shadow: 0 2px 8px rgba(245,158,11,0.4);
-}
-.member-name { font-size: 22pt; font-weight: 900; color: #111827; text-align: center; line-height: 1.2; }
-.member-org { font-size: 9pt; color: #6b7280; text-align: center; font-weight: 600; }
-.code-box {
-  display: flex; align-items: center; gap: 2.5mm;
-  background: linear-gradient(135deg, #eef2ff, #dbeafe);
-  border: 2px solid #1a2a5e; border-radius: 10mm; padding: 2.5mm 8mm;
-}
+.type-badge { background: linear-gradient(135deg, #FFC72C, #f59e0b); color: #1a2a5e;
+  font-size: 8pt; font-weight: 900; padding: 2mm 10mm; border-radius: 20mm;
+  letter-spacing: 1.5px; text-transform: uppercase; font-family: 'Inter', sans-serif; }
+.print-name { font-size: 22pt; font-weight: 900; color: #111827; text-align: center; line-height: 1.2; }
+.print-org { font-size: 9pt; color: #6b7280; text-align: center; font-weight: 600; }
+.code-box { display: flex; align-items: center; gap: 2.5mm;
+  background: linear-gradient(135deg, #eef2ff, #dbeafe); border: 2px solid #1a2a5e;
+  border-radius: 10mm; padding: 2.5mm 8mm; }
 .code-text { font-family: 'Inter', monospace; font-size: 13pt; font-weight: 900; color: #1a2a5e; letter-spacing: 2px; direction: ltr; }
-.qr-section { display: flex; flex-direction: column; align-items: center; gap: 1.5mm; }
-.qr-section img { width: 28mm; height: 28mm; border-radius: 3mm; border: 1.5px solid #e5e7eb; padding: 1.5mm; background: #fff; }
+.qr-wrap { display: flex; flex-direction: column; align-items: center; gap: 1.5mm; }
+.qr-wrap img { width: 30mm; height: 30mm; border-radius: 3mm; border: 1.5px solid #e5e7eb; padding: 1.5mm; background: #fff; }
 .qr-label { font-size: 6.5pt; color: #9ca3af; }
 
-.bottom-bar {
-  background: linear-gradient(135deg, #1a2a5e, #2C3E6B);
-  height: 13mm; display: flex; align-items: center;
-  justify-content: space-between; padding: 0 12mm; flex-shrink: 0;
-}
+.bottom-bar { background: linear-gradient(135deg, #1a2a5e, #2C3E6B); height: 13mm;
+  display: flex; align-items: center; justify-content: space-between; padding: 0 12mm; flex-shrink: 0; }
 .bottom-bar span { color: rgba(255,255,255,0.5); font-size: 8pt; }
 .bottom-bar .site { color: #FFC72C; font-weight: 700; font-size: 9pt; }
 
-/* ===== تصميم الخلف ===== */
-.back-top-bar {
-  background: linear-gradient(135deg, #1a2a5e, #2C3E6B);
-  height: 18mm; display: flex; align-items: center;
-  justify-content: center; gap: 3mm; flex-shrink: 0; flex-direction: column;
-  padding: 3mm;
-}
-.back-top-bar img { height: 10mm; border-radius: 2mm; background: rgba(255,255,255,0.9); padding: 1mm; object-fit: contain; }
-.back-top-bar span { color: #FFC72C; font-size: 7pt; font-weight: 900; text-align: center; }
-
-.back-body {
-  flex: 1; padding: 5mm 7mm;
-  display: flex; flex-direction: column; gap: 4mm; overflow: hidden;
-}
-.back-title-section { text-align: center; border-bottom: 1.5px solid #e5e7eb; padding-bottom: 4mm; }
-.back-course-name { font-size: 12pt; font-weight: 900; color: #111827; line-height: 1.3; }
-.back-course-type { display: inline-block; margin-top: 2mm;
-  background: #1e40af; color: #fff; font-size: 6pt; font-weight: 900;
-  padding: 1mm 4mm; border-radius: 8mm; letter-spacing: 1px; }
-.back-details { display: flex; flex-direction: column; gap: 2.5mm; }
-.back-detail { display: flex; align-items: flex-start; gap: 2.5mm; font-size: 8.5pt; color: #374151; line-height: 1.5; }
-.back-detail .icon { width: 5mm; text-align: center; font-size: 9pt; flex-shrink: 0; }
-.back-welcome {
-  background: linear-gradient(135deg, #eff6ff, #dbeafe);
-  border-right: 3px solid #1e40af; border-radius: 3mm; padding: 4mm; flex: 1;
-}
-.back-welcome .title { font-size: 9pt; font-weight: 800; color: #1e40af; margin-bottom: 2mm; }
-.back-welcome .text { font-size: 7.5pt; color: #374151; line-height: 1.7; }
-.back-footer {
-  display: flex; justify-content: space-between; align-items: center;
-  border-top: 1px solid #e5e7eb; padding-top: 2.5mm;
-}
-.back-footer img { height: 7mm; border-radius: 2mm; background: #f3f4f6; padding: 1mm; object-fit: contain; }
-.back-footer .url { font-size: 6.5pt; color: #1e40af; font-weight: 700; direction: ltr; }
-
-#status { text-align:center; padding:60px; font-size:16px; color:#666; }
-
-@media print {
-  .toolbar { display: none !important; }
-  body { background: white; }
-  .member-page {
-    margin: 0 !important;
-    box-shadow: none !important;
-    page-break-after: always !important;
-    break-after: page !important;
-  }
-}
-@page { size: A4 portrait; margin: 0; }
+/* ===== الخلف ===== */
+.fold-line { border-top: 1.5px dashed #aaa; flex-shrink: 0; }
+.back-wrap { width: 210mm; height: 148.5mm; display: flex; flex-direction: column;
+  overflow: hidden; transform: rotate(180deg); flex-shrink: 0; }
+.back-top { background: linear-gradient(135deg,#1a2a5e,#2C3E6B); height: 18mm; display: flex;
+  align-items: center; justify-content: center; gap: 3mm; flex-shrink: 0; }
+.back-top img { height: 12mm; border-radius: 2mm; background: rgba(255,255,255,0.9); padding: 1mm; object-fit: contain; }
+.back-top span { color: #FFC72C; font-size: 9pt; font-weight: 900; }
+.back-body { flex: 1; padding: 6mm 10mm; display: flex; flex-direction: column; gap: 4mm; overflow: hidden; }
+.back-course { text-align: center; border-bottom: 1.5px solid #e5e7eb; padding-bottom: 4mm; }
+.back-course-name { font-size: 14pt; font-weight: 900; color: #111827; line-height: 1.3; }
+.back-course-type { display: inline-block; margin-top: 2mm; background: #1e40af; color: #fff;
+  font-size: 6.5pt; font-weight: 900; padding: 1mm 5mm; border-radius: 8mm; }
+.back-details { display: flex; flex-direction: column; gap: 3mm; }
+.back-detail { display: flex; align-items: flex-start; gap: 2.5mm; font-size: 9pt; color: #374151; line-height: 1.5; }
+.back-detail .icon { width: 5mm; font-size: 10pt; flex-shrink: 0; }
+.back-welcome { background: linear-gradient(135deg,#eff6ff,#dbeafe); border-right: 3px solid #1e40af;
+  border-radius: 3mm; padding: 4mm 5mm; flex: 1; }
+.back-welcome .wt { font-size: 10pt; font-weight: 800; color: #1e40af; margin-bottom: 2mm; }
+.back-welcome .wb { font-size: 8.5pt; color: #374151; line-height: 1.8; }
+.back-foot { display: flex; justify-content: space-between; align-items: center;
+  border-top: 1px solid #e5e7eb; padding-top: 3mm; }
+.back-foot img { height: 7mm; border-radius: 2mm; background: #f3f4f6; padding: 1mm; object-fit: contain; }
+.back-foot .url { font-size: 7pt; color: #1e40af; font-weight: 700; direction: ltr; }
 </style>
 </head>
 <body>
+
 <div class="toolbar">
   <h1 id="title">🪪 Badges — FICC</h1>
-  <span class="info" id="count"></span>
-  <button class="btn btn-mode active" id="modeBtn" onclick="toggleMode()">🔄 وجه + خلف</button>
-  <button class="btn btn-print" onclick="window.print()">🖨️ طباعة / PDF</button>
-  <button class="btn btn-close" onclick="window.close()">✕</button>
+  <span class="info-text" id="count"></span>
+  <button class="btn btn-print-all" onclick="printAll()">🖨️ طباعة الكل</button>
+  <button class="btn btn-close" onclick="window.close()">✕ إغلاق</button>
 </div>
+
 <div id="status">⏳ جارٍ التحميل...</div>
-<div id="content"></div>
+<div class="members-list" id="list"></div>
+<div id="printArea"></div>
 
 <script>
 const params   = new URLSearchParams(window.location.search)
 const courseId = params.get('course') || ''
 const API      = '/api'
-let showBack   = true
 let course     = null
 let apps       = []
-
-function toggleMode() {
-  showBack = !showBack
-  document.getElementById('modeBtn').textContent = showBack ? '🔄 وجه + خلف' : '📋 وجه فقط'
-  document.getElementById('modeBtn').classList.toggle('active', showBack)
-  // إخفاء/إظهار الخلف بـ CSS
-  document.querySelectorAll('.badge-back-wrap, .fold-line').forEach(el => {
-    el.style.display = showBack ? '' : 'none'
-  })
-}
 
 function fmt(d) {
   if (!d) return ''
   try { return new Date(d).toLocaleDateString('ar-IQ',{year:'numeric',month:'long',day:'numeric',timeZone:'Asia/Baghdad'}) } catch { return d }
 }
-function qr(url) {
-  return 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=4&color=1e40af&data=' + encodeURIComponent(url)
-}
+function qr(url) { return 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=4&color=1e40af&data=' + encodeURIComponent(url) }
 
-function renderFront(app) {
+function makePrintPage(app) {
   const sub   = app.subscriber || {}
   const name  = sub.fullName  || app.fullName  || app.FullName  || '—'
   const code  = sub.subscriberCode || sub.SubscriberCode || ''
   const photo = sub.profileImage   || sub.ProfileImage  || ''
   const url   = 'https://ficc.iq/startups/' + courseId
+  const dates = course?.startDate ? (course.endDate ? `${fmt(course.startDate)} — ${fmt(course.endDate)}` : fmt(course.startDate)) : ''
+
   return `
-  <div class="badge-front">
-    <div class="top-bar">
-      <div style="display:flex;align-items:center;gap:4mm">
-        <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
-        <div class="top-bar-org">
-          <div class="org-ar">اتحاد الغرف التجارية العراقية</div>
-          <div class="org-en">Federation of Iraqi Chambers of Commerce</div>
+  <div class="print-page" id="page-${app.id}">
+    <!-- الوجه -->
+    <div style="width:210mm;height:148.5mm;display:flex;flex-direction:column;flex-shrink:0;overflow:hidden">
+      <div class="top-bar">
+        <div style="display:flex;align-items:center;gap:4mm">
+          <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
+          <div class="top-bar-org">
+            <div class="org-ar">اتحاد الغرف التجارية العراقية</div>
+            <div class="org-en">Federation of Iraqi Chambers of Commerce</div>
+          </div>
+        </div>
+        <div class="top-bar-badge">ATTENDEE</div>
+      </div>
+      <div class="photo-section">
+        <div class="photo-circle">
+          ${photo ? `<img src="${photo}" onerror="this.parentElement.textContent='👤'">` : '👤'}
         </div>
       </div>
-      <div class="top-bar-badge">ATTENDEE</div>
-    </div>
-    <div class="photo-section">
-      <div class="photo-circle">
-        ${photo ? `<img src="${photo}" onerror="this.parentElement.textContent='👤'">` : '👤'}
+      <div class="info-section">
+        <div class="type-badge">PARTICIPANT</div>
+        <div class="print-name">${name}</div>
+        <div class="print-org">اتحاد الغرف التجارية العراقية</div>
+        ${code ? `<div class="code-box"><span style="font-size:11pt">🪪</span><span class="code-text">${code}</span></div>` : ''}
+        <div class="qr-wrap">
+          <img src="${qr(url)}" alt="QR">
+          <div class="qr-label">امسح لعرض الدورة</div>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <span class="site">ficc.iq</span>
+        <span>${new Date().getFullYear()}</span>
       </div>
     </div>
-    <div class="info-section">
-      <div class="type-badge">PARTICIPANT</div>
-      <div class="member-name">${name}</div>
-      <div class="member-org">اتحاد الغرف التجارية العراقية</div>
-      ${code ? `<div class="code-box"><span style="font-size:11pt">🪪</span><span class="code-text">${code}</span></div>` : ''}
-      <div class="qr-section">
-        <img src="${qr(url)}" alt="QR">
-        <div class="qr-label">امسح لعرض الدورة</div>
-      </div>
-    </div>
-    <div class="bottom-bar">
-      <span class="site">ficc.iq</span>
-      <span>${new Date().getFullYear()}</span>
-    </div>
-  </div>`
-}
-
-function renderBack() {
-  const dates = course.startDate
-    ? (course.endDate ? `${fmt(course.startDate)} — ${fmt(course.endDate)}` : fmt(course.startDate))
-    : ''
-  return `
-  <div class="badge-back-wrap">
-    <div class="back-top-bar">
-      <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
-      <span>اتحاد الغرف التجارية العراقية</span>
-    </div>
-    <div class="back-body">
-      <div class="back-title-section">
-        <div class="back-course-name">🎓 ${course.title || ''}</div>
-        <span class="back-course-type">TRAINING COURSE</span>
-      </div>
-      <div class="back-details">
-        ${dates ? `<div class="back-detail"><span class="icon">📅</span><span>${dates}</span></div>` : ''}
-        ${course.location ? `<div class="back-detail"><span class="icon">📍</span><span>${course.location}</span></div>` : ''}
-        ${course.speaker  ? `<div class="back-detail"><span class="icon">👤</span><span>${course.speaker}${course.speakerTitle ? ' — ' + course.speakerTitle : ''}</span></div>` : ''}
-        ${course.price !== undefined ? `<div class="back-detail"><span class="icon">💰</span><span>${course.isFree||course.price===0?'مجانية':course.price?.toLocaleString()+' د.ع'}</span></div>` : ''}
-      </div>
-      <div class="back-welcome">
-        <div class="title">🎉 أهلاً وسهلاً بك!</div>
-        <div class="text">يسعدنا مشاركتك في هذه الدورة التدريبية المميزة.<br>نتمنى لك تجربة تعليمية ثرية ومثمرة تُضيف لمسيرتك المهنية.</div>
-      </div>
-      <div class="back-footer">
+    <!-- خط الطي -->
+    <div class="fold-line"></div>
+    <!-- الخلف -->
+    <div class="back-wrap">
+      <div class="back-top">
         <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
-        <span class="url">www.ficc.iq</span>
+        <span>اتحاد الغرف التجارية العراقية</span>
+      </div>
+      <div class="back-body">
+        <div class="back-course">
+          <div class="back-course-name">🎓 ${course?.title||''}</div>
+          <span class="back-course-type">TRAINING COURSE</span>
+        </div>
+        <div class="back-details">
+          ${dates?`<div class="back-detail"><span class="icon">📅</span><span>${dates}</span></div>`:''}
+          ${course?.location?`<div class="back-detail"><span class="icon">📍</span><span>${course.location}</span></div>`:''}
+          ${course?.speaker?`<div class="back-detail"><span class="icon">👤</span><span>${course.speaker}</span></div>`:''}
+        </div>
+        <div class="back-welcome">
+          <div class="wt">🎉 أهلاً وسهلاً بك!</div>
+          <div class="wb">يسعدنا مشاركتك في هذه الدورة التدريبية المميزة.<br>نتمنى لك تجربة تعليمية ثرية ومثمرة.</div>
+        </div>
+        <div class="back-foot">
+          <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
+          <span class="url">www.ficc.iq</span>
+        </div>
       </div>
     </div>
   </div>`
 }
 
-function render() {
-  const el = document.getElementById('content')
-  if (!apps.length) { el.innerHTML = '<div style="text-align:center;padding:60px;color:#666">لا يوجد مشاركون</div>'; return }
-  let html = ''
-  apps.forEach(app => {
-    html += `<div class="member-page">`
-    html += renderFront(app)
-    html += `<div class="fold-line"></div>`
-    html += renderBack()
-    html += `</div>`
+function printSingle(appId) {
+  // إظهار صفحة العضو المحدد فقط وطباعة
+  document.querySelectorAll('.print-page').forEach(p => {
+    p.style.display = p.id === 'page-' + appId ? 'flex' : 'none'
   })
-  el.innerHTML = html
+  document.querySelector('.members-list').style.display = 'none'
+  document.querySelector('.toolbar').style.display = 'none'
+  window.print()
+  // إرجاع الحالة
+  setTimeout(() => {
+    document.querySelectorAll('.print-page').forEach(p => p.style.display = 'none')
+    document.querySelector('.members-list').style.display = 'flex'
+    document.querySelector('.toolbar').style.display = 'flex'
+  }, 500)
+}
+
+function printAll() {
+  document.querySelectorAll('.print-page').forEach(p => p.style.display = 'flex')
+  document.querySelector('.members-list').style.display = 'none'
+  document.querySelector('.toolbar').style.display = 'none'
+  window.print()
+  setTimeout(() => {
+    document.querySelectorAll('.print-page').forEach(p => p.style.display = 'none')
+    document.querySelector('.members-list').style.display = 'flex'
+    document.querySelector('.toolbar').style.display = 'flex'
+  }, 500)
 }
 
 async function load() {
@@ -306,15 +292,56 @@ async function load() {
     course = await cr.json()
     const raw = await ar.json()
     apps = Array.isArray(raw) ? raw : []
-    document.getElementById('title').textContent = '🪪 ' + (course?.title || 'Badges')
+
+    document.getElementById('title').textContent = '🪪 ' + (course?.title||'Badges')
     document.getElementById('count').textContent = apps.length + ' مشارك'
     document.getElementById('status').style.display = 'none'
-    render()
+
+    // بناء القائمة
+    const list = document.getElementById('list')
+    const printArea = document.getElementById('printArea')
+    let listHtml = '', printHtml = ''
+
+    apps.forEach(app => {
+      const sub   = app.subscriber || {}
+      const name  = sub.fullName  || app.fullName  || app.FullName  || '—'
+      const code  = sub.subscriberCode || sub.SubscriberCode || ''
+      const photo = sub.profileImage   || sub.ProfileImage  || ''
+
+      listHtml += `
+      <div class="member-row">
+        <div class="member-photo">
+          ${photo ? `<img src="${photo}" onerror="this.textContent='👤'">` : '👤'}
+        </div>
+        <div class="member-info">
+          <div class="member-name">${name}</div>
+          ${code ? `<span class="member-code">🪪 ${code}</span>` : ''}
+        </div>
+        <div class="member-actions">
+          <button class="btn-print" onclick="printSingle(${app.id})">🖨️ طباعة</button>
+        </div>
+      </div>`
+
+      printHtml += makePrintPage(app)
+    })
+
+    list.innerHTML = listHtml
+    printArea.innerHTML = printHtml
+
   } catch(e) {
     document.getElementById('status').textContent = '❌ خطأ: ' + e.message
   }
 }
+
 load()
 </script>
+
+<style>
+@media print {
+  .members-list, .toolbar { display: none !important; }
+  .print-page { page-break-after: always; }
+}
+@page { size: A4 portrait; margin: 0; }
+</style>
 </body>
 </html>
