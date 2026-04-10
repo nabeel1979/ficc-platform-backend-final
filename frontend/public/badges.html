@@ -194,9 +194,12 @@ let apps       = []
 
 function toggleMode() {
   showBack = !showBack
-  document.getElementById('modeBtn').textContent  = showBack ? '🔄 وجه + خلف' : '📋 وجه فقط'
+  document.getElementById('modeBtn').textContent = showBack ? '🔄 وجه + خلف' : '📋 وجه فقط'
   document.getElementById('modeBtn').classList.toggle('active', showBack)
-  render()
+  // إخفاء/إظهار الخلف بـ CSS
+  document.querySelectorAll('.badge-back-wrap, .fold-line').forEach(el => {
+    el.style.display = showBack ? '' : 'none'
+  })
 }
 
 function fmt(d) {
@@ -287,10 +290,8 @@ function render() {
   apps.forEach(app => {
     html += `<div class="member-page">`
     html += renderFront(app)
-    if (showBack) {
-      html += `<div class="fold-line"></div>`
-      html += renderBack()
-    }
+    html += `<div class="fold-line"></div>`
+    html += renderBack()
     html += `</div>`
   })
   el.innerHTML = html
