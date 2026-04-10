@@ -507,14 +507,22 @@ function getOrientation() {
 function onOrientationChange() {
   const orientation = getOrientation()
   document.querySelectorAll('.print-page').forEach(page => {
+    // Force display flex
+    page.style.display = 'flex'
     if (orientation === 'landscape') {
       // Landscape: 4 badges in a row (A6 size each)
       page.classList.add('landscape-mode')
       page.classList.remove('portrait-mode')
+      page.style.width = '297mm'
+      page.style.height = '210mm'
+      page.style.flexDirection = 'row'
     } else {
       // Portrait: original design with fold line
       page.classList.remove('landscape-mode')
       page.classList.add('portrait-mode')
+      page.style.width = '210mm'
+      page.style.height = '297mm'
+      page.style.flexDirection = 'column'
     }
   })
 }
