@@ -170,17 +170,7 @@ function CourseForm({ item, onSave, onClose }) {
             <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>الوصف</label>
             <textarea value={form.description} onChange={e=>set('description',e.target.value)} rows={3}
               style={{width:'100%',padding:'10px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontSize:13,fontFamily:'Cairo,sans-serif',outline:'none',boxSizing:'border-box',resize:'vertical'}} />
-          </div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14}}>
-            <div>
-              <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>الحالة</label>
-              <select value={form.status} onChange={e=>set('status',e.target.value)} style={{width:'100%',padding:'10px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontSize:13,fontFamily:'Cairo,sans-serif',outline:'none'}}>
-                <option value="upcoming">📅 قادمة</option>
-                <option value="ongoing">🔴 جارية</option>
-                <option value="completed">✅ منتهية</option>
-              </select>
-            </div>
-            <div style={{display:'flex',flexDirection:'column',gap:10,justifyContent:'center',marginTop:20}}>
+          <div style={{display:'flex',flexDirection:'column',gap:10,justifyContent:'center',marginTop:20}}>
               <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:13}}>
                 <input type="checkbox" checked={form.isFree} onChange={e=>set('isFree',e.target.checked)} />مجانية
               </label>
@@ -1017,19 +1007,28 @@ export default function AdminCourses() {
     await api.delete(`/courses/${id}`); load()
   }
 
-  // إحصائيات
+  // إحصائيات — حساب الحالة من التاريخ
+  const getStatus = (course) => {
+    const now = new Date()
+    const start = new Date(course.startDate)
+    const end = new Date(course.endDate)
+    if (end < now) return 'completed'
+    if (start <= now && end >= now) return 'ongoing'
+    return 'upcoming'
+  }
   const stats = {
     all: courses.length,
-    upcoming: courses.filter(c=>c.status==='upcoming').length,
-    ongoing: courses.filter(c=>c.status==='ongoing').length,
-    completed: courses.filter(c=>c.status==='completed').length,
+    upcoming: courses.filter(c=>getStatus(c)==='upcoming').length,
+    ongoing: courses.filter(c=>getStatus(c)==='ongoing').length,
+    completed: courses.filter(c=>getStatus(c)==='completed').length,
     totalParticipants: courses.reduce((s,c)=>s+(c.currentParticipants||0),0),
   }
 
   // فلترة
   const toggleStatus = (s) => { setStatusFilter(p => p.includes(s) ? p.filter(x=>x!==s) : [...p,s]); setPage(1) }
   const filtered = courses.filter(c => {
-    if (statusFilter.length > 0 && !statusFilter.includes(c.status)) return false
+    const cStatus = getStatus(c)
+    if (statusFilter.length > 0 && !statusFilter.includes(cStatus)) return false
     if (searchText && !c.title?.includes(searchText) && !c.speaker?.includes(searchText) && !c.location?.includes(searchText)) return false
     return true
   })
@@ -1057,9 +1056,9 @@ export default function AdminCourses() {
       <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10,marginBottom:16}}>
         {[
           {label:'الكل',val:stats.all,color:'#2C3E6B',bg:'#eef2ff',icon:'📚'},
-          {label:'قادمة',val:stats.upcoming,color:'#0369a1',bg:'#e0f2fe',icon:'🟢'},
-          {label:'جارية',val:stats.ongoing,color:'#dc2626',bg:'#fee2e2',icon:'🔴'},
-          {label:'منتهية',val:stats.completed,color:'#16a34a',bg:'#dcfce7',icon:'✅'},
+          {label:'قادمة',val:stats.upcoming,color:'#eab308',bg:'#fef3c7',icon:'🟡'},
+          {label:'جارية',val:stats.ongoing,color:'#10b981',bg:'#d1fae5',icon:'🟢'},
+          {label:'منتهية',val:stats.completed,color:'#ef4444',bg:'#fee2e2',icon:'🔴'},
           {label:'مشاركون',val:stats.totalParticipants,color:'#7c3aed',bg:'#f3e8ff',icon:'👥'},
         ].map(s=>(
           <div key={s.label} style={{background:s.bg,borderRadius:12,padding:'12px 10px',textAlign:'center'}}>
@@ -1111,7 +1110,7 @@ export default function AdminCourses() {
               <div key={c.id} style={{background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:'0 2px 10px rgba(44,62,107,0.07)',border:'1px solid #e5e7eb'}}>
                 <div style={{background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',padding:'16px',position:'relative'}}>
                   <span style={{position:'absolute',top:10,left:10,padding:'3px 10px',borderRadius:20,fontSize:11,fontWeight:800,
-                    background:c.status==='upcoming'?'#dcfce7':c.status==='ongoing'?'#fee2e2':'#f3f4f6',
+                    background:c.status==='upcoming'?'#fef3c7':c.status==='ongoing'?'#d1fae5':'#fee2e2',
                     color:c.status==='upcoming'?'#166534':c.status==='ongoing'?'#991b1b':'#374151'}}>
                     {c.status==='upcoming'?'🟢 قادمة':c.status==='ongoing'?'🔴 جارية':'✅ منتهية'}
                   </span>
