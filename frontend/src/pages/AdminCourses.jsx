@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import api from '../lib/api'
 
 const STATUS = { upcoming:'📅 قادمة', ongoing:'🔴 جارية', completed:'✅ منتهية' }
+const SPECIALIZATIONS = ['الكمارك', 'الضرائب', 'الذهب', 'الذكاء الاصطناعي', 'برمجة', 'حاسوب', 'تجارة', 'محاسبة']
 
 function CourseForm({ item, onSave, onClose }) {
   const isEdit = !!item?.id
@@ -9,6 +10,7 @@ function CourseForm({ item, onSave, onClose }) {
     title: item?.title || '', description: item?.description || '',
     speaker: item?.speaker || '', speakerTitle: item?.speakerTitle || '', speakerImage: item?.speakerImage || '',
     workshopType: item?.workshopType || 'field',
+    specialization: item?.specialization || '',
     speakers: item?.speakersJson ? JSON.parse(item.speakersJson) : [{name: item?.speaker||'', title: item?.speakerTitle||'', image: item?.speakerImage||''}],
     location: item?.location || '',
     startDate: item?.startDate ? item.startDate.split('T')[0] : '',
@@ -110,7 +112,8 @@ function CourseForm({ item, onSave, onClose }) {
               </div>
             </div>
             {inp('تاريخ البدء *','startDate','date',true)} {inp('تاريخ الانتهاء *','endDate','date',true)}
-            {inp('الموقع','location')} {inp('الفئة','category')}
+            {form.workshopType==='field' ? inp('الموقع (الميدانية)','location') : inp('رابط الدورة (الإلكترونية)','location')}
+            {inp('الفئة','category')}
             <div>
               <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>نوع الورشة</label>
               <div style={{display:'flex',gap:8}}>
@@ -121,6 +124,13 @@ function CourseForm({ item, onSave, onClose }) {
                   </label>
                 ))}
               </div>
+            </div>
+            <div style={{marginBottom:14}}>
+              <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>تخصص الورشة</label>
+              <select value={form.specialization} onChange={e=>set('specialization',e.target.value)} style={{width:'100%',padding:'10px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontSize:13,fontFamily:'Cairo,sans-serif',outline:'none'}}>
+                <option value="">اختر التخصص</option>
+                {SPECIALIZATIONS.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
             </div>
             {inp('عدد المشاركين','maxParticipants','number')}
           </div>

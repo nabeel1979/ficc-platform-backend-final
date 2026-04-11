@@ -580,14 +580,15 @@ document.querySelectorAll('input[name="orientation"]').forEach(radio => {
     padding: 0 !important;
   }
   .print-row {
+    display: flex !important;
+    flex-direction: row !important;
     width: 210mm !important;
-    height: 148.5mm !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
   .print-quarter {
     width: 105mm !important;
-    height: 148.5mm !important;
+    flex-shrink: 0 !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
