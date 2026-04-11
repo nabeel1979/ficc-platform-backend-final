@@ -15,7 +15,6 @@ public class EntrepreneurCourse {
     public int MaxParticipants { get; set; } = 50;
     public int CurrentParticipants { get; set; } = 0;
     public string Status { get; set; } = "upcoming";
-    public string? Specialization { get; set; } // الكمارك، الضرائب، الذهب، الذكاء الاصطناعي، برمجة، حاسوب، تجارة، محاسبة
     public string? ImageUrl { get; set; }
     public decimal Price { get; set; } = 0;
     public bool IsFree { get; set; } = true;
