@@ -2692,9 +2692,16 @@ function StartupsAdminPanel() {
 
   const load = () => {
     setLoading(true)
-    api.get('/courses' + (filter !== 'all' ? `?status=${filter}` : ''),
-      { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => setStartups(r.data))
+    const url = '/courses' + (filter !== 'all' ? `?status=${filter}` : '')
+    api.get(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => {
+        const filtered = filter === 'all' ? r.data : r.data.filter(s => s.status === filter)
+        setStartups(filtered)
+      })
+      .catch(e => {
+        console.error('Error loading courses:', e)
+        setStartups([])
+      })
       .finally(() => setLoading(false))
   }
 
