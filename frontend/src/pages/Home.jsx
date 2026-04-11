@@ -428,7 +428,15 @@ function LatestCoursesSection() {
     }).catch(() => {})
   }, [])
   if (!courses.length) return null
-  const STATUS = { upcoming: { label:'🟢 قادمة', bg:'#dcfce7', color:'#166534' }, ongoing: { label:'🔴 جارية', bg:'#fee2e2', color:'#991b1b' }, completed: { label:'✅ منتهية', bg:'#f3f4f6', color:'#374151' } }
+  const STATUS = { upcoming: { label:'🟡 قادمة', bg:'#fef3c7', color:'#eab308' }, ongoing: { label:'🟢 جارية', bg:'#d1fae5', color:'#10b981' }, completed: { label:'🔴 منتهية', bg:'#fee2e2', color:'#ef4444' } }
+  const getStatus = (course) => {
+    const now = new Date()
+    const start = new Date(course.startDate)
+    const end = new Date(course.endDate)
+    if (end < now) return 'completed'
+    if (start <= now && end >= now) return 'ongoing'
+    return 'upcoming'
+  }
   const fmt = d => d ? new Date(d).toLocaleDateString('ar-IQ',{year:'numeric',month:'short',day:'numeric',timeZone:'Asia/Baghdad'}) : ''
   const fmtWithTime = d => {
     if (!d) return ''
@@ -446,7 +454,7 @@ function LatestCoursesSection() {
         </div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:16}}>
           {courses.map(c => {
-            const st = STATUS[c.status] || STATUS.upcoming
+            const st = STATUS[getStatus(c)] || STATUS.upcoming
             const pct = c.maxParticipants > 0 ? Math.round((c.currentParticipants/c.maxParticipants)*100) : 0
             return (
               <a key={c.id} href={`/courses/${c.id}`} style={{textDecoration:'none',display:'flex',flexDirection:'column',background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:'0 2px 10px rgba(44,62,107,0.07)',border:'1px solid #e5e7eb'}}>
