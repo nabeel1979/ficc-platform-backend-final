@@ -15,10 +15,8 @@ function CourseForm({ item, onSave, onClose }) {
     startTime: item?.startDate && item.startDate.includes('T') ? item.startDate.split('T')[1]?.slice(0,5) : '',
     endDate: item?.endDate ? item.endDate.split('T')[0] : '',
     endTime: item?.endDate && item.endDate.includes('T') ? item.endDate.split('T')[1]?.slice(0,5) : '',
-    formCloseDateTime: item?.formCloseDateTime ? item.formCloseDateTime.split('T')[0] : '',
-    formCloseTime: item?.formCloseDateTime && item.formCloseDateTime.includes('T') ? item.formCloseDateTime.split('T')[1]?.slice(0,5) : '',
-    confirmationDeadlineDateTime: item?.confirmationDeadlineDateTime ? item.confirmationDeadlineDateTime.split('T')[0] : '',
-    confirmationDeadlineTime: item?.confirmationDeadlineDateTime && item.confirmationDeadlineDateTime.includes('T') ? item.confirmationDeadlineDateTime.split('T')[1]?.slice(0,5) : '',
+    formCloseDateTime: item?.formCloseDateTime ? item.formCloseDateTime.split('T')[0]+'T'+(item.formCloseDateTime.split('T')[1]?.slice(0,5) || '00:00') : '',
+    confirmationDeadlineDateTime: item?.confirmationDeadlineDateTime ? item.confirmationDeadlineDateTime.split('T')[0]+'T'+(item.confirmationDeadlineDateTime.split('T')[1]?.slice(0,5) || '00:00') : '',
     maxParticipants: item?.maxParticipants || 50,
     isFree: item?.isFree !== false, price: item?.price || 0,
     category: item?.category || '', status: item?.status || 'upcoming', isActive: item?.isActive !== false,
@@ -34,8 +32,8 @@ function CourseForm({ item, onSave, onClose }) {
       // دمج التاريخ والوقت
       const startTime = form.startTime ? `${form.startDate}T${form.startTime}:00` : form.startDate
       const endTime = form.endTime ? `${form.endDate}T${form.endTime}:00` : form.endDate
-      const formCloseDateTime = form.formCloseDateTime && form.formCloseTime ? `${form.formCloseDateTime}T${form.formCloseTime}:00` : null
-      const confirmationDeadlineDateTime = form.confirmationDeadlineDateTime && form.confirmationDeadlineTime ? `${form.confirmationDeadlineDateTime}T${form.confirmationDeadlineTime}:00` : null
+      const formCloseDateTime = form.formCloseDateTime ? `${form.formCloseDateTime}:00` : null
+      const confirmationDeadlineDateTime = form.confirmationDeadlineDateTime ? `${form.confirmationDeadlineDateTime}:00` : null
       
       const payload = {
         ...form,
@@ -44,9 +42,7 @@ function CourseForm({ item, onSave, onClose }) {
         startTime: undefined,
         endTime: undefined,
         formCloseDateTime: formCloseDateTime,
-        formCloseTime: undefined,
         confirmationDeadlineDateTime: confirmationDeadlineDateTime,
-        confirmationDeadlineTime: undefined,
         speaker: validSpeakers[0]?.name || '',
         speakerTitle: validSpeakers[0]?.title || '',
         speakerImage: validSpeakers[0]?.image || '',
@@ -147,22 +143,8 @@ function CourseForm({ item, onSave, onClose }) {
                 {inp('وقت الانتهاء','endTime','time')}
               </div>
             </div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14}}>
-              <div>
-                {inp('تاريخ إغلاق الاستمارة','formCloseDateTime','date')}
-              </div>
-              <div>
-                {inp('الوقت','formCloseTime','time')}
-              </div>
-            </div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14}}>
-              <div>
-                {inp('تاريخ تأكيد الموعد','confirmationDeadlineDateTime','date')}
-              </div>
-              <div>
-                {inp('الوقت','confirmationDeadlineTime','time')}
-              </div>
-            </div>
+            {inp('تاريخ ووقت إغلاق الاستمارة','formCloseDateTime','datetime-local')}
+            {inp('تاريخ ووقت تأكيد الموعد','confirmationDeadlineDateTime','datetime-local')}
             {form.workshopType==='field' ? inp('الموقع (الميدانية)','location') : inp('رابط الدورة (الإلكترونية)','location')}
             {inp('الفئة','category')}
             <div>
