@@ -44,7 +44,12 @@ function CourseForm({ item, onSave, onClose }) {
   const inp = (label, k, type='text', req=false) => (
     <div style={{marginBottom:14}}>
       <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>{label}{req&&<span style={{color:'#ef4444'}}>*</span>}</label>
-      <input type={type} required={req} value={form[k]} onChange={e => set(k, type==='number' ? +e.target.value : e.target.value)}
+      <input type={type} required={req} value={form[k]} onChange={e => {
+        let val = type==='number' ? +e.target.value : e.target.value
+        // إذا غيّر نوع الورشة للإلكترونية، فرّغ الموقع
+        if(k==='location' && form.workshopType==='online') val = ''
+        set(k, val)
+      }}
         style={{width:'100%',padding:'10px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontSize:13,fontFamily:'Cairo,sans-serif',outline:'none',boxSizing:'border-box'}} />
     </div>
   )
@@ -119,7 +124,13 @@ function CourseForm({ item, onSave, onClose }) {
               <div style={{display:'flex',gap:8}}>
                 {[{v:'field',l:'🏢 ميدانية'},{v:'online',l:'💻 إلكترونية'}].map(t => (
                   <label key={t.v} style={{display:'flex',alignItems:'center',gap:6,cursor:'pointer',padding:'8px 14px',border:`1.5px solid ${form.workshopType===t.v?'#2C3E6B':'#e5e7eb'}`,borderRadius:8,background:form.workshopType===t.v?'#eef2ff':'#fff',fontSize:12,fontWeight:700,color:form.workshopType===t.v?'#2C3E6B':'#6b7280',flex:1,justifyContent:'center'}}>
-                    <input type="radio" name="workshopType" value={t.v} checked={form.workshopType===t.v} onChange={()=>set('workshopType',t.v)} style={{display:'none'}} />
+                    <input type="radio" name="workshopType" value={t.v} checked={form.workshopType===t.v} onChange={()=>{
+                      set('workshopType',t.v)
+                      // إذا اختار إلكترونية، فرّغ الموقع
+                      if(t.v==='online') set('location','')
+                      // إذا اختار ميدانية، ضع بغداد الافتراضي
+                      else if(t.v==='field' && !form.location) set('location','بغداد')
+                    }} style={{display:'none'}} />
                     {t.l}
                   </label>
                 ))}
