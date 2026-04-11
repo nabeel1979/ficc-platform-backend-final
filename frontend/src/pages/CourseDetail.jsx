@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
+import ShareButtons from '../components/ShareButtons'
 
 const STATUS_LABEL = { upcoming:'📅 قادمة', ongoing:'🔴 جارية الآن', completed:'✅ منتهية' }
 const STATUS_COLOR = { upcoming:'#10b981', ongoing:'#ef4444', completed:'#6b7280' }
@@ -8,16 +9,27 @@ const STATUS_COLOR = { upcoming:'#10b981', ongoing:'#ef4444', completed:'#6b7280
 // استخراج YouTube video ID
 function getYTId(url) {
   if (!url) return null
-  const m = url.match(/(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/watch\?.+&v=))([\w-]{11})/)
+  try {
+    const u = new URL(url)
+    // watch?v=ID
+    if (u.searchParams.get('v')) return u.searchParams.get('v').slice(0,11)
+    // /shorts/ID, /embed/ID, /v/ID, youtu.be/ID
+    const m = u.pathname.match(/\/(?:shorts|embed|v)\/([\w-]{11})/) ||
+              u.pathname.match(/^\/([\w-]{11})$/)
+    if (m) return m[1]
+  } catch {}
+  // fallback regex
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:shorts|embed|v)\/)([^?&\s]{11})/)
   return m ? m[1] : null
 }
 
 // YouTube Thumbnail
 function YTThumb({ url, title, onClick }) {
   const id = getYTId(url)
+  const shorts = isShorts(url)
   if (!id) return null
   return (
-    <div onClick={onClick} style={{cursor:'pointer',borderRadius:12,overflow:'hidden',position:'relative',background:'#000',aspectRatio:'16/9'}}>
+    <div onClick={onClick} style={{cursor:'pointer',borderRadius:12,overflow:'hidden',position:'relative',background:'#000',aspectRatio: shorts ? '9/16' : '16/9', maxHeight: shorts ? 320 : 'unset'}}>
       <img src={`https://img.youtube.com/vi/${id}/hqdefault.jpg`} alt={title||'فيديو'} style={{width:'100%',height:'100%',objectFit:'cover',opacity:0.85,transition:'opacity 0.2s'}}
         onMouseEnter={e=>e.target.style.opacity=1} onMouseLeave={e=>e.target.style.opacity=0.85} />
       <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
@@ -25,29 +37,15 @@ function YTThumb({ url, title, onClick }) {
           <div style={{width:0,height:0,borderTop:'10px solid transparent',borderBottom:'10px solid transparent',borderLeft:'18px solid white',marginRight:-4}} />
         </div>
       </div>
+      {shorts && <div style={{position:'absolute',top:8,right:8,background:'#ff0000',color:'#fff',fontSize:10,fontWeight:800,padding:'2px 8px',borderRadius:6}}>Shorts</div>}
       {title && <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'8px 12px',background:'linear-gradient(transparent,rgba(0,0,0,0.75))',color:'#fff',fontSize:12,fontWeight:700,direction:'rtl'}}>{title}</div>}
     </div>
   )
 }
 
 // Video Modal
-function VideoModal({ url, title, onClose }) {
-  const id = getYTId(url)
-  if (!id) return null
-  return (
-    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.9)',zIndex:2000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{width:'100%',maxWidth:860,position:'relative'}}>
-        <button onClick={onClose} style={{position:'absolute',top:-44,left:0,background:'none',border:'none',color:'#fff',fontSize:32,cursor:'pointer',lineHeight:1}}>✕</button>
-        {title && <div style={{color:'#fff',fontSize:16,fontWeight:700,marginBottom:12,direction:'rtl',fontFamily:'Cairo,sans-serif'}}>{title}</div>}
-        <div style={{position:'relative',paddingBottom:'56.25%',height:0}}>
-          <iframe
-            src={`https://www.youtube.com/embed/${id}?autoplay=1&rel=0`}
-            style={{position:'absolute',top:0,left:0,width:'100%',height:'100%',border:'none',borderRadius:12}}
-            allow="autoplay; encrypted-media" allowFullScreen />
-        </div>
-      </div>
-    </div>
-  )
+function isShorts(url) {
+  return url && url.includes('/shorts/')
 }
 
 // Image Lightbox
@@ -78,10 +76,11 @@ export default function CourseDetail() {
   const [media, setMedia] = useState([])
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(false)
+  const courseUrl = typeof window !== 'undefined' ? `${window.location.origin}/courses/${id}` : ''
   const [form, setForm] = useState({ fullName:'', phone:'', email:'', company:'', motivation:'' })
   const [msg, setMsg] = useState({ type:'', text:'' })
   const [submitting, setSubmitting] = useState(false)
-  const [videoModal, setVideoModal] = useState(null)
+  const [videoModal, setVideoModal] = useState(null) // kept for compatibility
   const [imageModal, setImageModal] = useState(null)
 
   useEffect(() => {
@@ -141,25 +140,50 @@ export default function CourseDetail() {
       {/* Hero */}
       <div style={{background:'linear-gradient(135deg,#2C3E6B,#1a2a4a)',borderRadius:20,padding:'32px 28px',color:'#fff',marginBottom:24,position:'relative',overflow:'hidden'}}>
         <div style={{position:'absolute',top:-20,left:-20,width:200,height:200,background:'rgba(255,255,255,0.03)',borderRadius:'50%'}} />
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:16}}>
+        <div style={{display:'flex',flexDirection:'column',gap:16}}>
           <div style={{flex:1}}>
             <span style={{display:'inline-block',padding:'4px 14px',borderRadius:20,background:STATUS_COLOR[course.status]+'33',color:STATUS_COLOR[course.status] || '#10b981',fontSize:12,fontWeight:800,border:`1px solid ${STATUS_COLOR[course.status]}55`,marginBottom:12}}>
               {STATUS_LABEL[course.status] || course.status}
             </span>
             <h1 style={{fontSize:26,fontWeight:900,margin:'0 0 12px',lineHeight:1.3}}>{course.title}</h1>
             {course.description && <p style={{color:'rgba(255,255,255,0.75)',fontSize:14,lineHeight:1.7,margin:'0 0 16px'}}>{course.description}</p>}
-            {course.speaker && (
-              <div style={{display:'flex',alignItems:'center',gap:10,background:'rgba(255,255,255,0.08)',borderRadius:12,padding:'10px 16px',width:'fit-content'}}>
-                <div style={{width:40,height:40,borderRadius:'50%',background:'rgba(255,199,44,0.3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>👤</div>
-                <div>
-                  <div style={{fontWeight:800,fontSize:14}}>{course.speaker}</div>
-                  {course.speakerTitle && <div style={{color:'rgba(255,255,255,0.6)',fontSize:11}}>{course.speakerTitle}</div>}
+            {(() => {
+              const speakers = course.speakersJson ? (() => { try { return JSON.parse(course.speakersJson) } catch { return null } })() : null
+              const list = (speakers && speakers.length > 0) ? speakers : (course.speaker ? [{name:course.speaker, title:course.speakerTitle, image:course.speakerImage}] : [])
+              return list.length > 0 ? (
+                <div style={{marginTop:16}}>
+                  {/* عنوان محاضرو الورشة */}
+                  <div style={{fontSize:12,fontWeight:700,color:'rgba(255,199,44,0.9)',marginBottom:10,letterSpacing:0.5}}>
+                    🎤 محاضرو الورشة
+                  </div>
+                  {/* Grid responsive — 2 columns on desktop, 1 on mobile */}
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:10}}>
+                    {list.map((sp, i) => (
+                      <div key={i} style={{
+                        display:'flex', alignItems:'center', gap:12,
+                        background:'rgba(255,255,255,0.12)', borderRadius:14,
+                        padding:'12px 16px', boxSizing:'border-box'
+                      }}>
+                        {/* صورة أكبر */}
+                        <div style={{width:52,height:52,borderRadius:'50%',flexShrink:0,overflow:'hidden',border:'2px solid rgba(255,199,44,0.6)',background:'rgba(255,199,44,0.2)'}}>
+                          {sp.image
+                            ? <img src={sp.image} alt={sp.name} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={e=>{e.target.style.display='none'}} />
+                            : <div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>👤</div>
+                          }
+                        </div>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontWeight:800,fontSize:13,lineHeight:1.4,wordBreak:'break-word'}}>{sp.name}</div>
+                          {sp.title && <div style={{color:'rgba(255,255,255,0.65)',fontSize:11,marginTop:2,lineHeight:1.4,wordBreak:'break-word'}}>{sp.title}</div>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              ) : null
+            })()}
           </div>
           {/* التسجيل */}
-          <div style={{background:'rgba(255,255,255,0.1)',borderRadius:16,padding:'20px',minWidth:220,backdropFilter:'blur(10px)'}}>
+          <div style={{background:'rgba(255,255,255,0.1)',borderRadius:16,padding:'20px',width:'100%',boxSizing:'border-box',backdropFilter:'blur(10px)'}}>
             <div style={{fontSize:12,color:'rgba(255,255,255,0.6)',marginBottom:6}}>المقاعد المتاحة</div>
             <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
               <span style={{fontWeight:800,fontSize:20}}>{course.currentParticipants}</span>
@@ -183,6 +207,7 @@ export default function CourseDetail() {
                 {msg.text}
               </div>
             )}
+
           </div>
         </div>
       </div>
@@ -194,6 +219,7 @@ export default function CourseDetail() {
           { icon:'🏁', label:'تاريخ الانتهاء', value: new Date(course.endDate).toLocaleDateString('ar-IQ',{year:'numeric',month:'long',day:'numeric'}) },
           course.location && { icon:'📍', label:'الموقع', value: course.location },
           course.category && { icon:'🏷️', label:'الفئة', value: course.category },
+          course.workshopType && { icon: course.workshopType==='online'?'💻':'🏢', label:'نوع الورشة', value: course.workshopType==='online'?'إلكترونية':'ميدانية' },
           course.status === 'upcoming' && daysLeft > 0 && { icon:'⏰', label:'يبدأ بعد', value: `${daysLeft} يوم` },
         ].filter(Boolean).map((item, i) => (
           <div key={i} style={{background:'#fff',borderRadius:14,padding:'16px',boxShadow:'0 2px 8px rgba(44,62,107,0.06)',border:'1px solid #e5e7eb',display:'flex',gap:12,alignItems:'center'}}>
@@ -206,6 +232,16 @@ export default function CourseDetail() {
         ))}
       </div>
 
+      {/* وصف الدورة */}
+      {course.description && (
+        <div style={{background:'#fff',borderRadius:20,padding:24,marginBottom:24,boxShadow:'0 2px 12px rgba(44,62,107,0.07)'}}>
+          <h2 style={{fontSize:18,fontWeight:800,color:'#2C3E6B',marginBottom:14,display:'flex',alignItems:'center',gap:8}}>
+            📋 عن الدورة
+          </h2>
+          <p style={{fontSize:14,lineHeight:2,color:'#374151',whiteSpace:'pre-line'}}>{course.description}</p>
+        </div>
+      )}
+
       {/* الصور */}
       {images.length > 0 && (
         <div style={{background:'#fff',borderRadius:20,padding:24,marginBottom:24,boxShadow:'0 2px 12px rgba(44,62,107,0.07)'}}>
@@ -213,7 +249,7 @@ export default function CourseDetail() {
             🖼️ صور الدورة <span style={{fontSize:12,color:'#94a3b8',fontWeight:600}}>({images.length})</span>
           </h2>
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:10}}>
-            {images.map((img, i) => (
+            {images.slice(0,10).map((img, i) => (
               <div key={img.id} onClick={() => setImageModal(i)}
                 style={{cursor:'pointer',borderRadius:12,overflow:'hidden',aspectRatio:'4/3',background:'#f1f5f9',position:'relative',boxShadow:'0 2px 8px rgba(0,0,0,0.08)',transition:'transform 0.2s'}}
                 onMouseEnter={e=>e.currentTarget.style.transform='scale(1.02)'}
@@ -232,16 +268,34 @@ export default function CourseDetail() {
           <h2 style={{fontSize:18,fontWeight:800,color:'#2C3E6B',marginBottom:16,display:'flex',alignItems:'center',gap:8}}>
             🎥 فيديوهات الدورة <span style={{fontSize:12,color:'#94a3b8',fontWeight:600}}>({videos.length})</span>
           </h2>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:14}}>
-            {videos.map(vid => (
-              <div key={vid.id}>
-                <YTThumb url={vid.url} title={vid.title} onClick={() => setVideoModal(vid)} />
-                {vid.description && <p style={{fontSize:12,color:'#64748b',marginTop:6,lineHeight:1.5}}>{vid.description}</p>}
-              </div>
-            ))}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:16}}>
+            {videos.map(vid => {
+              const id = getYTId(vid.url)
+              if (!id) return null
+              return (
+                <div key={vid.id}>
+                  {/* embed مباشر داخل الصفحة — نفس طريقة الأخبار */}
+                  <div style={{position:'relative',paddingBottom:'56.25%',height:0,overflow:'hidden',borderRadius:12,background:'#000',boxShadow:'0 4px 16px rgba(0,0,0,0.2)'}}
+                    onClick={e=>e.stopPropagation()}>
+                    <iframe
+                      src={`https://www.youtube.com/embed/${id}?rel=0&modestbranding=1`}
+                      style={{position:'absolute',top:0,left:0,width:'100%',height:'100%',border:'none'}}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title={vid.title||'فيديو'}
+                    />
+                  </div>
+                  {vid.title && <div style={{fontWeight:700,fontSize:13,color:'#1e293b',marginTop:8,direction:'rtl'}}>{vid.title}</div>}
+                  {vid.description && <p style={{fontSize:12,color:'#64748b',marginTop:4,lineHeight:1.5}}>{vid.description}</p>}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
+
+      {/* أزرار المشاركة — نفس طريقة الغرف التجارية */}
+      <ShareButtons url={courseUrl} title={course?.title||''} label="شارك الورشة" />
 
       {/* نموذج التسجيل */}
       {applying && (

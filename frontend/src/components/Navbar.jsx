@@ -11,7 +11,6 @@ const navLinks = [
   { to: '/lawyers', icon: '⚖️', title: 'المحامون' },
   { to: '/news', icon: '📰', title: 'الأخبار' },
   { to: '/startups', icon: '🚀', title: 'ريادة الأعمال' },
-  { to: '/courses', icon: '🎓', title: 'الدورات' },
   { to: '/exhibitions', icon: '🎪', title: 'المعارض' },
   { to: '/conferences', icon: '🎤', title: 'المؤتمرات' },
 ]
@@ -51,6 +50,7 @@ export default function Navbar() {
             style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 14px',borderRadius:'8px',background:'rgba(255,199,44,0.15)',color:'#FFC72C',fontWeight:'700',fontSize:'13px',textDecoration:'none',border:'1px solid rgba(255,199,44,0.3)',fontFamily:'Cairo,sans-serif'}}>
             📞 اتصل بنا
           </Link>
+          <Link to="/subscribe" className="nav-login" style={{background:'linear-gradient(135deg,#FFC72C,#f59e0b)',color:'#1a2a4a',marginLeft:6}}>🔔 متابعي</Link>
           <Link to="/login" className="nav-login">🔐 دخول</Link>
         </div>
       </div>

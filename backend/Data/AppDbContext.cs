@@ -9,6 +9,7 @@ public class AppDbContext : DbContext {
     public DbSet<Chamber> Chambers => Set<Chamber>();
     public DbSet<Member> Members => Set<Member>();
     public DbSet<Subscriber> Subscribers => Set<Subscriber>();
+    public DbSet<Sector> Sectors => Set<Sector>();
     public DbSet<RateLimitBlock> RateLimitBlocks => Set<RateLimitBlock>();
     public DbSet<KnowledgeBase> KnowledgeBase => Set<KnowledgeBase>();
     public DbSet<SubscriberChat> SubscriberChats => Set<SubscriberChat>();
@@ -16,6 +17,7 @@ public class AppDbContext : DbContext {
     public DbSet<Setting> Settings => Set<Setting>();
     public DbSet<ShippingCompany> ShippingCompanies => Set<ShippingCompany>();
     public DbSet<OtpCode> OtpCodes => Set<OtpCode>();
+    public DbSet<BroadcastLog> BroadcastLogs => Set<BroadcastLog>();
     public DbSet<News> News => Set<News>();
     public DbSet<Certificate> Certificates => Set<Certificate>();
     public DbSet<Request> Requests => Set<Request>();

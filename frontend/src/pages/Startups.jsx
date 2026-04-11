@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 
 const API_BASE = ''
@@ -131,58 +132,176 @@ const STATUS_LABELS = {
 }
 
 function CourseApplyModal({ course, onClose }) {
-  const [form, setForm] = useState({ fullName:'', phone:'', email:'', company:'', motivation:'' })
+  // step: 'login' | 'otp' | 'profile' | 'confirm' | 'register_prompt' | 'success'
+  const [step, setStep] = useState('login')
+  const [loginVal, setLoginVal] = useState('')
+  const [loginType, setLoginType] = useState('phone') // phone | email
+  const [otp, setOtp] = useState('')
+  const [subscriber, setSubscriber] = useState(null)
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
-  const [success, setSuccess] = useState(false)
 
-  const submit = async (e) => {
-    e.preventDefault(); setLoading(true); setMsg('')
+  // إرسال OTP
+  const sendOtp = async () => {
+    if (!loginVal.trim()) return setMsg('أدخل رقم الواتساب أو البريد الإلكتروني')
+    setLoading(true); setMsg('')
     try {
-      await api.post(`/courses/${course.id}/apply`, form)
-      setSuccess(true)
-    } catch(err) {
-      setMsg(err.response?.data?.message || 'حدث خطأ، حاول مرة أخرى')
-    } finally { setLoading(false) }
+      const payload = loginType === 'email' ? { email: loginVal } : { phone: loginVal }
+      await api.post('/subscribers/send-otp', payload)
+      setStep('otp')
+    } catch(e) {
+      const m = e?.response?.data?.message || ''
+      const status = e?.response?.status
+      if (status === 404 || m.includes('غير مسجّل') || m.includes('not found')) {
+        setMsg('❌ ' + (m || 'هذا الرقم / البريد غير مسجّل'))
+      } else if (status === 429) {
+        setMsg('⚠️ ' + m)
+      } else {
+        setMsg(m || 'حدث خطأ، حاول مرة أخرى')
+      }
+    }
+    setLoading(false)
   }
+
+  // تحقق OTP وجلب بيانات المتابع
+  const verifyOtp = async () => {
+    if (!otp) return setMsg('أدخل رمز التأكيد')
+    setLoading(true); setMsg('')
+    try {
+      const payload = loginType === 'email' ? { email: loginVal, code: otp } : { phone: loginVal, code: otp }
+      const res = await api.post('/subscribers/verify-otp', payload)
+      setSubscriber(res.data)
+      setStep('confirm')
+    } catch(e) { setMsg(e?.response?.data?.message || 'رمز خاطئ') }
+    setLoading(false)
+  }
+
+  // إرسال الطلب
+  const submit = async () => {
+    if (!subscriber) return
+    setLoading(true); setMsg('')
+    try {
+      await api.post(`/courses/${course.id}/apply`, {
+        fullName: subscriber.fullName,
+        phone: subscriber.phone || subscriber.whatsApp,
+        email: subscriber.email,
+        subscriberId: subscriber.id
+      })
+      setStep('success')
+    } catch(e) { setMsg(e?.response?.data?.message || 'حدث خطأ') }
+    setLoading(false)
+  }
+
+  const inp = {width:'100%',padding:'11px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontSize:13,fontFamily:'Cairo,sans-serif',outline:'none',boxSizing:'border-box'}
+  const btnP = {flex:1,padding:'12px',background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:'#fff',border:'none',borderRadius:12,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:800,fontSize:13}
+  const btnS = {padding:'12px 18px',background:'#f1f5f9',border:'none',borderRadius:12,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700}
 
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:2000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{background:'#fff',borderRadius:20,padding:'28px 24px',width:'100%',maxWidth:460,maxHeight:'90vh',overflowY:'auto',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
-        {success ? (
+      <div style={{background:'#fff',borderRadius:20,padding:'28px 24px',width:'100%',maxWidth:440,maxHeight:'90vh',overflowY:'auto',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
+
+        {/* Header */}
+        <div style={{marginBottom:20}}>
+          <h2 style={{fontSize:16,fontWeight:800,color:'#2C3E6B',margin:'0 0 4px'}}>📝 التسجيل في الدورة</h2>
+          <p style={{fontSize:12,color:'#64748b',margin:0}}>{course.title}</p>
+        </div>
+
+        {/* Step: login */}
+        {step === 'login' && (
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            <div style={{display:'flex',gap:8,marginBottom:4}}>
+              {[{k:'phone',l:'📱 واتساب'},{k:'email',l:'📧 إيميل'}].map(t=>(
+                <button key={t.k} onClick={()=>{setLoginType(t.k);setLoginVal('');setMsg('')}}
+                  style={{flex:1,padding:'8px',borderRadius:8,border:`2px solid ${loginType===t.k?'#2C3E6B':'#e5e7eb'}`,background:loginType===t.k?'#eef2ff':'#fff',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12,color:loginType===t.k?'#2C3E6B':'#64748b'}}>
+                  {t.l}
+                </button>
+              ))}
+            </div>
+            <input value={loginVal} onChange={e=>setLoginVal(e.target.value)} dir="ltr"
+              placeholder={loginType==='email'?'email@example.com':'07xxxxxxxxx'}
+              style={inp} onKeyDown={e=>e.key==='Enter'&&sendOtp()} />
+            {msg && <div style={{color:'#ef4444',fontSize:12,fontWeight:600}}>{msg}</div>}
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={sendOtp} disabled={loading} style={btnP}>{loading?'⏳...':'📲 إرسال رمز'}</button>
+              <button onClick={onClose} style={btnS}>إلغاء</button>
+            </div>
+            <div style={{textAlign:'center',fontSize:12,color:'#94a3b8',borderTop:'1px solid #f1f5f9',paddingTop:12}}>
+              غير مسجّل؟ <button onClick={()=>setStep('register_prompt')} style={{background:'none',border:'none',color:'#2C3E6B',fontWeight:700,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontSize:12}}>سجّل الآن</button>
+            </div>
+          </div>
+        )}
+
+        {/* Step: OTP */}
+        {step === 'otp' && (
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:10,padding:'10px 14px',fontSize:12,color:'#059669',fontWeight:600}}>
+              ✅ تم إرسال رمز التأكيد إلى {loginType==='email'?'البريد الإلكتروني':'الواتساب'}
+            </div>
+            <input value={otp} onChange={e=>setOtp(e.target.value.replace(/\D/g,'').slice(0,6))}
+              placeholder="000000" maxLength={6} inputMode="numeric" dir="ltr"
+              style={{...inp,textAlign:'center',fontSize:24,letterSpacing:8,fontWeight:700}} />
+            {msg && <div style={{color:'#ef4444',fontSize:12}}>{msg}</div>}
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={verifyOtp} disabled={loading} style={{...btnP,background:'linear-gradient(135deg,#059669,#047857)'}}>{loading?'⏳...':'✅ تأكيد'}</button>
+              <button onClick={()=>{setStep('login');setOtp('');setMsg('')}} style={btnS}>← رجوع</button>
+            </div>
+          </div>
+        )}
+
+        {/* Step: تأكيد البيانات */}
+        {step === 'confirm' && subscriber && (
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            <div style={{background:'#f8fafc',borderRadius:12,padding:16,border:'1px solid #e5e7eb'}}>
+              <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
+                {subscriber.profileImage
+                  ? <img src={subscriber.profileImage} style={{width:52,height:52,borderRadius:'50%',objectFit:'cover'}} />
+                  : <div style={{width:52,height:52,borderRadius:'50%',background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,color:'#fff'}}>👤</div>
+                }
+                <div>
+                  <div style={{fontWeight:800,fontSize:15,color:'#1e293b'}}>{subscriber.fullName}</div>
+                  <div style={{fontSize:12,color:'#64748b'}}>{subscriber.phone||subscriber.whatsApp}</div>
+                  {subscriber.email && <div style={{fontSize:12,color:'#64748b'}}>{subscriber.email}</div>}
+                </div>
+              </div>
+              {[
+                subscriber.company && {icon:'🏢',val:subscriber.company},
+                subscriber.city && {icon:'📍',val:subscriber.city},
+              ].filter(Boolean).map((r,i)=>(
+                <div key={i} style={{fontSize:12,color:'#475569',marginBottom:4}}>{r.icon} {r.val}</div>
+              ))}
+            </div>
+            {msg && <div style={{color:'#ef4444',fontSize:12}}>{msg}</div>}
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={submit} disabled={loading} style={{...btnP,background:'linear-gradient(135deg,#FFC72C,#f59e0b)',color:'#1a2a4a'}}>{loading?'⏳ جارٍ...':'📤 إرسال الطلب'}</button>
+              <button onClick={onClose} style={btnS}>إلغاء</button>
+            </div>
+          </div>
+        )}
+
+        {/* Step: غير مسجّل */}
+        {step === 'register_prompt' && (
+          <div style={{display:'flex',flexDirection:'column',gap:14,textAlign:'center'}}>
+            <div style={{fontSize:48}}>📋</div>
+            <h3 style={{color:'#2C3E6B',fontWeight:800,fontSize:15,margin:0}}>أنت غير مسجّل كمتابع</h3>
+            <p style={{color:'#64748b',fontSize:13,margin:0}}>سجّل بياناتك أولاً ثم عد لإكمال التسجيل في الدورة</p>
+            <a href="/subscribe" target="_blank" rel="noreferrer"
+              style={{padding:'12px',background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:'#fff',borderRadius:12,textDecoration:'none',fontFamily:'Cairo,sans-serif',fontWeight:800,fontSize:13,display:'block'}}>
+              ✨ سجّل كمتابع الآن
+            </a>
+            <button onClick={()=>{setStep('login');setMsg('')}} style={{...btnS,width:'100%'}}>← رجوع لتسجيل الدخول</button>
+          </div>
+        )}
+
+        {/* Step: نجاح */}
+        {step === 'success' && (
           <div style={{textAlign:'center',padding:'20px 0'}}>
             <div style={{fontSize:56,marginBottom:12}}>🎉</div>
             <h2 style={{fontSize:18,fontWeight:800,color:'#10b981',marginBottom:8}}>تم التسجيل بنجاح!</h2>
             <p style={{color:'#64748b',fontSize:13,marginBottom:20}}>سيتم التواصل معك قريباً لتأكيد مشاركتك في "{course.title}".</p>
             <button onClick={onClose} style={{padding:'11px 28px',background:'#2C3E6B',color:'#fff',border:'none',borderRadius:12,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700}}>إغلاق</button>
           </div>
-        ) : (
-          <>
-            <h2 style={{fontSize:17,fontWeight:800,color:'#2C3E6B',marginBottom:4}}>📝 التسجيل في الدورة</h2>
-            <p style={{fontSize:12,color:'#64748b',marginBottom:18}}>{course.title}</p>
-            <form onSubmit={submit}>
-              {[{label:'الاسم الكامل *',k:'fullName',required:true},{label:'رقم الهاتف *',k:'phone',required:true,t:'tel'},{label:'البريد الإلكتروني',k:'email',t:'email'},{label:'الشركة / الجهة',k:'company'}].map(f=>(
-                <div key={f.k} style={{marginBottom:12}}>
-                  <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>{f.label}</label>
-                  <input type={f.t||'text'} required={f.required} value={form[f.k]} onChange={e=>setForm(p=>({...p,[f.k]:e.target.value}))}
-                    style={{width:'100%',padding:'10px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontSize:13,fontFamily:'Cairo,sans-serif',outline:'none',boxSizing:'border-box'}} />
-                </div>
-              ))}
-              <div style={{marginBottom:16}}>
-                <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>سبب الانضمام</label>
-                <textarea value={form.motivation} onChange={e=>setForm(p=>({...p,motivation:e.target.value}))}
-                  style={{width:'100%',padding:'10px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontSize:13,fontFamily:'Cairo,sans-serif',outline:'none',boxSizing:'border-box',height:70,resize:'vertical'}} />
-              </div>
-              {msg && <div style={{background:'#fef2f2',border:'1px solid #fecaca',borderRadius:8,padding:'8px 12px',color:'#ef4444',fontSize:12,marginBottom:12}}>{msg}</div>}
-              <div style={{display:'flex',gap:8}}>
-                <button type="submit" disabled={loading} style={{flex:1,padding:'11px',background:'linear-gradient(135deg,#10b981,#059669)',color:'#fff',border:'none',borderRadius:12,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:800,fontSize:13}}>
-                  {loading?'⏳ جارٍ...':'✅ تسجيل'}
-                </button>
-                <button type="button" onClick={onClose} style={{padding:'11px 18px',background:'#f1f5f9',border:'none',borderRadius:12,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700}}>إلغاء</button>
-              </div>
-            </form>
-          </>
         )}
+
       </div>
     </div>
   )
@@ -195,6 +314,10 @@ function CoursesSection() {
   const [applying, setApplying] = useState(null)
   const [contact, setContact] = useState({ email:'', phone1:'', phone2:'' })
   const [loading, setLoading] = useState(true)
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [searchText, setSearchText] = useState('')
 
   useEffect(() => {
     api.get('/courses').then(r => setCourses(r.data)).catch(()=>{}).finally(()=>setLoading(false))
@@ -208,12 +331,23 @@ function CoursesSection() {
     }).catch(()=>{})
   }, [])
 
-  const filtered = filter==='all' ? courses : courses.filter(c=>c.status===filter)
+  // جمع التخصصات الفريدة
+  const categories = [...new Set(courses.map(c=>c.category).filter(Boolean))]
+
+  // فلترة متعددة
+  const filtered = courses.filter(c => {
+    if (filter !== 'all' && c.status !== filter) return false
+    if (categoryFilter && c.category !== categoryFilter) return false
+    if (searchText && !c.title?.includes(searchText) && !c.speaker?.includes(searchText)) return false
+    if (dateFrom && c.startDate && new Date(c.startDate) < new Date(dateFrom)) return false
+    if (dateTo && c.startDate && new Date(c.startDate) > new Date(dateTo)) return false
+    return true
+  })
   const counts = { all:courses.length, upcoming:courses.filter(c=>c.status==='upcoming').length, ongoing:courses.filter(c=>c.status==='ongoing').length, completed:courses.filter(c=>c.status==='completed').length }
 
 
   return (
-    <div style={{marginBottom:28,background:'#f8fafc',borderRadius:16,padding:20}}>
+    <div id="courses" style={{marginBottom:28,background:'#f8fafc',borderRadius:16,padding:20}}>
       {applying && <CourseApplyModal course={applying} onClose={()=>setApplying(null)} />}
       {loading && <div style={{textAlign:'center',padding:20,color:'#94a3b8',fontSize:13}}>⏳ جارٍ تحميل الدورات...</div>}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:10}}>
@@ -235,11 +369,37 @@ function CoursesSection() {
           ))}
         </div>
       </div>
+
+      {/* شريط الفلاتر المتقدمة */}
+      <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:16,alignItems:'center',background:'#fff',borderRadius:12,padding:'10px 14px',border:'1px solid #e5e7eb'}}>
+        {/* تخصص */}
+        <select value={categoryFilter} onChange={e=>setCategoryFilter(e.target.value)}
+          style={{padding:'7px 12px',borderRadius:8,border:'1.5px solid #e5e7eb',fontFamily:'Cairo,sans-serif',fontSize:12,fontWeight:700,color:'#374151',background:'#f8fafc',outline:'none',flex:1,minWidth:120}}>
+          <option value=''>📂 كل التخصصات</option>
+          {categories.map(c=><option key={c} value={c}>{c}</option>)}
+        </select>
+        {/* من تاريخ */}
+        <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)}
+          style={{padding:'7px 10px',borderRadius:8,border:'1.5px solid #e5e7eb',fontFamily:'Cairo,sans-serif',fontSize:12,background:'#f8fafc',outline:'none',flex:1,minWidth:120}} placeholder="من" title="من تاريخ"/>
+        {/* إلى تاريخ */}
+        <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)}
+          style={{padding:'7px 10px',borderRadius:8,border:'1.5px solid #e5e7eb',fontFamily:'Cairo,sans-serif',fontSize:12,background:'#f8fafc',outline:'none',flex:1,minWidth:120}} placeholder="إلى" title="إلى تاريخ"/>
+        {/* بحث */}
+        <input value={searchText} onChange={e=>setSearchText(e.target.value)} placeholder="🔍 بحث بالاسم أو المتحدث"
+          style={{padding:'7px 12px',borderRadius:8,border:'1.5px solid #e5e7eb',fontFamily:'Cairo,sans-serif',fontSize:12,background:'#f8fafc',outline:'none',flex:2,minWidth:160}}/>
+        {/* مسح */}
+        {(categoryFilter||dateFrom||dateTo||searchText) && (
+          <button onClick={()=>{setCategoryFilter('');setDateFrom('');setDateTo('');setSearchText('')}}
+            style={{padding:'7px 12px',borderRadius:8,background:'#fee2e2',color:'#dc2626',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700,fontSize:12}}>
+            ✕ مسح
+          </button>
+        )}
+      </div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(290px,1fr))',gap:16}}>
         {filtered.map(course => {
           const st = STATUS_LABELS[course.status]||STATUS_LABELS.upcoming
           const pct = course.maxParticipants>0 ? Math.round((course.currentParticipants/course.maxParticipants)*100) : 0
-          const fmt = d => new Date(d).toLocaleDateString('ar-IQ',{year:'numeric',month:'short',day:'numeric'})
+          const fmt = d => new Date(d).toLocaleDateString('ar-IQ',{year:'numeric',month:'short',day:'numeric',timeZone:'Asia/Baghdad'})
           return (
             <div key={course.id} style={{background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:'0 2px 10px rgba(44,62,107,0.07)',border:'1px solid #e5e7eb',display:'flex',flexDirection:'column'}}>
               <div style={{background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',padding:'16px 16px 12px',position:'relative'}}>

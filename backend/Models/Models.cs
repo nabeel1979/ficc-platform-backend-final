@@ -378,11 +378,52 @@ public class Subscriber {
     public string Phone { get; set; } = "";
     public string? WhatsApp { get; set; }
     public string? Email { get; set; }
-    public string? Sectors { get; set; }    // JSON array
+    public string? Sectors { get; set; }    // JSON array (legacy)
     public string? NotifyBy { get; set; }   // JSON array: ["whatsapp","sms","email"]
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
+
+    // Profile
+    public string? ProfileImage { get; set; }
+    public string? NationalIdFront { get; set; }
+    public string? NationalIdBack { get; set; }
+    public string? Passport { get; set; }
+    public string? TradeIdFront { get; set; }
+    public string? TradeIdBack { get; set; }
+    public string? CV { get; set; }
+
+    public string? SubscriberCode { get; set; } // كود فريد مثل FICC-K7X2M
+
+    // أوراق الشركة
+    public string? CompanyReg { get; set; }    // شهادة تسجيل الشركة
+    public string? ChamberCert { get; set; }   // شهادة اتحاد الغرف
+    public string? TaxCert { get; set; }       // شهادة الإفادة الضريبية
+    public string? CompanyStamp { get; set; }  // ختم الشركة
+    public string? OtherDoc { get; set; }      // وثيقة أخرى
+
+    // Social Links
+    public string? Facebook { get; set; }
+    public string? Instagram { get; set; }
+    public string? Twitter { get; set; }
+    public string? LinkedIn { get; set; }
+    public string? TikTok { get; set; }
+
+    // Interests — أقسام المتابعة (الريادة/العلاقات/المنظمات)
+    public string? Interests { get; set; } // JSON array of SectorIds: [1,2,3]
+    // TraderSectors — قطاعات التاجر من ثوابت النظام
+    public string? TraderSectors { get; set; } // JSON array of SystemConstant IDs
+}
+
+// جدول الأقسام — Single Source of Truth
+public class Sector {
+    public int Id { get; set; }
+    public string Name { get; set; } = "";        // الريادة
+    public string Slug { get; set; } = "";        // entrepreneurship
+    public string? Description { get; set; }
+    public string? Icon { get; set; }             // 🎯
+    public int DisplayOrder { get; set; } = 0;
+    public bool IsActive { get; set; } = true;
 }
 
 public class RateLimitBlock {
@@ -437,4 +478,12 @@ public class SubscriberChatMessage {
     public int? KnowledgeBaseId { get; set; }        // مصدر الإجابة
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public SubscriberChat? Chat { get; set; }
+}
+
+public class BroadcastLog {
+    public int Id { get; set; }
+    public int CourseId { get; set; }
+    public int SubscriberId { get; set; }
+    public string Channel { get; set; } = "";
+    public DateTime SentAt { get; set; } = DateTime.UtcNow;
 }

@@ -25,6 +25,7 @@ import Lawyers from './pages/Lawyers'
 import FormsPage, { FormFiller } from './pages/Forms'
 import Login from './pages/Login'
 import AdminDashboard from './pages/AdminDashboard'
+import CourseBadge from './pages/CourseBadge'
 import RegisterRequest from './pages/RegisterRequest'
 import ReviewPage from './pages/ReviewPage'
 import Correspondence from './pages/Correspondence'
@@ -133,7 +134,7 @@ export default function App() {
       <Route path="/customs-agents" element={<Layout><CustomsAgents /></Layout>} />
       <Route path="/lawyers" element={<Layout><Lawyers /></Layout>} />
       <Route path="/startups" element={<Layout><Startups /></Layout>} />
-      <Route path="/courses" element={<Layout><Courses /></Layout>} />
+      <Route path="/badges/course/:courseId" element={<CourseBadge />} />
       <Route path="/courses/:id" element={<Layout><CourseDetail /></Layout>} />
       <Route path="/track-request" element={<TrackRequest />} />
       <Route path="/join" element={<JoinPage />} />

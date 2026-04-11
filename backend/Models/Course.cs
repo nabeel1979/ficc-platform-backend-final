@@ -6,9 +6,16 @@ public class EntrepreneurCourse {
     public string? Description { get; set; }
     public string? Speaker { get; set; }
     public string? SpeakerTitle { get; set; }
+    public string? SpeakerImage { get; set; }
+    public string? WorkshopType { get; set; } // "online" | "field"
+    public string? SpeakersJson { get; set; } // JSON array: [{name, title, image}]
     public string? Location { get; set; }
     public DateTime StartDate { get; set; }
+    public DateTime? StartTime { get; set; } // وقت البداية
     public DateTime EndDate { get; set; }
+    public DateTime? EndTime { get; set; } // وقت الانتهاء
+    public DateTime? FormCloseDateTime { get; set; } // وقت وتاريخ إغلاق الاستمارة
+    public DateTime? ConfirmationDeadlineDateTime { get; set; } // وقت وتاريخ تأكيد/إلغاء الموعد
     public int MaxParticipants { get; set; } = 50;
     public int CurrentParticipants { get; set; } = 0;
     public string Status { get; set; } = "upcoming";
@@ -31,16 +38,8 @@ public class CourseApplication {
     public string? Company { get; set; }
     public string? Motivation { get; set; }
     public string Status { get; set; } = "pending";
+    public int? SubscriberId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
-public class CourseMedia {
-    public int Id { get; set; }
-    public int CourseId { get; set; }
-    public string Type { get; set; } = "image"; // image | video
-    public string Url { get; set; } = "";        // R2 URL for images, YouTube URL for videos
-    public string? Title { get; set; }
-    public string? Description { get; set; }
-    public int DisplayOrder { get; set; } = 0;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-}
+// CourseMedia defined in Models/CourseMedia.cs

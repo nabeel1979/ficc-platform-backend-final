@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../lib/api'
+import ShareButtons from '../components/ShareButtons'
 
 const types = ['شحن بري','شحن بحري','شحن جوي','شحن دولي','توصيل محلي','خدمات لوجستية','تخليص جمركي','تخزين ومستودعات']
 const ShippingTypeBadges = ({types}) => { if (!types) return null; return (<>{types.split(',').filter(Boolean).map(t=><span key={t} style={{background:'rgba(255,255,255,0.2)',color:'#fff',padding:'2px 7px',borderRadius:'10px',fontSize:'11px',fontWeight:'600',marginLeft:'4px'}}>{t.trim()}</span>)}</>)}
@@ -168,15 +169,7 @@ function Detail({ item, onBack }) {
                 </div>
               </div>
             )}
-            <div style={{background:'#F8F9FA',borderRadius:'14px',padding:'16px 20px'}}>
-              <p style={{color:'#888',fontSize:'13px',fontWeight:'700',margin:'0 0 12px'}}>📤 شارك:</p>
-              <div style={{display:'flex',gap:'10px'}}>
-                <a href={`https://wa.me/?text=${encodeURIComponent(item.companyName+'%0A'+window.location.origin+'/shipping/'+item.id)}`} target="_blank" rel="noreferrer"
-                  style={{flex:'1',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',padding:'12px',borderRadius:'12px',background:'#25D366',color:'#fff',fontSize:'14px',fontWeight:'700',textDecoration:'none',fontFamily:'Cairo,sans-serif'}}>💬 واتساب</a>
-                <button onClick={()=>{navigator.clipboard.writeText(window.location.origin+'/shipping/'+item.id);alert('✅ تم نسخ الرابط!')}}
-                  style={{flex:'1',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',padding:'12px',borderRadius:'12px',background:'#2C3E6B',color:'#fff',border:'none',cursor:'pointer',fontSize:'14px',fontWeight:'700',fontFamily:'Cairo,sans-serif'}}>🔗 نسخ الرابط</button>
-              </div>
-            </div>
+            <ShareButtons url={`${window.location.origin}/shipping/${item.id}`} title={item.companyName} label="شارك" />
           </div>
         </div>
       </div>

@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=210mm, initial-scale=1.0">
+<title>Badges — FICC</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Inter:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Cairo', sans-serif; background: #f1f5f9; direction: rtl; }
+
+/* شريط الأدوات */
+.toolbar {
+  background: #1a2a5e;
+  padding: 12px 24px;
+  display: flex; gap: 12px; align-items: center;
+  position: sticky; top: 0; z-index: 100; flex-wrap: wrap;
+}
+.toolbar h1 { color: #FFC72C; font-size: 15px; font-weight: 800; }
+.info-text { color: rgba(255,255,255,0.55); font-size: 12px; }
+.btn { padding: 8px 18px; border: none; border-radius: 8px; cursor: pointer;
+  font-family: 'Cairo',sans-serif; font-weight: 800; font-size: 12px; }
+.btn-print-all { background: #FFC72C; color: #1a2a5e; margin-right: auto; }
+.btn-close { background: rgba(255,255,255,0.1); color: #fff; }
+
+/* الجدول */
+.table-wrap {
+  display: none;
+  max-width: 960px;
+  margin: 24px auto;
+  padding: 0 16px;
+}
+.table-card {
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border: 1px solid #e5e7eb;
+}
+.table-header-bar {
+  background: linear-gradient(135deg, #1a2a5e, #2C3E6B);
+  padding: 14px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.table-header-bar h2 { color: #FFC72C; font-size: 14px; font-weight: 800; }
+.table-header-bar span { color: rgba(255,255,255,0.7); font-size: 12px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  background: #f8fafc; color: #374151; font-weight: 800;
+  padding: 10px 14px; text-align: right; border-bottom: 2px solid #e5e7eb;
+  font-size: 12px;
+}
+tbody tr { border-bottom: 1px solid #f1f5f9; transition: background 0.1s; }
+tbody tr:hover { background: #f8fafc; }
+tbody td { padding: 10px 14px; color: #374151; vertical-align: middle; }
+.td-name { font-weight: 800; color: #111827; display: flex; align-items: center; gap: 10px; }
+.td-photo { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; border: 2px solid #FFC72C;
+  background: #eef2ff; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.td-photo img { width: 100%; height: 100%; object-fit: cover; }
+.td-code { font-family: 'Inter', monospace; font-size: 11px; font-weight: 700; color: #1e40af;
+  background: #eef2ff; padding: 2px 7px; border-radius: 5px; }
+.td-phone { direction: ltr; font-family: monospace; color: #374151; }
+.td-email { color: #6b7280; font-size: 12px; }
+.td-date { color: #9ca3af; font-size: 11px; white-space: nowrap; }
+.btn-print-row { padding: 5px 12px; background: #1a2a5e; color: #fff; border: none; border-radius: 7px;
+  cursor: pointer; font-family: 'Cairo',sans-serif; font-weight: 700; font-size: 11px; white-space: nowrap; }
+.btn-print-row:hover { background: #2C3E6B; }
+
+/* Print page orientation modes */
+.print-page.portrait-mode {
+  width: 210mm !important;
+  flex-direction: column !important;
+}
+.print-page.portrait-mode .print-row {
+  display: flex !important;
+  flex-direction: row !important;
+  width: 210mm !important;
+  height: 148.5mm !important;
+}
+.print-page.portrait-mode .print-quarter {
+  width: 105mm !important;
+  height: 148.5mm !important;
+}
+.print-page.landscape-mode {
+  width: 297mm !important;
+  height: 210mm !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+}
+.print-page.landscape-mode .print-row {
+  flex-direction: column !important;
+  width: 105mm !important;
+  height: 105mm !important;
+}
+.landscape-mode .print-row {
+  width: 105mm !important;
+  height: 105mm !important;
+  flex-direction: column !important;
+}
+.landscape-mode .print-quarter {
+  width: 105mm !important;
+  height: 105mm !important;
+}
+.landscape-mode .fold-line-separator {
+  display: none !important;
+}
+
+/* Orientation controls */
+.orientation-controls {
+  display: flex; gap: 12px; align-items: center; margin-left: 20px;
+  padding: 0 16px; border-left: 1px solid rgba(255,255,255,0.2);
+}
+.orientation-label { color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 700; }
+.radio-group { display: flex; gap: 16px; }
+.radio-item { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.radio-item input[type="radio"] { cursor: pointer; accent-color: #FFC72C; }
+.radio-item label { color: rgba(255,255,255,0.8); font-size: 12px; cursor: pointer; }
+
+#status { text-align:center; padding:60px; font-size:16px; color:#666; }
+
+/* ===== صفحة الطباعة ===== */
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  body { background: white; margin: 0 !important; padding: 0 !important; }
+  .toolbar, .members-list, #tableWrap, #status { display: none !important; }
+  .print-page { display: flex !important; width: 210mm !important; height: 297mm !important; }
+}
+
+/* صفحة A4 — وجه وخلف جنب بعض (نصف صفحة) */
+.print-page {
+  display: none;
+  width: 210mm;
+  height: 297mm;
+  background: white;
+  flex-direction: column;
+  align-items: flex-start;
+  overflow: hidden;
+  page-break-after: always;
+}
+/* صف واحد = نصف الصفحة */
+.print-row {
+  width: 210mm !important;
+  height: 148.5mm !important;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-shrink: 0 !important;
+  overflow: hidden !important;
+}
+/* ربع واحد = A6 */
+.print-quarter {
+  width: 105mm;
+  height: 148.5mm;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 0.3px dashed #ccc;
+}
+/* المنطقة السفلية الفارغة — تعليمات الطي */
+.fold-line-separator {
+  width: 210mm;
+  height: 1px;
+  border-top: 1.5px dashed #aaa;
+  flex-shrink: 0;
+  position: relative;
+}
+.fold-line-separator::before {
+  content: '✂ اطوِ هنا';
+  position: absolute;
+  left: 50%;
+  top: -9px;
+  transform: translateX(-50%);
+  background: #f1f5f9;
+  padding: 0 8px;
+  font-size: 7pt;
+  color: #aaa;
+  font-family: 'Cairo', sans-serif;
+  white-space: nowrap;
+}
+
+/* ===== الوجه ===== */
+.top-bar {
+  background: linear-gradient(135deg, #1a2a5e, #2C3E6B);
+  height: 18mm; display: flex; align-items: center;
+  justify-content: space-between; padding: 0 5mm; flex-shrink: 0;
+}
+.top-bar img { height: 11mm; border-radius: 2mm; background: rgba(255,255,255,0.9); padding: 1mm; object-fit: contain; }
+.top-bar-org .org-ar { color: #FFC72C; font-size: 7.5pt; font-weight: 900; }
+.top-bar-org .org-en { color: rgba(255,255,255,0.6); font-size: 5pt; }
+.top-bar-badge { color: #fff; font-size: 6pt; font-weight: 900; direction: ltr;
+  border: 1px solid rgba(255,199,44,0.6); padding: 1mm 2.5mm;
+  border-radius: 5mm; background: rgba(255,199,44,0.15); }
+
+.photo-section {
+  background: linear-gradient(180deg, #1a2a5e 0%, #f8fafc 40%);
+  display: flex; justify-content: center; align-items: center;
+  padding: 7mm 0 5mm; flex-shrink: 0;
+}
+.photo-circle {
+  width: 30mm; height: 30mm; border-radius: 50%;
+  overflow: hidden; border: 3.5px solid #FFC72C;
+  box-shadow: 0 3px 16px rgba(255,199,44,0.5), 0 0 0 1.5mm rgba(255,199,44,0.2);
+  background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 22pt;
+}
+.photo-circle img { width: 100%; height: 100%; object-fit: cover; }
+
+.info-section {
+  background: #fff; padding: 3mm 5mm;
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2.5mm;
+}
+.type-badge { background: linear-gradient(135deg, #FFC72C, #f59e0b); color: #1a2a5e;
+  font-size: 6pt; font-weight: 900; padding: 1.2mm 7mm; border-radius: 20mm;
+  letter-spacing: 1.2px; text-transform: uppercase; font-family: 'Inter', sans-serif;
+  box-shadow: 0 1.5mm 5mm rgba(245,158,11,0.4); }
+.print-name { font-size: 14pt; font-weight: 900; color: #111827; text-align: center; line-height: 1.2; }
+.print-org { font-size: 6.5pt; color: #6b7280; text-align: center; font-weight: 600; }
+.code-box { display: flex; align-items: center; gap: 1.5mm;
+  background: linear-gradient(135deg, #eef2ff, #dbeafe); border: 1.5px solid #1a2a5e;
+  border-radius: 8mm; padding: 1.5mm 5mm; box-shadow: 0 1mm 4mm rgba(30,64,175,0.15); }
+.code-text { font-family: 'Inter', monospace; font-size: 8.5pt; font-weight: 900; color: #1a2a5e; letter-spacing: 2px; direction: ltr; }
+.qr-wrap { display: flex; flex-direction: column; align-items: center; gap: 1.5mm; }
+.qr-wrap img { width: 24mm; height: 24mm; border-radius: 3mm; border: 2px solid #1a2a5e; padding: 1.5mm; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.qr-label { font-size: 5pt; color: #9ca3af; letter-spacing: 0.5px; }
+
+.bottom-bar { background: linear-gradient(135deg, #1a2a5e, #2C3E6B); height: 9mm;
+  display: flex; align-items: center; justify-content: space-between; padding: 0 5mm; flex-shrink: 0; }
+.bottom-bar span { color: rgba(255,255,255,0.45); font-size: 5.5pt; }
+.bottom-bar .site { color: #FFC72C; font-weight: 800; font-size: 7pt; letter-spacing: 0.5px; }
+.bottom-bar .member-badge { color: rgba(255,199,44,0.7); font-size: 5pt; font-weight: 700; }
+
+/* ===== الخلف ===== */
+.fold-line { border-top: 1.5px dashed #aaa; flex-shrink: 0; }
+.back-wrap { width: 105mm; height: 148.5mm; display: flex; flex-direction: column;
+  overflow: hidden; flex-shrink: 0; }
+.back-top { background: linear-gradient(135deg,#1a2a5e,#2C3E6B); height: 18mm; display: flex;
+  align-items: center; justify-content: center; gap: 3mm; flex-shrink: 0; }
+.back-top img { height: 12mm; border-radius: 2mm; background: rgba(255,255,255,0.9); padding: 1mm; object-fit: contain; }
+.back-top span { color: #FFC72C; font-size: 9pt; font-weight: 900; }
+.back-body { flex: 1; padding: 6mm 10mm; display: flex; flex-direction: column; gap: 4mm; overflow: hidden; }
+.back-course { text-align: center; border-bottom: 1.5px solid #e5e7eb; padding-bottom: 4mm; }
+.back-course-name { font-size: 14pt; font-weight: 900; color: #111827; line-height: 1.3; }
+.back-course-type { display: inline-block; margin-top: 2mm; background: #1e40af; color: #fff;
+  font-size: 6.5pt; font-weight: 900; padding: 1mm 5mm; border-radius: 8mm; }
+.back-details { display: flex; flex-direction: column; gap: 3mm; }
+.back-detail { display: flex; align-items: flex-start; gap: 2.5mm; font-size: 9pt; color: #374151; line-height: 1.5; }
+.back-detail .icon { width: 5mm; font-size: 10pt; flex-shrink: 0; }
+.back-welcome { background: linear-gradient(135deg,#eff6ff,#dbeafe); border-right: 3px solid #1e40af;
+  border-radius: 3mm; padding: 4mm 5mm; flex: 1; }
+.back-welcome .wt { font-size: 10pt; font-weight: 800; color: #1e40af; margin-bottom: 2mm; }
+.back-welcome .wb { font-size: 8.5pt; color: #374151; line-height: 1.8; }
+.back-foot { display: flex; justify-content: space-between; align-items: center;
+  border-top: 1px solid #e5e7eb; padding-top: 3mm; }
+.back-foot img { height: 7mm; border-radius: 2mm; background: #f3f4f6; padding: 1mm; object-fit: contain; }
+.back-foot .url { font-size: 7pt; color: #1e40af; font-weight: 700; direction: ltr; }
+
+/* نبذة عن الاتحاد */
+.about-box {
+  background: linear-gradient(135deg, #1a2a5e, #2C3E6B);
+  border-radius: 4mm;
+  padding: 5mm;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3mm;
+}
+.about-title { color: #FFC72C; font-size: 9pt; font-weight: 900; border-bottom: 1px solid rgba(255,199,44,0.3); padding-bottom: 2mm; }
+.about-text { color: rgba(255,255,255,0.85); font-size: 7pt; line-height: 1.8; }
+.about-contacts { display: flex; flex-direction: column; gap: 1.5mm; }
+.about-contact { display: flex; align-items: center; gap: 2mm; color: rgba(255,255,255,0.7); font-size: 6.5pt; }
+.about-contact span:first-child { color: #FFC72C; }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <h1 id="title">🪪 Badges — FICC</h1>
+  <span class="info-text" id="count"></span>
+  
+  <div class="orientation-controls">
+    <span class="orientation-label">التخطيط:</span>
+    <div class="radio-group">
+      <div class="radio-item">
+        <input type="radio" id="portrait" name="orientation" value="portrait" checked>
+        <label for="portrait">عمودي (Landscape)</label>
+      </div>
+      <div class="radio-item">
+        <input type="radio" id="landscape" name="orientation" value="landscape">
+        <label for="landscape">أفقي (Portrait)</label>
+      </div>
+    </div>
+  </div>
+  
+  <button class="btn btn-print-all" onclick="printAll()">🖨️ طباعة الكل</button>
+  <button class="btn btn-close" onclick="window.close()">✕ إغلاق</button>
+</div>
+
+<div id="status">⏳ جارٍ التحميل...</div>
+<div class="table-wrap" id="tableWrap" style="display:none">
+  <div class="table-card">
+    <div class="table-header-bar">
+      <h2 id="tableTitle">📋 طلبات التسجيل</h2>
+      <span id="count2"></span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>الاسم</th>
+          <th>الواتف</th>
+          <th>الإيميل</th>
+          <th>الشركة</th>
+          <th>التاريخ</th>
+          <th>Badge</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+<div id="printArea"></div>
+
+<script>
+const params   = new URLSearchParams(window.location.search)
+const courseId = params.get('course') || ''
+const memberId = params.get('member') || '' // إذا محدد → عضو واحد فقط
+const API      = '/api'
+let course     = null
+let apps       = []
+
+function fmt(d) {
+  if (!d) return ''
+  try { return new Date(d).toLocaleDateString('ar-IQ',{year:'numeric',month:'long',day:'numeric',timeZone:'Asia/Baghdad'}) } catch { return d }
+}
+function qr(url) { return 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=4&color=1e40af&data=' + encodeURIComponent(url) }
+
+function makeBackBody(c, dates) {
+  let datesHtml = dates ? `<div class="back-detail"><span class="icon">📅</span><span>${dates}</span></div>` : ''
+  let locHtml = c?.location ? `<div class="back-detail"><span class="icon">📍</span><span>${c.location}</span></div>` : ''
+  let spkHtml = c?.speaker ? `<div class="back-detail"><span class="icon">👤</span><span>${c.speaker}</span></div>` : ''
+  return `
+  <div class="back-body">
+    <!-- تفاصيل الدورة -->
+    <div class="back-course">
+      <div class="back-course-name">🎓 ${c?.title||''}</div>
+      <span class="back-course-type">TRAINING COURSE</span>
+    </div>
+    <div class="back-details">
+      ${datesHtml}
+      ${locHtml}
+      ${spkHtml}
+    </div>
+    <!-- نبذة عن الاتحاد -->
+    <div class="about-box">
+      <div class="about-title">🏛️ اتحاد الغرف التجارية العراقية</div>
+      <div class="about-text">
+        يمثّل اتحاد الغرف التجارية العراقية المظلة التنظيمية لجميع الغرف التجارية في العراق،
+        ويعمل على تطوير القطاع الخاص وتعزيز بيئة الأعمال.
+      </div>
+      <div class="about-contacts">
+        <div class="about-contact"><span>🌐</span><span>www.ficc.iq</span></div>
+        <div class="about-contact"><span>📧</span><span>info@ficc.iq</span></div>
+        <div class="about-contact"><span>📞</span><span>5366 (الرقم المختصر)</span></div>
+      </div>
+    </div>
+    <!-- Footer -->
+    <div class="back-foot">
+      <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
+      <span class="url">www.ficc.iq</span>
+    </div>
+  </div>`
+}
+
+function makePrintPage(app) {
+  const sub   = app.subscriber || {}
+  const name  = sub.fullName  || app.fullName  || app.FullName  || '—'
+  const code  = sub.subscriberCode || sub.SubscriberCode || ''
+  const photo = sub.profileImage   || sub.ProfileImage  || ''
+  const url   = 'https://ficc.iq/startups/' + courseId
+  const dates = course?.startDate ? (course.endDate ? `${fmt(course.startDate)} — ${fmt(course.endDate)}` : fmt(course.startDate)) : ''
+
+  return `
+  <div class="print-page portrait-mode" id="page-${app.id}">
+    <!-- الصف العلوي: وجه يمين + خلف يسار -->
+    <div class="print-row" style="display:flex !important;flex-direction:row !important;width:210mm !important;height:148.5mm !important;">
+      <!-- ربع 1: الوجه -->
+      <div class="print-quarter">
+    <div style="width:105mm;height:148.5mm;display:flex;flex-direction:column;overflow:hidden">
+      <div class="top-bar">
+        <div style="display:flex;align-items:center;gap:4mm">
+          <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
+          <div class="top-bar-org">
+            <div class="org-ar">اتحاد الغرف التجارية العراقية</div>
+            <div class="org-en">Federation of Iraqi Chambers of Commerce</div>
+          </div>
+        </div>
+        <div class="top-bar-badge">ATTENDEE</div>
+      </div>
+      <div class="photo-section">
+        <div class="photo-circle">
+          ${photo ? `<img src="${photo}" onerror="this.parentElement.textContent='👤'">` : '👤'}
+        </div>
+      </div>
+      <div class="info-section">
+        <div class="type-badge">PARTICIPANT</div>
+        <div class="print-name">${name}</div>
+        <div class="print-org">اتحاد الغرف التجارية العراقية</div>
+        ${code ? `<div class="code-box"><span style="font-size:11pt">🪪</span><span class="code-text">${code}</span></div>` : ''}
+        <div class="qr-wrap">
+          <img src="${qr(url)}" alt="QR">
+          <div class="qr-label">امسح لعرض الدورة</div>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <span class="site">ficc.iq</span>
+        <span class="member-badge">✓ عضو مشارك</span>
+        <span>${new Date().getFullYear()}</span>
+      </div>
+    </div>
+    </div></div><!-- /ربع 1 -->
+      <!-- ربع 2: الخلف -->
+      <div class="print-quarter">
+    <div class="back-wrap">
+      <div class="back-top">
+        <img src="https://ficc.iq/ficc-logo.jpg" onerror="this.style.display='none'">
+        <span>اتحاد الغرف التجارية العراقية</span>
+      </div>
+      ${makeBackBody(course, dates)}</div>
+    </div></div><!-- /ربع 2 -->
+    </div><!-- /الصف العلوي -->
+
+  </div>`
+}
+
+function printSingle(appId) {
+  document.querySelectorAll('.print-page').forEach(p => {
+    p.style.display = p.id === 'page-' + appId ? 'flex' : 'none'
+  })
+  document.getElementById('tableWrap').style.display = 'none'
+  document.querySelector('.toolbar').style.display = 'none'
+  window.print()
+  setTimeout(() => {
+    document.querySelectorAll('.print-page').forEach(p => p.style.display = 'none')
+    document.getElementById('tableWrap').style.display = 'block'
+    document.querySelector('.toolbar').style.display = 'flex'
+  }, 800)
+}
+
+function printAll() {
+  document.querySelectorAll('.print-page').forEach(p => p.style.display = 'flex')
+  document.getElementById('tableWrap').style.display = 'none'
+  document.querySelector('.toolbar').style.display = 'none'
+  window.print()
+  setTimeout(() => {
+    document.querySelectorAll('.print-page').forEach(p => p.style.display = 'none')
+    document.getElementById('tableWrap').style.display = 'block'
+    document.querySelector('.toolbar').style.display = 'flex'
+  }, 800)
+}
+
+function getOrientation() {
+  return document.querySelector('input[name="orientation"]:checked')?.value || 'portrait'
+}
+
+function onOrientationChange() {
+  const orientation = getOrientation()
+  document.querySelectorAll('.print-page').forEach(page => {
+    // Force display flex
+    page.style.display = 'flex'
+    if (orientation === 'landscape') {
+      // Landscape: 4 badges in a row (A6 size each)
+      page.classList.add('landscape-mode')
+      page.classList.remove('portrait-mode')
+      page.style.width = '297mm'
+      page.style.height = '210mm'
+      page.style.flexDirection = 'row'
+    } else {
+      // Portrait: original design with fold line
+      page.classList.remove('landscape-mode')
+      page.classList.add('portrait-mode')
+      page.style.width = '210mm'
+      page.style.height = '297mm'
+      page.style.flexDirection = 'column'
+    }
+  })
+}
+
+async function load() {
+  try {
+    const [cr, ar] = await Promise.all([
+      fetch(`${API}/courses/${courseId}`),
+      fetch(`${API}/courses/${courseId}/badges-data?key=ficc2026badges`)
+    ])
+    course = await cr.json()
+    let raw = await ar.json()
+    if (!Array.isArray(raw)) raw = []
+    // فلتر عضو واحد إذا محدد
+    apps = memberId ? raw.filter(a => String(a.id) === memberId) : raw
+
+    // إذا عضو واحد — اعرض badge مباشرة + اطبع
+    if (memberId && apps.length > 0) {
+      document.getElementById('tableWrap').style.display = 'none'
+      document.getElementById('status').style.display = 'none'
+    }
+
+    document.getElementById('title').textContent = '🪪 ' + (course?.title||'Badges')
+    document.getElementById('count').textContent = apps.length + ' مشارك'
+    document.getElementById('status').style.display = 'none'
+
+    document.getElementById('tableWrap').style.display = 'block'
+    document.getElementById('tableTitle').textContent = `📋 ${course?.title||'طلبات التسجيل'}`
+    document.getElementById('count2').textContent = `إجمالي الطلبات: ${apps.length}`
+
+    const tbody = document.getElementById('tableBody')
+    const printArea = document.getElementById('printArea')
+    let bodyHtml = '', printHtml = ''
+
+    apps.forEach(app => {
+      const sub   = app.subscriber || {}
+      const name  = sub.fullName  || app.fullName  || app.FullName  || '—'
+      const code  = sub.subscriberCode || sub.SubscriberCode || ''
+      const photo = sub.profileImage   || sub.ProfileImage  || ''
+      const phone = app.phone || sub.phone || sub.whatsApp || '—'
+      const email = app.email || sub.email || '—'
+      const company = app.company || '—'
+      const date = app.createdAt ? new Date(app.createdAt).toLocaleDateString('ar-IQ',{timeZone:'Asia/Baghdad',year:'numeric',month:'2-digit',day:'2-digit'}) : '—'
+
+      bodyHtml += `
+      <tr>
+        <td>
+          <div class="td-name">
+            <div class="td-photo">${photo ? `<img src="${photo}" onerror="this.textContent='👤'">` : '👤'}</div>
+            <div>
+              <div>${name}</div>
+              ${code ? `<span class="td-code">${code}</span>` : ''}
+            </div>
+          </div>
+        </td>
+        <td><span class="td-phone">${phone}</span></td>
+        <td><span class="td-email">${email}</span></td>
+        <td>${company}</td>
+        <td><span class="td-date">${date}</span></td>
+        <td><button class="btn-print-row" onclick="printSingle(${app.id})">🖨️ Badge</button></td>
+      </tr>`
+
+      printHtml += makePrintPage(app)
+    })
+
+    tbody.innerHTML = bodyHtml
+    printArea.innerHTML = printHtml
+
+    // إذا عضو واحد — اعرض الـ badge مباشرة وأخفي الجدول
+    if (memberId && apps.length > 0) {
+      document.querySelectorAll('.print-page').forEach(p => p.style.display = 'flex')
+      document.querySelector('.toolbar').style.display = 'none'
+    }
+
+  } catch(e) {
+    document.getElementById('status').textContent = '❌ خطأ: ' + e.message
+  }
+}
+
+load()
+
+// Listen to orientation changes
+document.querySelectorAll('input[name="orientation"]').forEach(radio => {
+  radio.addEventListener('change', onOrientationChange)
+})
+</script>
+
+
+<style>
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; orphans: 0 !important; widows: 0 !important; }
+  html, body { margin: 0 !important; padding: 0 !important; width: 210mm !important; height: 297mm !important; }
+  .print-page {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .print-row {
+    display: flex !important;
+    flex-direction: row !important;
+    width: 210mm !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  .print-quarter {
+    width: 105mm !important;
+    flex-shrink: 0 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+@page { size: 210mm 297mm; margin: 0; }
+</style>
+</body>
+</html>

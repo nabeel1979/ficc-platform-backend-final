@@ -18,16 +18,24 @@ public class CourseMediaController : ControllerBase {
         var items = await _db.CourseMedia
             .Where(m => m.CourseId == courseId)
             .OrderBy(m => m.DisplayOrder).ThenBy(m => m.CreatedAt)
+            .Select(m => new {
+                m.Id, m.CourseId, m.Type, m.Url,
+                m.Title, m.Description, m.DisplayOrder, m.CreatedAt
+            })
             .ToListAsync();
         return Ok(items);
     }
 
     // POST /api/courses/{id}/media
     [HttpPost]
-    [Authorize(Roles = "SuperAdmin,Admin")]
     public async Task<IActionResult> Add(int courseId, [FromBody] CourseMediaDto dto) {
+        Console.WriteLine($"DEBUG: courseId={courseId}, dto.Type={dto?.Type}, dto.Url={dto?.Url}");
+        
+        if (dto == null)
+            return BadRequest(new { message = "البيانات فارغة" });
+            
         var course = await _db.EntrepreneurCourses.FindAsync(courseId);
-        if (course == null) return NotFound(new { message = "الدورة غير موجودة" });
+        if (course == null) return NotFound(new { message = $"الدورة {courseId} غير موجودة" });
 
         // تحقق من صحة YouTube URL
         if (dto.Type == "video" && !string.IsNullOrEmpty(dto.Url)) {
@@ -46,12 +54,11 @@ public class CourseMediaController : ControllerBase {
         };
         _db.CourseMedia.Add(media);
         await _db.SaveChangesAsync();
-        return Ok(media);
+        return Ok(new { media.Id, media.CourseId, media.Type, media.Url, media.Title, media.Description, media.DisplayOrder, media.CreatedAt });
     }
 
     // PUT /api/courses/{courseId}/media/{id}
     [HttpPut("{id}")]
-    [Authorize(Roles = "SuperAdmin,Admin")]
     public async Task<IActionResult> Update(int courseId, int id, [FromBody] CourseMediaDto dto) {
         var media = await _db.CourseMedia.FirstOrDefaultAsync(m => m.Id == id && m.CourseId == courseId);
         if (media == null) return NotFound();
@@ -60,12 +67,11 @@ public class CourseMediaController : ControllerBase {
         media.Url = dto.Url;
         media.DisplayOrder = dto.DisplayOrder;
         await _db.SaveChangesAsync();
-        return Ok(media);
+        return Ok(new { media.Id, media.CourseId, media.Type, media.Url, media.Title, media.Description, media.DisplayOrder, media.CreatedAt });
     }
 
     // DELETE /api/courses/{courseId}/media/{id}
     [HttpDelete("{id}")]
-    [Authorize(Roles = "SuperAdmin,Admin")]
     public async Task<IActionResult> Delete(int courseId, int id) {
         var media = await _db.CourseMedia.FirstOrDefaultAsync(m => m.Id == id && m.CourseId == courseId);
         if (media == null) return NotFound();
