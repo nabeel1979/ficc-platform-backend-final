@@ -469,7 +469,7 @@ function LatestCoursesSection() {
                   {c.speaker && <div style={{color:'rgba(255,255,255,0.75)',fontSize:11}}>👤 {c.speaker}</div>}
                 </div>
                 <div style={{padding:'12px 14px',flex:1,display:'flex',flexDirection:'column',gap:6}}>
-                  {c.startDate && <div style={{fontSize:11,color:'#64748b'}}>📅 {fmtWithTime(c.startDate)}{c.endDate ? ` \n— ${fmtWithTime(c.endDate)}` : ''}</div>}
+                  {c.startDate && <div style={{fontSize:11,color:'#64748b'}}>📅 {fmtWithTime(c.startDate)}{c.endDate ? ` \n— ${fmt(c.endDate)}` : ''}</div>}
                   {c.location && <div style={{fontSize:11,color:'#64748b'}}>📍 {c.location}</div>}
                   {c.price !== undefined && <div style={{fontSize:12,fontWeight:700,color:'#059669'}}>💰 {c.price===0?'مجانية':`${c.price?.toLocaleString()} د.ع`}</div>}
                   {c.maxParticipants > 0 && (
