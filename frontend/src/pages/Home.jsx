@@ -430,6 +430,13 @@ function LatestCoursesSection() {
   if (!courses.length) return null
   const STATUS = { upcoming: { label:'🟢 قادمة', bg:'#dcfce7', color:'#166534' }, ongoing: { label:'🔴 جارية', bg:'#fee2e2', color:'#991b1b' }, completed: { label:'✅ منتهية', bg:'#f3f4f6', color:'#374151' } }
   const fmt = d => d ? new Date(d).toLocaleDateString('ar-IQ',{year:'numeric',month:'short',day:'numeric',timeZone:'Asia/Baghdad'}) : ''
+  const fmtWithTime = d => {
+    if (!d) return ''
+    const date = new Date(d)
+    const dateStr = date.toLocaleDateString('ar-IQ',{year:'numeric',month:'short',day:'numeric',timeZone:'Asia/Baghdad'})
+    const timeStr = date.toLocaleTimeString('ar-IQ',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Baghdad'})
+    return `${dateStr} الساعة ${timeStr}`
+  }
   return (
     <section style={{padding:'40px 16px',background:'#f8fafc',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
       <div style={{maxWidth:1100,margin:'0 auto'}}>
@@ -450,7 +457,7 @@ function LatestCoursesSection() {
                   {c.speaker && <div style={{color:'rgba(255,255,255,0.75)',fontSize:11}}>👤 {c.speaker}</div>}
                 </div>
                 <div style={{padding:'12px 14px',flex:1,display:'flex',flexDirection:'column',gap:6}}>
-                  {c.startDate && <div style={{fontSize:11,color:'#64748b'}}>📅 {fmt(c.startDate)}{c.endDate ? ` — ${fmt(c.endDate)}` : ''}</div>}
+                  {c.startDate && <div style={{fontSize:11,color:'#64748b'}}>📅 {fmtWithTime(c.startDate)}{c.endDate ? ` \n— ${fmtWithTime(c.endDate)}` : ''}</div>}
                   {c.location && <div style={{fontSize:11,color:'#64748b'}}>📍 {c.location}</div>}
                   {c.price !== undefined && <div style={{fontSize:12,fontWeight:700,color:'#059669'}}>💰 {c.price===0?'مجانية':`${c.price?.toLocaleString()} د.ع`}</div>}
                   {c.maxParticipants > 0 && (
