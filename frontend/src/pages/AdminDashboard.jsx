@@ -2692,12 +2692,12 @@ function StartupsAdminPanel() {
 
   const load = () => {
     setLoading(true)
-    const url = '/courses' + (filter !== 'all' ? `?status=${filter}` : '')
+    // الـ status values: upcoming, ongoing, completed
+    const statusMap = { all: null, 'قادمة': 'upcoming', 'جارية': 'ongoing', 'منتهية': 'completed' }
+    const statusValue = statusMap[filter] || (filter !== 'all' ? filter : null)
+    const url = '/courses' + (statusValue ? `?status=${statusValue}` : '')
     api.get(url, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => {
-        const filtered = filter === 'all' ? r.data : r.data.filter(s => s.status === filter)
-        setStartups(filtered)
-      })
+      .then(r => setStartups(r.data || []))
       .catch(e => {
         console.error('Error loading courses:', e)
         setStartups([])
@@ -2714,15 +2714,15 @@ function StartupsAdminPanel() {
     load()
   }
 
-  const statusColors = { pending:'#f59e0b', approved:'#10b981', rejected:'#ef4444' }
-  const statusLabels = { pending:'⏳ قيد المراجعة', approved:'✅ مقبول', rejected:'❌ مرفوض' }
+  const statusColors = { upcoming:'#3b82f6', ongoing:'#ef4444', completed:'#10b981' }
+  const statusLabels = { upcoming:'📅 قادمة', ongoing:'🔴 جارية', completed:'✅ منتهية' }
 
   return (
     <div style={{padding:'24px',fontFamily:'Cairo,sans-serif',direction:'rtl'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px'}}>
         <h2 style={{color:'#2C3E6B',fontWeight:'800',fontSize:'22px',margin:0}}>🚀 ريادة الأعمال</h2>
         <div style={{display:'flex',gap:'8px'}}>
-          {['all','pending','approved','rejected'].map(s => (
+          {['all','upcoming','ongoing','completed'].map(s => (
             <button key={s} onClick={() => setFilter(s)}
               style={{padding:'8px 16px',borderRadius:'10px',border:'none',cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:'700',fontSize:'13px',
                 background: filter===s ? '#2C3E6B' : '#f1f5f9',
