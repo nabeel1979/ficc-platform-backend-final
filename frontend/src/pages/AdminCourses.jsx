@@ -1007,19 +1007,28 @@ export default function AdminCourses() {
     await api.delete(`/courses/${id}`); load()
   }
 
-  // إحصائيات
+  // إحصائيات — حساب الحالة من التاريخ
+  const getStatus = (course) => {
+    const now = new Date()
+    const start = new Date(course.startDate)
+    const end = new Date(course.endDate)
+    if (end < now) return 'completed'
+    if (start <= now && end >= now) return 'ongoing'
+    return 'upcoming'
+  }
   const stats = {
     all: courses.length,
-    upcoming: courses.filter(c=>c.status==='upcoming').length,
-    ongoing: courses.filter(c=>c.status==='ongoing').length,
-    completed: courses.filter(c=>c.status==='completed').length,
+    upcoming: courses.filter(c=>getStatus(c)==='upcoming').length,
+    ongoing: courses.filter(c=>getStatus(c)==='ongoing').length,
+    completed: courses.filter(c=>getStatus(c)==='completed').length,
     totalParticipants: courses.reduce((s,c)=>s+(c.currentParticipants||0),0),
   }
 
   // فلترة
   const toggleStatus = (s) => { setStatusFilter(p => p.includes(s) ? p.filter(x=>x!==s) : [...p,s]); setPage(1) }
   const filtered = courses.filter(c => {
-    if (statusFilter.length > 0 && !statusFilter.includes(c.status)) return false
+    const cStatus = getStatus(c)
+    if (statusFilter.length > 0 && !statusFilter.includes(cStatus)) return false
     if (searchText && !c.title?.includes(searchText) && !c.speaker?.includes(searchText) && !c.location?.includes(searchText)) return false
     return true
   })
