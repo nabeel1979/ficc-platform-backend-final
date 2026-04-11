@@ -442,6 +442,10 @@ function LatestCoursesSection() {
     if (!d) return ''
     const date = new Date(d)
     const dateStr = date.toLocaleDateString('ar-IQ',{year:'numeric',month:'short',day:'numeric',timeZone:'Asia/Baghdad'})
+    // تحقق إذا الوقت ليس midnight (00:00) — يعني في وقت فعلي
+    const hours = date.getUTCHours()
+    const minutes = date.getUTCMinutes()
+    if (hours === 0 && minutes === 0) return dateStr // بدون وقت
     const timeStr = date.toLocaleTimeString('ar-IQ',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Baghdad'})
     return `${dateStr} الساعة ${timeStr}`
   }
