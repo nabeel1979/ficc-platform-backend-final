@@ -199,6 +199,19 @@ using (var scope = app.Services.CreateScope())
 
 
 // =======================
+// Database Migration & Seeding
+// =======================
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
+    
+    // Seed permissions data
+    await SeedPermissions.SeedPermissionsDataAsync(db);
+}
+
+
+// =======================
 // Auth
 // =======================
 app.UseAuthentication();
