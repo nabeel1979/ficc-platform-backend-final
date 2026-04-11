@@ -11,7 +11,11 @@ public class EntrepreneurCourse {
     public string? SpeakersJson { get; set; } // JSON array: [{name, title, image}]
     public string? Location { get; set; }
     public DateTime StartDate { get; set; }
+    public DateTime? StartTime { get; set; } // وقت البداية
     public DateTime EndDate { get; set; }
+    public DateTime? EndTime { get; set; } // وقت الانتهاء
+    public DateTime? FormCloseDateTime { get; set; } // وقت وتاريخ إغلاق الاستمارة
+    public DateTime? ConfirmationDeadlineDateTime { get; set; } // وقت وتاريخ تأكيد/إلغاء الموعد
     public int MaxParticipants { get; set; } = 50;
     public int CurrentParticipants { get; set; } = 0;
     public string Status { get; set; } = "upcoming";

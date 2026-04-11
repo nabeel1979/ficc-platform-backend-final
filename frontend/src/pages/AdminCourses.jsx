@@ -12,7 +12,13 @@ function CourseForm({ item, onSave, onClose }) {
     speakers: item?.speakersJson ? JSON.parse(item.speakersJson) : [{name: item?.speaker||'', title: item?.speakerTitle||'', image: item?.speakerImage||''}],
     location: item?.location || '',
     startDate: item?.startDate ? item.startDate.split('T')[0] : '',
+    startTime: item?.startTime ? item.startTime.split('T')[1]?.slice(0,5) : '',
     endDate: item?.endDate ? item.endDate.split('T')[0] : '',
+    endTime: item?.endTime ? item.endTime.split('T')[1]?.slice(0,5) : '',
+    formCloseDateTime: item?.formCloseDateTime ? item.formCloseDateTime.split('T')[0] : '',
+    formCloseTime: item?.formCloseDateTime ? item.formCloseDateTime.split('T')[1]?.slice(0,5) : '',
+    confirmationDeadlineDateTime: item?.confirmationDeadlineDateTime ? item.confirmationDeadlineDateTime.split('T')[0] : '',
+    confirmationDeadlineTime: item?.confirmationDeadlineDateTime ? item.confirmationDeadlineDateTime.split('T')[1]?.slice(0,5) : '',
     maxParticipants: item?.maxParticipants || 50,
     isFree: item?.isFree !== false, price: item?.price || 0,
     category: item?.category || '', status: item?.status || 'upcoming', isActive: item?.isActive !== false,
@@ -25,8 +31,22 @@ function CourseForm({ item, onSave, onClose }) {
     e.preventDefault(); setLoading(true); setMsg('')
     try {
       const validSpeakers = form.speakers.filter(s => s.name.trim())
+      // دمج التاريخ والوقت
+      const startTime = form.startTime ? `${form.startDate}T${form.startTime}:00` : form.startDate
+      const endTime = form.endTime ? `${form.endDate}T${form.endTime}:00` : form.endDate
+      const formCloseDateTime = form.formCloseDateTime && form.formCloseTime ? `${form.formCloseDateTime}T${form.formCloseTime}:00` : null
+      const confirmationDeadlineDateTime = form.confirmationDeadlineDateTime && form.confirmationDeadlineTime ? `${form.confirmationDeadlineDateTime}T${form.confirmationDeadlineTime}:00` : null
+      
       const payload = {
         ...form,
+        startDate: startTime,
+        endDate: endTime,
+        startTime: undefined,
+        endTime: undefined,
+        formCloseDateTime: formCloseDateTime,
+        formCloseTime: undefined,
+        confirmationDeadlineDateTime: confirmationDeadlineDateTime,
+        confirmationDeadlineTime: undefined,
         speaker: validSpeakers[0]?.name || '',
         speakerTitle: validSpeakers[0]?.title || '',
         speakerImage: validSpeakers[0]?.image || '',
@@ -109,7 +129,38 @@ function CourseForm({ item, onSave, onClose }) {
                 ))}
               </div>
             </div>
-            {inp('تاريخ البدء *','startDate','date',true)} {inp('تاريخ الانتهاء *','endDate','date',true)}
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14}}>
+              <div>
+                {inp('تاريخ البدء *','startDate','date',true)}
+              </div>
+              <div>
+                {inp('وقت البدء','startTime','time')}
+              </div>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14}}>
+              <div>
+                {inp('تاريخ الانتهاء *','endDate','date',true)}
+              </div>
+              <div>
+                {inp('وقت الانتهاء','endTime','time')}
+              </div>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14}}>
+              <div>
+                {inp('تاريخ إغلاق الاستمارة','formCloseDateTime','date')}
+              </div>
+              <div>
+                {inp('الوقت','formCloseTime','time')}
+              </div>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14}}>
+              <div>
+                {inp('تاريخ تأكيد الموعد','confirmationDeadlineDateTime','date')}
+              </div>
+              <div>
+                {inp('الوقت','confirmationDeadlineTime','time')}
+              </div>
+            </div>
             {form.workshopType==='field' ? inp('الموقع (الميدانية)','location') : inp('رابط الدورة (الإلكترونية)','location')}
             {inp('الفئة','category')}
             <div>
