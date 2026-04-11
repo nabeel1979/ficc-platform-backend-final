@@ -2714,8 +2714,8 @@ function StartupsAdminPanel() {
     load()
   }
 
-  const statusColors = { upcoming:'#3b82f6', ongoing:'#ef4444', completed:'#10b981' }
-  const statusLabels = { upcoming:'📅 قادمة', ongoing:'🔴 جارية', completed:'✅ منتهية' }
+  const statusColors = { upcoming:'#eab308', ongoing:'#10b981', completed:'#ef4444' }
+  const statusLabels = { upcoming:'📅 قادمة', ongoing:'✅ جارية', completed:'❌ منتهية' }
 
   return (
     <div style={{padding:'24px',fontFamily:'Cairo,sans-serif',direction:'rtl'}}>
