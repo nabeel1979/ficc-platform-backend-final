@@ -202,12 +202,21 @@ public class User {
     public string Role { get; set; } = "Member";
     public int? ChamberId { get; set; }
     public Chamber? Chamber { get; set; }
+    
+    // Organizational Structure (الهيكل التنظيمي)
+    public int? OrganizationalStructureId { get; set; }
+    // Navigation property would be added in DbContext configuration
+    
     public string? Email { get; set; }
     public string? Phone { get; set; }
     public string? FullName { get; set; }
     public bool IsActive { get; set; } = true;
     public bool IsEmailVerified { get; set; } = false;
     public bool IsFirstLogin { get; set; } = true;
+    
+    // Permissions
+    public ICollection<UserPermission> Permissions { get; set; } = new List<UserPermission>();
+    
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
