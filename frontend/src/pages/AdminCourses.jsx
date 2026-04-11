@@ -1057,9 +1057,9 @@ export default function AdminCourses() {
       <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10,marginBottom:16}}>
         {[
           {label:'الكل',val:stats.all,color:'#2C3E6B',bg:'#eef2ff',icon:'📚'},
-          {label:'قادمة',val:stats.upcoming,color:'#0369a1',bg:'#e0f2fe',icon:'🟢'},
-          {label:'جارية',val:stats.ongoing,color:'#dc2626',bg:'#fee2e2',icon:'🔴'},
-          {label:'منتهية',val:stats.completed,color:'#16a34a',bg:'#dcfce7',icon:'✅'},
+          {label:'قادمة',val:stats.upcoming,color:'#eab308',bg:'#fef3c7',icon:'🟡'},
+          {label:'جارية',val:stats.ongoing,color:'#10b981',bg:'#d1fae5',icon:'🟢'},
+          {label:'منتهية',val:stats.completed,color:'#ef4444',bg:'#fee2e2',icon:'🔴'},
           {label:'مشاركون',val:stats.totalParticipants,color:'#7c3aed',bg:'#f3e8ff',icon:'👥'},
         ].map(s=>(
           <div key={s.label} style={{background:s.bg,borderRadius:12,padding:'12px 10px',textAlign:'center'}}>
@@ -1111,7 +1111,7 @@ export default function AdminCourses() {
               <div key={c.id} style={{background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:'0 2px 10px rgba(44,62,107,0.07)',border:'1px solid #e5e7eb'}}>
                 <div style={{background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',padding:'16px',position:'relative'}}>
                   <span style={{position:'absolute',top:10,left:10,padding:'3px 10px',borderRadius:20,fontSize:11,fontWeight:800,
-                    background:c.status==='upcoming'?'#dcfce7':c.status==='ongoing'?'#fee2e2':'#f3f4f6',
+                    background:c.status==='upcoming'?'#fef3c7':c.status==='ongoing'?'#d1fae5':'#fee2e2',
                     color:c.status==='upcoming'?'#166534':c.status==='ongoing'?'#991b1b':'#374151'}}>
                     {c.status==='upcoming'?'🟢 قادمة':c.status==='ongoing'?'🔴 جارية':'✅ منتهية'}
                   </span>
