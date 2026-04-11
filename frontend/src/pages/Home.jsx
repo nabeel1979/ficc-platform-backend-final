@@ -442,7 +442,7 @@ function LatestCoursesSection() {
             const st = STATUS[c.status] || STATUS.upcoming
             const pct = c.maxParticipants > 0 ? Math.round((c.currentParticipants/c.maxParticipants)*100) : 0
             return (
-              <a key={c.id} href={`/startups/${c.id}`} style={{textDecoration:'none',display:'flex',flexDirection:'column',background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:'0 2px 10px rgba(44,62,107,0.07)',border:'1px solid #e5e7eb'}}>
+              <a key={c.id} href={`/courses/${c.id}`} style={{textDecoration:'none',display:'flex',flexDirection:'column',background:'#fff',borderRadius:16,overflow:'hidden',boxShadow:'0 2px 10px rgba(44,62,107,0.07)',border:'1px solid #e5e7eb'}}>
                 <div style={{background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',padding:'16px',position:'relative'}}>
                   <span style={{position:'absolute',top:10,left:10,padding:'3px 10px',borderRadius:20,fontSize:10,fontWeight:800,background:st.bg,color:st.color}}>{st.label}</span>
                   {c.category && <span style={{position:'absolute',top:10,right:10,padding:'2px 8px',borderRadius:20,fontSize:10,background:'rgba(255,199,44,0.2)',color:'#FFC72C',fontWeight:700}}>{c.category}</span>}
