@@ -170,17 +170,7 @@ function CourseForm({ item, onSave, onClose }) {
             <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>الوصف</label>
             <textarea value={form.description} onChange={e=>set('description',e.target.value)} rows={3}
               style={{width:'100%',padding:'10px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontSize:13,fontFamily:'Cairo,sans-serif',outline:'none',boxSizing:'border-box',resize:'vertical'}} />
-          </div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14}}>
-            <div>
-              <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>الحالة</label>
-              <select value={form.status} onChange={e=>set('status',e.target.value)} style={{width:'100%',padding:'10px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontSize:13,fontFamily:'Cairo,sans-serif',outline:'none'}}>
-                <option value="upcoming">📅 قادمة</option>
-                <option value="ongoing">🔴 جارية</option>
-                <option value="completed">✅ منتهية</option>
-              </select>
-            </div>
-            <div style={{display:'flex',flexDirection:'column',gap:10,justifyContent:'center',marginTop:20}}>
+          <div style={{display:'flex',flexDirection:'column',gap:10,justifyContent:'center',marginTop:20}}>
               <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:13}}>
                 <input type="checkbox" checked={form.isFree} onChange={e=>set('isFree',e.target.checked)} />مجانية
               </label>
