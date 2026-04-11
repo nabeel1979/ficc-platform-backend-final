@@ -6,17 +6,20 @@ namespace FICCPlatform.Services;
 /// <summary>
 /// خدمة مركزية لإدارة الملفات — تدعم التخزين المحلي + Cloudflare R2
 /// إذا R2 مفعّل: يرفع على السحابة ويرجع URL
-/// إذا لا: يحفظ محلياً ويرجع مسار نسبي
+/// إذا لا: يحفظ محلياً ويرجع مسار نسبي أو URL كامل إن تم تهيئته
 /// </summary>
-public class StorageService {
+public class StorageService
+{
     private readonly string _uploadsRoot;
     private readonly AmazonS3Client? _s3;
     private readonly string _bucket;
     private readonly string _r2Endpoint;
     private readonly bool _r2Enabled;
     private string _publicUrl = "https://pub-be4a1829a4e84fc0b477dfe8adb915ef.r2.dev";
+    private readonly string _localPublicUrl;
 
-    public StorageService(IConfiguration cfg, IWebHostEnvironment env) {
+    public StorageService(IConfiguration cfg, IWebHostEnvironment env)
+    {
         // مسار التخزين المحلي
         var configured = cfg["Storage:UploadsPath"];
         _uploadsRoot = !string.IsNullOrWhiteSpace(configured)
@@ -25,17 +28,25 @@ public class StorageService {
         Directory.CreateDirectory(_uploadsRoot);
 
         // إعداد Cloudflare R2 - يقبل Cloudflare:* أو R2:*
-        var accountId  = cfg["Cloudflare:AccountId"]  ?? cfg["R2:AccountId"]  ?? "";
-        var accessKey  = cfg["Cloudflare:AccessKeyId"] ?? cfg["R2:AccessKeyId"] ?? "";
-        var secretKey  = cfg["Cloudflare:SecretKey"]   ?? cfg["R2:SecretAccessKey"] ?? "";
-        _bucket        = cfg["Cloudflare:Bucket"]      ?? cfg["R2:BucketName"] ?? "ficcmedia";
-        var publicUrl  = cfg["Cloudflare:PublicUrl"]   ?? cfg["R2:PublicUrl"]  ?? "https://pub-be4a1829a4e84fc0b477dfe8adb915ef.r2.dev";
+        var accountId = cfg["Cloudflare:AccountId"] ?? cfg["R2:AccountId"] ?? "";
+        var accessKey = cfg["Cloudflare:AccessKeyId"] ?? cfg["R2:AccessKeyId"] ?? "";
+        var secretKey = cfg["Cloudflare:SecretKey"] ?? cfg["R2:SecretAccessKey"] ?? "";
+        _bucket = cfg["Cloudflare:Bucket"] ?? cfg["R2:BucketName"] ?? "ficcmedia";
+        var publicUrl = cfg["Cloudflare:PublicUrl"] ?? cfg["R2:PublicUrl"] ?? "https://pub-be4a1829a4e84fc0b477dfe8adb915ef.r2.dev";
         _publicUrl = publicUrl;
-        _r2Endpoint    = $"https://{accountId}.r2.cloudflarestorage.com";
-        _r2Enabled     = !string.IsNullOrEmpty(accessKey) && !string.IsNullOrEmpty(secretKey) && !string.IsNullOrEmpty(accountId);
+        _r2Endpoint = $"https://{accountId}.r2.cloudflarestorage.com";
+        _r2Enabled = !string.IsNullOrEmpty(accessKey) && !string.IsNullOrEmpty(secretKey) && !string.IsNullOrEmpty(accountId);
+        //Console.WriteLine($"R2 enabled: {_r2Enabled}");
 
-        if (_r2Enabled) {
-            _s3 = new AmazonS3Client(accessKey, secretKey, new AmazonS3Config {
+        // Optional: base URL to use when serving local uploads.
+        // If provided (for example "https://api.example.com" or "https://static.example.com"),
+        // SaveFileAsync/SaveFileBytesAsync will return absolute URLs instead of relative "/uploads/..."
+        _localPublicUrl = (cfg["Storage:PublicUrl"] ?? cfg["App:PublicUrl"] ?? "").TrimEnd('/');
+
+        if (_r2Enabled)
+        {
+            _s3 = new AmazonS3Client(accessKey, secretKey, new AmazonS3Config
+            {
                 ServiceURL = _r2Endpoint,
                 ForcePathStyle = true
             });
@@ -46,7 +57,8 @@ public class StorageService {
     public string UploadsRoot => _uploadsRoot;
 
     /// <summary>مسار مجلد فرعي محلي</summary>
-    public string GetFolder(string subFolder) {
+    public string GetFolder(string subFolder)
+    {
         var path = Path.Combine(_uploadsRoot, subFolder);
         Directory.CreateDirectory(path);
         return path;
@@ -56,79 +68,112 @@ public class StorageService {
         Path.Combine(GetFolder(subFolder), fileName);
 
     public string GetRelativeUrl(string subFolder, string fileName) =>
-        $"/uploads/{subFolder}/{fileName}";
+        string.IsNullOrEmpty(_localPublicUrl)
+            ? $"/uploads/{subFolder}/{fileName}"
+            : $"{_localPublicUrl}/uploads/{subFolder}/{fileName}";
 
     /// <summary>
     /// رفع ملف — إذا R2 مفعّل يرفع عليه، وإلا يحفظ محلياً
-    /// يرجع URL كامل (R2) أو مسار نسبي (محلي)
+    /// يرجع URL كامل (R2) أو مسار نسبي / URL محلي (محلي)
     /// </summary>
-    public async Task<string> SaveFileAsync(IFormFile file, string subFolder, string? customName = null) {
+    public async Task<string> SaveFileAsync(IFormFile file, string subFolder, string? customName = null)
+    {
         var ext = Path.GetExtension(file.FileName).ToLower();
         var fileName = customName ?? $"{Guid.NewGuid()}{ext}";
 
-        if (_r2Enabled && _s3 != null) {
+        if (_r2Enabled && _s3 != null)
+        {
             // رفع لـ R2
             var key = $"{subFolder}/{fileName}";
             using var stream = file.OpenReadStream();
-            var request = new PutObjectRequest {
-                BucketName  = _bucket,
-                Key         = key,
+            var request = new PutObjectRequest
+            {
+                BucketName = _bucket,
+                Key = key,
                 InputStream = stream,
                 ContentType = file.ContentType,
-                CannedACL   = S3CannedACL.PublicRead,
-                DisablePayloadSigning = true
+                CannedACL = S3CannedACL.PublicRead
             };
             await _s3.PutObjectAsync(request);
             return $"{_publicUrl}/{key}";
-        } else {
+        }
+        else
+        {
             // حفظ محلي
             var folder = GetFolder(subFolder);
             var fullPath = Path.Combine(folder, fileName);
             using var fs = File.Create(fullPath);
             await file.CopyToAsync(fs);
-            return $"/uploads/{subFolder}/{fileName}";
+
+            // Return absolute URL if _localPublicUrl is configured, otherwise relative path.
+            return string.IsNullOrEmpty(_localPublicUrl)
+                ? $"/uploads/{subFolder}/{fileName}"
+                : $"{_localPublicUrl}/uploads/{subFolder}/{fileName}";
         }
     }
 
     /// <summary>رفع bytes مباشرة للـ R2 أو محلياً</summary>
-    public async Task<string> SaveFileBytesAsync(byte[] bytes, string key) {
-        if (_r2Enabled && _s3 != null) {
+    public async Task<string> SaveFileBytesAsync(byte[] bytes, string key)
+    {
+        if (_r2Enabled && _s3 != null)
+        {
             using var ms = new MemoryStream(bytes);
-            var request = new PutObjectRequest {
-                BucketName  = _bucket,
-                Key         = key,
+            var request = new PutObjectRequest
+            {
+                BucketName = _bucket,
+                Key = key,
                 InputStream = ms,
                 ContentType = key.EndsWith(".png") ? "image/png" : key.EndsWith(".gif") ? "image/gif" : "image/jpeg",
-                CannedACL   = S3CannedACL.PublicRead,
+                CannedACL = S3CannedACL.PublicRead,
                 DisablePayloadSigning = true
             };
             await _s3.PutObjectAsync(request);
             return $"{_publicUrl}/{key}";
-        } else {
+        }
+        else
+        {
             // حفظ محلي
             var parts = key.Split('/');
             var subFolder = parts.Length > 1 ? parts[0] : "uploads";
             var fileName = parts.Last();
             var folder = GetFolder(subFolder);
             await File.WriteAllBytesAsync(Path.Combine(folder, fileName), bytes);
-            return $"/uploads/{key}";
+
+            return string.IsNullOrEmpty(_localPublicUrl)
+                ? $"/uploads/{key}"
+                : $"{_localPublicUrl}/uploads/{key}";
         }
     }
 
     /// <summary>حذف ملف من R2 أو محلياً</summary>
-    public async Task DeleteFileAsync(string urlOrPath) {
+    public async Task DeleteFileAsync(string urlOrPath)
+    {
         if (string.IsNullOrEmpty(urlOrPath)) return;
 
-        if (_r2Enabled && _s3 != null && urlOrPath.Contains("r2.cloudflarestorage.com")) {
+        if (_r2Enabled && _s3 != null && urlOrPath.Contains("r2.cloudflarestorage.com"))
+        {
             // استخرج الـ key من الـ URL
             var uri = new Uri(urlOrPath);
             var key = uri.AbsolutePath.TrimStart('/').Replace($"{_bucket}/", "");
             try { await _s3.DeleteObjectAsync(_bucket, key); } catch { }
-        } else {
+        }
+        else
+        {
             // حذف محلي
-            var localPath = urlOrPath.StartsWith("/uploads/")
-                ? Path.Combine(_uploadsRoot, urlOrPath["/uploads/".Length..])
-                : urlOrPath;
+            // Accept both relative paths (/uploads/...) and absolute localPublicUrl URLs
+            string localPath;
+            if (!string.IsNullOrEmpty(_localPublicUrl) && urlOrPath.StartsWith(_localPublicUrl, StringComparison.OrdinalIgnoreCase))
+            {
+                var relative = urlOrPath.Substring(_localPublicUrl.Length).TrimStart('/');
+                localPath = relative.StartsWith("uploads/") ? Path.Combine(_uploadsRoot, relative["uploads/".Length..]) : Path.Combine(_uploadsRoot, relative);
+            }
+            else
+            {
+                localPath = urlOrPath.StartsWith("/uploads/")
+                    ? Path.Combine(_uploadsRoot, urlOrPath["/uploads/".Length..])
+                    : urlOrPath;
+            }
+
             if (File.Exists(localPath)) File.Delete(localPath);
         }
     }
