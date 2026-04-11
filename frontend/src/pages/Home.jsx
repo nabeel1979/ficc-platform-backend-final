@@ -442,6 +442,10 @@ function LatestCoursesSection() {
     if (!d) return ''
     const date = new Date(d)
     const dateStr = date.toLocaleDateString('ar-IQ',{year:'numeric',month:'short',day:'numeric',timeZone:'Asia/Baghdad'})
+    // تحقق إذا الوقت ليس midnight (00:00) — يعني في وقت فعلي
+    const hours = date.getUTCHours()
+    const minutes = date.getUTCMinutes()
+    if (hours === 0 && minutes === 0) return dateStr // بدون وقت
     const timeStr = date.toLocaleTimeString('ar-IQ',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Baghdad'})
     return `${dateStr} الساعة ${timeStr}`
   }
@@ -465,7 +469,7 @@ function LatestCoursesSection() {
                   {c.speaker && <div style={{color:'rgba(255,255,255,0.75)',fontSize:11}}>👤 {c.speaker}</div>}
                 </div>
                 <div style={{padding:'12px 14px',flex:1,display:'flex',flexDirection:'column',gap:6}}>
-                  {c.startDate && <div style={{fontSize:11,color:'#64748b'}}>📅 {fmtWithTime(c.startDate)}{c.endDate ? ` \n— ${fmtWithTime(c.endDate)}` : ''}</div>}
+                  {c.startDate && <div style={{fontSize:11,color:'#64748b'}}>📅 {fmtWithTime(c.startDate)}{c.endDate ? ` \n— ${fmt(c.endDate)}` : ''}</div>}
                   {c.location && <div style={{fontSize:11,color:'#64748b'}}>📍 {c.location}</div>}
                   {c.price !== undefined && <div style={{fontSize:12,fontWeight:700,color:'#059669'}}>💰 {c.price===0?'مجانية':`${c.price?.toLocaleString()} د.ع`}</div>}
                   {c.maxParticipants > 0 && (
