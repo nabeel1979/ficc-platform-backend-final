@@ -2692,7 +2692,7 @@ function StartupsAdminPanel() {
 
   const load = () => {
     setLoading(true)
-    api.get('/startups/admin/all' + (filter !== 'all' ? `?status=${filter}` : ''),
+    api.get('/courses' + (filter !== 'all' ? `?status=${filter}` : ''),
       { headers: { Authorization: `Bearer ${token}` } })
       .then(r => setStartups(r.data))
       .finally(() => setLoading(false))
