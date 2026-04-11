@@ -44,12 +44,7 @@ function CourseForm({ item, onSave, onClose }) {
   const inp = (label, k, type='text', req=false) => (
     <div style={{marginBottom:14}}>
       <label style={{display:'block',fontSize:12,fontWeight:700,color:'#374151',marginBottom:4}}>{label}{req&&<span style={{color:'#ef4444'}}>*</span>}</label>
-      <input type={type} required={req} value={form[k]} onChange={e => {
-        let val = type==='number' ? +e.target.value : e.target.value
-        // إذا غيّر نوع الورشة للإلكترونية، فرّغ الموقع
-        if(k==='location' && form.workshopType==='online') val = ''
-        set(k, val)
-      }}
+      <input type={type} required={req} value={form[k]} onChange={e => set(k, type==='number' ? +e.target.value : e.target.value)}
         style={{width:'100%',padding:'10px 14px',border:'1.5px solid #e5e7eb',borderRadius:10,fontSize:13,fontFamily:'Cairo,sans-serif',outline:'none',boxSizing:'border-box'}} />
     </div>
   )
