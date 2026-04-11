@@ -69,12 +69,14 @@ function CourseForm({ item, onSave, onClose }) {
 
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{background:'#fff',borderRadius:20,padding:'28px 24px',width:'100%',maxWidth:560,maxHeight:'90vh',overflowY:'auto',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+      <div style={{background:'#fff',borderRadius:20,width:'100%',maxWidth:600,maxHeight:'90vh',display:'flex',flexDirection:'column',direction:'rtl',fontFamily:'Cairo,sans-serif'}}>
+        {/* Header — ثابت */}
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'20px 24px',borderBottom:'1.5px solid #e5e7eb',flexShrink:0}}>
           <h2 style={{fontSize:18,fontWeight:800,color:'#2C3E6B'}}>{isEdit ? '✏️ تعديل دورة' : '➕ إضافة دورة'}</h2>
           <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#94a3b8'}}>✕</button>
         </div>
-        <form onSubmit={submit}>
+        {/* Content — scrollable */}
+        <form onSubmit={submit} style={{flex:1,overflowY:'auto',padding:'20px 24px'}}>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
             <div style={{gridColumn:'1/-1'}}>{inp('عنوان الدورة *','title','text',true)}</div>
             {/* المحاضرون — حتى 4 */}
@@ -207,13 +209,14 @@ function CourseForm({ item, onSave, onClose }) {
           </div>
           {!form.isFree && inp('السعر (د.ع)','price','number')}
           {msg && <div style={{background:'#fef2f2',border:'1px solid #fecaca',borderRadius:8,padding:'8px 14px',color:'#ef4444',fontSize:13,marginBottom:12}}>{msg}</div>}
-          <div style={{display:'flex',gap:10}}>
-            <button type="submit" disabled={loading} style={{flex:1,padding:'12px',background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:'#fff',border:'none',borderRadius:12,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:800,fontSize:14}}>
-              {loading ? '⏳ جارٍ الحفظ...' : '💾 حفظ'}
-            </button>
-            <button type="button" onClick={onClose} style={{padding:'12px 20px',background:'#f1f5f9',border:'none',borderRadius:12,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700}}>إلغاء</button>
-          </div>
         </form>
+        {/* Footer — ثابت */}
+        <div style={{display:'flex',gap:10,padding:'16px 24px',borderTop:'1.5px solid #e5e7eb',flexShrink:0}}>
+          <button type="submit" disabled={loading} onClick={()=>document.querySelector('form').dispatchEvent(new Event('submit',{bubbles:true}))} style={{flex:1,padding:'12px',background:'linear-gradient(135deg,#2C3E6B,#4A6FA5)',color:'#fff',border:'none',borderRadius:12,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:800,fontSize:14}}>
+            {loading ? '⏳ جارٍ الحفظ...' : '💾 حفظ'}
+          </button>
+          <button type="button" onClick={onClose} style={{padding:'12px 20px',background:'#f1f5f9',border:'none',borderRadius:12,cursor:'pointer',fontFamily:'Cairo,sans-serif',fontWeight:700}}>إلغاء</button>
+        </div>
       </div>
     </div>
   )
